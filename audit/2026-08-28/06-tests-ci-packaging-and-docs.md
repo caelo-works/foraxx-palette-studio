@@ -13,9 +13,9 @@ Commands run: `bash tests/run.sh` (1262 assertions, green);
 `bash scripts/build-update-package.sh 0.0.0-audit`; `bash scripts/check-package.sh dist/*.zip`
 (PASS); nine mutation experiments against `pjsr/lib/*.js` and `tests/*.test.js`, each restored
 immediately; a comparison of `tests/shim.js`'s `format()` against C `printf(1)`; a read of the
-ingest contract in `/home/psy4meuh/pixinsight-scripts/scripts/build-update-repo.sh`; a read of
-the reference repo `/home/psy4meuh/pix-sky-intruders`; and an inspection of the installed
-PixInsight at `/mnt/c/Program Files/PixInsight` to settle the icon-path question.
+ingest contract in the update site's `scripts/build-update-repo.sh`; a read of the reference
+repository the CaeloWorks PixInsight standards come from; and an inspection of an installed
+PixInsight to settle the icon-path question.
 
 ---
 
