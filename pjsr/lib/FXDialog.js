@@ -381,7 +381,6 @@ function ForaxxStudioDialog()
 
       this.rendering = true;
       this.refreshButton.enabled = false;
-      fxClearStretchFallback();
       this.previewStatus.text = (this.notice.length > 0)
                               ? (this.notice + "  -  " + fxT( "renderingShort" ))
                               : fxT( "rendering" );
@@ -505,10 +504,6 @@ function ForaxxStudioDialog()
          note += "  -  " + fxT( "noteLinear" );
       else if ( FX.linearInput && !fxLooksLinear( FX ) )
          note += "  -  " + fxT( "noteAlreadyStretched" );
-      // The auto stretch quietly changed method. Saying so on screen is the
-      // difference between "this looks odd" and "this is not what I asked for".
-      if ( fxStretchDidFallBack() )
-         note += "  -  " + fxT( "noteStretchFallback" );
       // Appends, like its two neighbours. A bare assignment here discarded both
       // the capitalised linear-data warning and the off-screen-levels note
       // whenever a multiscale stage was on - silencing, in exactly the
@@ -605,7 +600,6 @@ function ForaxxStudioDialog()
       this.linearMethodRow.combo.clear();
       this.linearMethodRow.combo.addItem( fxT( "linearMethodStf" ) );
       this.linearMethodRow.combo.addItem( fxT( "linearMethodStat" ) );
-      this.linearMethodRow.combo.addItem( fxT( "linearMethodGhs" ) );
       this.linearMethodRow.combo.currentItem = FX.linearMethod;
       fxRetitleSection( this.linearBar );
       fxRetitleSection( this.generalBar );
@@ -1090,7 +1084,7 @@ function ForaxxStudioDialog()
     * ========================================================================== */
 
    this.linearMethodRow = fxComboRow( this, "linearMethod",
-      [ fxT( "linearMethodStf" ), fxT( "linearMethodStat" ), fxT( "linearMethodGhs" ) ],
+      [ fxT( "linearMethodStf" ), fxT( "linearMethodStat" ) ],
       FX.linearMethod,
       function( index )
       {
@@ -1109,32 +1103,8 @@ function ForaxxStudioDialog()
    this.linearNoClipCheck = fxCheckBox( this, "linearNoClip", FX.linearNoClip,
       function( checked ) { FX.linearNoClip = checked; dlg.requestPreview(); }, this );
 
-   this.ghsBRow = fxNumericRow( this, "ghsB",
-      function( value ) { FX.ghsB = value; dlg.requestPreview(); } );
 
-   this.ghsAutoSPCheck = fxCheckBox( this, "ghsAutoSP", FX.ghsAutoSP,
-      function( checked )
-      {
-         FX.ghsAutoSP = checked;
-         if ( !checked )
-         {
-            // Hand the user the value the automatic placement was using, rather
-            // than leaving a stored 0.10 sitting thirty times above linear data.
-            // A symmetry point above the background makes GHS compress towards
-            // black, so the wrong starting number is not a small mistake.
-            let seed = fxGhsAutoSymmetry( FX.haView != null ? FX.haView : FX.siiView );
-            if ( seed > 0 )
-            {
-               FX.ghsSP = seed;
-               dlg.ghsSPRow.setValue( seed );
-            }
-         }
-         dlg.updateControls();
-         dlg.requestPreview();
-      }, this );
 
-   this.ghsSPRow = fxNumericRow( this, "ghsSP",
-      function( value ) { FX.ghsSP = value; dlg.requestPreview(); } );
 
    this.linearNote = new Label( this );
    this.linearNote.useRichText = true;
@@ -1146,9 +1116,6 @@ function ForaxxStudioDialog()
    this.linearControl.sizer.add( this.linearTargetRow );
    this.linearControl.sizer.add( this.linearClipRow );
    this.linearControl.sizer.add( this.linearNoClipCheck );
-   this.linearControl.sizer.add( this.ghsBRow.sizer );
-   this.linearControl.sizer.add( this.ghsAutoSPCheck );
-   this.linearControl.sizer.add( this.ghsSPRow.sizer );
 
    this.linearBar = new SectionBar( this, fxT( "secLinear" ) );
    this.linearBar.__titleKey = "secLinear";
@@ -2095,18 +2062,9 @@ function ForaxxStudioDialog()
     */
    this.updateControls = function()
    {
-      // The three methods do not share their controls. Showing all of them at
-      // once would be five sliders of which two are inert, and an inert slider
-      // is indistinguishable from a broken one.
-      // The target drives all three methods now: the two expression ones solve
-      // their midtones balance for it, and GHS solves its stretch factor for it.
-      // Only the shadows clip belongs to the expression methods alone.
-      let ghs = FX.linearMethod == 2;
-      this.linearClipRow.enabled = !ghs;
-      this.linearNoClipCheck.enabled = !ghs && FX.linearMethod == 0;
-      this.ghsBRow.enabled = ghs;
-      this.ghsAutoSPCheck.enabled = ghs;
-      this.ghsSPRow.enabled = ghs && !FX.ghsAutoSP;
+      // "Never clip the black point" is implied by the statistical stretch and
+      // only means something for the screen transfer one.
+      this.linearNoClipCheck.enabled = FX.linearMethod == 0;
 
       let style = fxStyle( FX );
       let needsSii = style.needsSii;

@@ -295,14 +295,6 @@ var FX =
    linearClip:     2.80,    // shadows clipping, in MAD sigmas
    linearNoClip:   false,   // never place the black point above the darkest pixel
 
-   // GeneralizedHyperbolicStretch, method 2. Three controls out of the twelve
-   // the process exposes: D and SP decide the result, b shapes the contrast
-   // around it. The rest keep the process's own defaults.
-   ghsD:           1.00,    // stretch factor: only the solver's fallback now,
-                            // since D is solved for the target at render time
-   ghsB:           0.00,    // local intensity
-   ghsSP:          0.10,    // symmetry point, used when the automatic one is off
-   ghsAutoSP:      true,    // place the symmetry point on the channel's median
 
    // ---- channel weighting (soft gain, 1.0 = untouched) ---------------------
    gainSii:        1.00,
@@ -569,10 +561,6 @@ var FXPersisted =
    [ "linearTarget",     "real"    ],
    [ "linearClip",       "real"    ],
    [ "linearNoClip",     "boolean" ],
-   [ "ghsD",             "real"    ],
-   [ "ghsB",             "real"    ],
-   [ "ghsSP",            "real"    ],
-   [ "ghsAutoSP",        "boolean" ],
    [ "previewFit",       "boolean" ],
    [ "previewScale",     "real"    ],
    [ "previewDetail",    "int"     ],
@@ -593,8 +581,6 @@ var FXRanges =
    normShadow:      [ 0.00, 1.00, 2 ],
    linearTarget:    [ 0.02, 0.60, 3 ],
    linearClip:      [ 0.00, 6.00, 2 ],
-   ghsB:            [ -5.00, 15.00, 2 ],
-   ghsSP:           [ 0.00, 1.00, 4 ],
    gainSii:         [ 0.20, 3.00, 2 ],
    gainHa:          [ 0.20, 3.00, 2 ],
    gainOiii:        [ 0.20, 3.00, 2 ],
