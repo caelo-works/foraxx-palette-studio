@@ -348,8 +348,13 @@ function ForaxxStudioDialog()
       if ( fxLooksLinear( FX ) )
          note += "  -  THESE CHANNELS LOOK LINEAR. Stretch them first; this script needs "
                + "non-linear images.";
+      // Appends, like its two neighbours. A bare assignment here discarded both
+      // the capitalised linear-data warning and the off-screen-levels note
+      // whenever a multiscale stage was on - silencing, in exactly the
+      // configuration where the preview is least trustworthy, the only guard
+      // rail left on the one input type this version does not support.
       if ( FX.hdrEnabled && (FX.hdrLayers > 0 || FX.localContrast > 0) )
-         note = "  -  multiscale stages are approximate at this sampling";
+         note += "  -  multiscale stages are approximate at this sampling";
       // A star's peak is a handful of pixels. If the resampling averaged them
       // away, the brightness stretch has nothing left to lift and the previewed
       // stars come out far dimmer than the ones Execute produces.

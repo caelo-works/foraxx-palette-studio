@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Called by release.yml so a tag runs exactly these checks, not a copy of them
+  # that can drift. A release used to depend on nothing at all.
+  workflow_call:
 
 permissions:
   contents: read

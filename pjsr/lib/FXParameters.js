@@ -215,8 +215,13 @@ var FXStyles =
 
 function fxStyle( p )
 {
-   let i = p.styleIndex;
-   if ( i < 0 || i >= FXStyles.length )
+   // Coerce before comparing. A NaN index satisfies neither i < 0 nor
+   // i >= length, so it used to pass the guard untouched and FXStyles[NaN]
+   // returned undefined; the migrations dereference the result before
+   // fxSanitize runs, so one corrupt settings file threw out of main() and the
+   // dialog then failed to open on every subsequent launch as well.
+   let i = Math.floor( Number( p.styleIndex ) );
+   if ( !isFinite( i ) || i < 0 || i >= FXStyles.length )
       i = 0;
    return FXStyles[i];
 }

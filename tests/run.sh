@@ -133,10 +133,18 @@ failures=0
 total=0
 for t in "$ROOT"/tests/*.test.js; do
    if node "$t" > "$BUILD/last.log" 2>&1; then
-      # Each suite reports its own assertion count on the last line. Surfacing it
-      # is the cheap guard against a suite that silently stops asserting.
-      summary="$(tail -1 "$BUILD/last.log")"
-      n="$(printf '%s' "$summary" | grep -oE '[0-9]+ assertions' | grep -oE '[0-9]+' || echo 0)"
+      # A zero exit is necessary but not sufficient. The suite must also have
+      # said how many assertions it ran, in the exact form report() emits: a
+      # suite that stopped asserting, or returned early, exits 0 with nothing to
+      # show, and that must not read as success.
+      summary="$(grep -E '^[a-z0-9_-]+: [0-9]+ assertions passed\.$' "$BUILD/last.log" | tail -1)"
+      if [ -z "$summary" ]; then
+         echo "FAIL $(basename "$t") exited 0 without reporting an assertion count"
+         cat "$BUILD/last.log"
+         failures=1
+         continue
+      fi
+      n="$(printf '%s' "$summary" | grep -oE '[0-9]+ assertions' | grep -oE '[0-9]+')"
       total=$(( total + n ))
       echo "OK   $summary"
    else

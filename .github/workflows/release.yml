@@ -10,16 +10,22 @@ permissions:
   contents: write
 
 jobs:
+  # The whole of CI, not a subset. Publishing used to be independent of it: the
+  # tag workflow re-ran the harness and the package check but skipped the
+  # sidecar validator - the guard on the HTML entities that would make the
+  # shared repository index malformed and take every CaeloWorks script down with
+  # it - along with shellcheck, the SPDX check and the licence check.
+  verify:
+    uses: ./.github/workflows/ci.yml
+
   release:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
-      - name: Run test harness (a red harness blocks the release)
-        run: bash tests/run.sh
 
       - name: Version from tag
         id: v

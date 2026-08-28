@@ -152,6 +152,24 @@ const KEYS = Object.keys( fx.FX );
    eq( fx.fxStyle( { styleIndex: 0 } ), fx.FXStyles[0], 'fxStyle indexes the table' );
    eq( fx.fxStyle( { styleIndex: -1 } ), fx.FXStyles[0], 'a negative index falls back to the first' );
    eq( fx.fxStyle( { styleIndex: 9999 } ), fx.FXStyles[0], 'an out-of-range index falls back too' );
+
+   // A settings file or a process icon is user-writable and can hold anything.
+   // NaN satisfies neither i < 0 nor i >= length, so it used to pass the range
+   // guard untouched and return undefined; the migrations dereference that
+   // before fxSanitize can clean it, so main() threw and the dialog then failed
+   // to open on every subsequent launch too. There is no recovery from inside
+   // the script, which is what made a Medium worth a regression test.
+   [ NaN, null, undefined, 7.5, -0.5, 'three', {}, [], Infinity, -Infinity ].forEach( bad => {
+      const style = fx.fxStyle( { styleIndex: bad } );
+      ok( style !== undefined && style !== null,
+          'fxStyle survives a corrupt styleIndex of ' + JSON.stringify( bad ) );
+      ok( fx.FXStyles.indexOf( style ) >= 0,
+          'and returns a real style for ' + JSON.stringify( bad ) );
+   } );
+   eq( fx.fxStyle( { styleIndex: 7.5 } ), fx.FXStyles[7],
+       'a fractional index truncates to the style it names' );
+   eq( fx.fxStyle( { styleIndex: '3' } ), fx.FXStyles[3],
+       'a numeric string - what a settings file round-trip can produce - still indexes' );
 }
 
 // ---------------------------------------------------------------------------

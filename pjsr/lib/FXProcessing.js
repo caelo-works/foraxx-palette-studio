@@ -1067,17 +1067,19 @@ function fxValidate( p )
    let needed = [];
    let mode = fxStyle( p );
 
-   needed.push( [ "Ha", p.haView ] );
-   needed.push( [ "Oiii", p.oiiiView ] );
+   // Each entry carries the parameter key as well, so a wrapper re-resolved
+   // below can be written back to the object the render actually reads.
+   needed.push( [ "Ha", p.haView, "haView" ] );
+   needed.push( [ "Oiii", p.oiiiView, "oiiiView" ] );
    if ( mode.needsSii )
-      needed.push( [ "Sii", p.siiView ] );
+      needed.push( [ "Sii", p.siiView, "siiView" ] );
 
    if ( p.makeStars )
    {
-      needed.push( [ "Ha stars", p.haStarsView ] );
-      needed.push( [ "Oiii stars", p.oiiiStarsView ] );
+      needed.push( [ "Ha stars", p.haStarsView, "haStarsView" ] );
+      needed.push( [ "Oiii stars", p.oiiiStarsView, "oiiiStarsView" ] );
       if ( mode.needsSii )
-         needed.push( [ "Sii stars", p.siiStarsView ] );
+         needed.push( [ "Sii stars", p.siiStarsView, "siiStarsView" ] );
    }
 
    let ref = null;
@@ -1087,9 +1089,17 @@ function fxValidate( p )
       let view = needed[i][1];
 
       // Re-resolve by identifier: the user may have closed the window while
-      // this dialog was open, leaving us holding a stale wrapper.
+      // this dialog was open, leaving us holding a stale wrapper. The fresh
+      // wrapper is written back into the parameter object, because the render
+      // reads p.*View directly - validating one object and rendering another is
+      // how the case this guard was written for came back as a thrown error
+      // instead of the validation report it is supposed to produce.
       if ( view != null && !view.isNull )
+      {
          view = View.viewById( view.id );
+         needed[i][1] = view;
+         p[ needed[i][2] ] = view;
+      }
 
       if ( view == null || view.isNull )
       {
