@@ -67,8 +67,12 @@ if [ -n "${XSSK_PATH:-}" ]; then
   : "${PI_EXE:?set PI_EXE to your PixInsight executable to code-sign}"
   printf 'PixInsight signing-key password (not stored): ' >&2
   read -r -s __PW; echo >&2
-  SIGN_TMP="$( mktemp -d )"; SIGN_JS="$SIGN_TMP/sign.js"
-  cat > "$SIGN_JS" <<'PJSR'
+  # The runner and the file being signed are deliberately named apart. They were
+  # both SIGN_JS once, which worked only because the shell expanded the -r=
+  # argument before the child's environment was applied - rename either one and
+  # signing breaks silently, on a path nothing exercises but a hand release.
+  SIGN_TMP="$( mktemp -d )"; SIGN_RUNNER="$SIGN_TMP/sign.js"
+  cat > "$SIGN_RUNNER" <<'PJSR'
 var xsgn = getEnvironmentVariable( "SIGN_XSGN" );
 var js   = getEnvironmentVariable( "SIGN_JS" );
 var xssk = getEnvironmentVariable( "SIGN_XSSK" );
@@ -77,7 +81,7 @@ Security.generateScriptSignatureFile( xsgn, js, [], xssk, pw );
 PJSR
   rm -f "$DST/$NAME.xsgn"
   SIGN_XSGN="$DST/$NAME.xsgn" SIGN_JS="$DST/$NAME.js" SIGN_XSSK="$XSSK_PATH" SIGN_PW="$__PW" \
-    "$PI_EXE" -n --automation-mode --force-exit -r="$SIGN_JS" || true
+    "$PI_EXE" -n --automation-mode --force-exit -r="$SIGN_RUNNER" || true
   unset __PW
   rm -rf "$SIGN_TMP"
   [ -f "$DST/$NAME.xsgn" ] || { echo "error: no .xsgn produced" >&2; exit 1; }

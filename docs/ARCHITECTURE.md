@@ -19,9 +19,11 @@ rather than approximate.
 | `pjsr/lib/FXSplitter.js` | Draggable dividers |
 | `pjsr/assets/ForaxxPaletteStudio.svg` | Menu icon, installed to `rsc/icons/script/` |
 
-`FXExpressions.js` and `FXParameters.js` are the only files free of PixInsight
-runtime objects, which is exactly why they are the two the node harness bundles
-and tests. Everything else is verified by hand in PixInsight.
+`FXParameters.js`, `FXExpressions.js` and `FXProcessing.js` load under the test
+shim, so the node harness bundles and drives all three — the expression writer,
+the parameter surface and the conditioning arithmetic. `FXDialog.js`,
+`FXPreview.js`, `FXHistogram.js` and `FXSplitter.js` build PixInsight controls at
+load time and are only parsed; they are verified by hand in PixInsight.
 
 ## The two invariants
 

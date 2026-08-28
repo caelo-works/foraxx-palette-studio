@@ -20,11 +20,25 @@ your Windows `LocalAppData` on its own — and stamps the version as `dev`. Poin
 **Script → Feature Scripts → Add** at that folder, or run it straight from
 **Script → Execute Script File…**. Re-run the script after each edit.
 
-`tests/run.sh` bundles the two pure-logic libraries and runs real assertions
-against the PixelMath expressions, then syntax-checks every other PJSR file. It
-catches syntax errors and expression regressions, not PJSR API misuse — there is
-no substitute for running the thing in PixInsight. See `docs/RELEASING.md` for
-the hand gates a release has to pass.
+`tests/run.sh` bundles the libraries that load without PixInsight, drives them
+through a shim, and runs five suites against them, then syntax-checks the files
+that build controls at load time:
+
+| Suite | What it holds still |
+|---|---|
+| `expressions` | The PixelMath strings for every palette, the star combination, HDR and the luminance substitution |
+| `emission` | How a number becomes a literal — precision, notation, and the floor that keeps a balance from rounding to zero |
+| `normalization` | The conditioning arithmetic: the MTF and its solver, black points, and what happens to linear input |
+| `parameters` | The contract between the dialog, the settings file and saved process icons |
+| `naming` | That an output group is numbered as one, never a mixture |
+
+It catches expression regressions and contract drift, not PJSR API misuse —
+there is no substitute for running the thing in PixInsight. See
+`docs/RELEASING.md` for the hand gates a release has to pass.
+
+Add a suite by dropping `tests/<name>.test.js` next to the others; the runner
+picks up anything matching `*.test.js` and each suite reports its own assertion
+count, which the runner totals.
 
 ## Layout
 
@@ -33,8 +47,9 @@ the two invariants that govern changes.
 
 A new file in `pjsr/lib/` must be reachable by `#include` from the entry point,
 directly or through another lib file — an orphan file packages fine and then is
-not there at runtime. Add it to `tests/run.sh` too: to `LIBS` if it is pure
-logic, to `UNBUNDLED` if it touches PixInsight objects.
+not there at runtime, which CI checks. Add it to `tests/run.sh` too: to `LIBS`
+if it loads under the shim, to `UNBUNDLED` if it builds PixInsight controls at
+load time.
 
 ## House rules
 

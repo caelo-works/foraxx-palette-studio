@@ -26,19 +26,22 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/tests/build"
 MODULE="$BUILD/module.js"
 
-# Pure-logic libs, in dependency order: FXExpressions reads fxStyle/FXStyles.
+# Libs the harness loads and drives, in dependency order: FXExpressions reads
+# fxStyle/FXStyles, FXProcessing reads both. FXProcessing is full of PI-facing
+# code, but it loads under the shim and its conditioning maths - the part that
+# decides how dark an image comes out - is plain arithmetic worth testing.
 LIBS=(
    "$ROOT/pjsr/lib/FXParameters.js"
    "$ROOT/pjsr/lib/FXExpressions.js"
+   "$ROOT/pjsr/lib/FXProcessing.js"
 )
 
-# PI-facing files: syntax only.
+# Files the harness only parses: they build PixInsight controls at load time.
 UNBUNDLED=(
    "$ROOT/pjsr/ForaxxPaletteStudio.js"
    "$ROOT/pjsr/lib/FXDialog.js"
    "$ROOT/pjsr/lib/FXHistogram.js"
    "$ROOT/pjsr/lib/FXPreview.js"
-   "$ROOT/pjsr/lib/FXProcessing.js"
    "$ROOT/pjsr/lib/FXSplitter.js"
 )
 
@@ -60,11 +63,18 @@ mkdir -p "$BUILD"
    cat <<'EOF'
 
 module.exports = {
+   // --- parameters -------------------------------------------------------
    FXStyles: FXStyles,
    FX: FX,
    FXDefaults: FXDefaults,
+   FXPersisted: FXPersisted,
+   FXRanges: FXRanges,
+   FX_LEVEL_SETS: FX_LEVEL_SETS,
    fxStyle: fxStyle,
    fxFirstStyleFor: fxFirstStyleFor,
+   fxLevelsAreIdentity: fxLevelsAreIdentity,
+
+   // --- expressions ------------------------------------------------------
    fxNum: fxNum,
    fxMTF: fxMTF,
    fxStretch: fxStretch,
@@ -79,7 +89,32 @@ module.exports = {
    fxBuildPosteriseExpressions: fxBuildPosteriseExpressions,
    fxBuildHDRCompression: fxBuildHDRCompression,
    fxBuildLuminanceApplyExpressions: fxBuildLuminanceApplyExpressions,
-   fxBuildCombineExpression: fxBuildCombineExpression
+   fxBuildCombineExpression: fxBuildCombineExpression,
+   FX_STAR_HA_TO_OIII: FX_STAR_HA_TO_OIII,
+
+   // --- processing: conditioning maths and identifier helpers -------------
+   fxClamp: fxClamp,
+   fxMTFValue: fxMTFValue,
+   fxSolveMTF: fxSolveMTF,
+   fxChannelStats: fxChannelStats,
+   fxClearStatsCache: fxClearStatsCache,
+   fxBlackPointFor: fxBlackPointFor,
+   fxMedianAfterBlackPoint: fxMedianAfterBlackPoint,
+   fxNormalizationBoost: fxNormalizationBoost,
+   fxChannelTransform: fxChannelTransform,
+   fxStretchMapFor: fxStretchMapFor,
+   fxCollectStretch: fxCollectStretch,
+   fxLooksLinear: fxLooksLinear,
+   fxUniqueViewId: fxUniqueViewId,
+   fxUniqueBaseId: fxUniqueBaseId,
+   fxScaleCurve: fxScaleCurve,
+   fxScaleDeltaCurve: fxScaleDeltaCurve,
+
+   // --- shim handles, for driving the above ------------------------------
+   fxTestView: fxTestView,
+   fxTestSetViews: fxTestSetViews,
+   fxTestConsole: fxTestConsole,
+   fxTestConsoleReset: fxTestConsoleReset
 };
 EOF
 } > "$MODULE"
@@ -95,9 +130,15 @@ for src in "${UNBUNDLED[@]}"; do
 done
 
 failures=0
+total=0
 for t in "$ROOT"/tests/*.test.js; do
    if node "$t" > "$BUILD/last.log" 2>&1; then
-      echo "OK   $(basename "$t")"
+      # Each suite reports its own assertion count on the last line. Surfacing it
+      # is the cheap guard against a suite that silently stops asserting.
+      summary="$(tail -1 "$BUILD/last.log")"
+      n="$(printf '%s' "$summary" | grep -oE '[0-9]+ assertions' | grep -oE '[0-9]+' || echo 0)"
+      total=$(( total + n ))
+      echo "OK   $summary"
    else
       echo "FAIL $(basename "$t")"
       cat "$BUILD/last.log"
@@ -109,4 +150,4 @@ if [ "$failures" -ne 0 ]; then
    echo "Tests failed." >&2
    exit 1
 fi
-echo "All tests passed."
+echo "All tests passed ($total assertions)."

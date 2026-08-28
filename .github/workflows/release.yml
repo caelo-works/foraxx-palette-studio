@@ -17,13 +17,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Run test harness (a red harness blocks the release)
         run: bash tests/run.sh
+
       - name: Version from tag
         id: v
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: The tag must be documented
+        run: |
+          # A release whose changes are not written down is a release nobody can
+          # tell apart from the one before it.
+          v="${{ steps.v.outputs.version }}"
+          grep -q "^## \[$v\]" CHANGELOG.md \
+            || { echo "::error::CHANGELOG.md has no [$v] section"; exit 1; }
+
       - name: Build the distribution artifact
         run: bash scripts/build-update-package.sh "${{ steps.v.outputs.version }}"
+
+      - name: Contents match the update site's ingest contract
+        run: bash scripts/check-package.sh dist/*.zip
+
       - name: Publish release + assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -33,3 +48,19 @@ jobs:
             --generate-notes \
             dist/*.zip \
             dist/update-package.json
+
+      - name: Remind the maintainer what is left to do
+        run: |
+          sha1="$(python3 -c "import json;print(json.load(open('dist/update-package.json'))['sha1'])")"
+          {
+            echo "### Published"
+            echo
+            echo "Still to do, by hand:"
+            echo
+            echo "1. Comment on the tracking issue in \`caelo-works/pixinsight-scripts\` with"
+            echo "   this release URL, the sha1 \`$sha1\` and the piVersionRange."
+            echo "2. Re-run \`scripts/build-update-repo.sh\` on the site so the shared"
+            echo "   \`updates.xri\` picks this up."
+            echo "3. Confirm the PixInsight hand gates in \`docs/RELEASING.md\` were run —"
+            echo "   CI cannot see an image, and this script is judged by eye."
+          } >> "$GITHUB_STEP_SUMMARY"
