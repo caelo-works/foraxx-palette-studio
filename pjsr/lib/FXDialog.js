@@ -41,6 +41,36 @@ function fxFmt( value, precision )
  * dialog constructor and kill the script before it ever appeared. Assigning
  * them through here degrades to a plain text button instead.
  */
+// The emblem file, looked for beside the script and in the installed icon
+// directory. Named once so the two places that build a path agree.
+#define FX_ICON_NAME "ForaxxPaletteStudio.svg"
+
+/*
+ * Open a URL with the platform's default handler. The "by CaeloWorks" line in
+ * the header is a link, and PJSR has no browser of its own.
+ */
+function fxOpenInBrowser( url )
+{
+   try
+   {
+      let plat = String( CoreApplication.platform );
+      let P = new ExternalProcess;
+      if ( /win|mswindows/i.test( plat ) )
+         P.start( "cmd", [ "/c", "start", "", url ] );
+      else if ( /mac|osx/i.test( plat ) )
+         P.start( "/usr/bin/open", [ url ] );
+      else
+         P.start( "xdg-open", [ url ] );
+      if ( P.waitForStarted )
+         P.waitForStarted();
+   }
+   catch ( x )
+   {
+      // A header that cannot open a browser is not a reason to stop working.
+      Console.warningln( "Could not open " + url );
+   }
+}
+
 function fxSetIcon( dialog, button, resource, fallbackText )
 {
    try
@@ -398,20 +428,153 @@ function ForaxxStudioDialog()
                              + note;
    };
 
+   /*
+    * The menu icon, painted at the header's left. Looked for where a dev
+    * staging puts it, then beside the script, then where the package installs
+    * it - four levels up from src/scripts/CaeloWorks/<Name>/ is the PixInsight
+    * root. Sized in physical pixels so it follows the UI scaling of a
+    * high-density display like every other control, and returns null on any
+    * failure so the header simply loses its emblem rather than the dialog
+    * failing to open.
+    */
+   this.makeEmblem = function()
+   {
+      let here = File.extractDrive( #__FILE__ ) + File.extractDirectory( #__FILE__ );
+      let candidates = [ here + "/../assets/" + FX_ICON_NAME,
+                         here + "/assets/" + FX_ICON_NAME,
+                         here + "/" + FX_ICON_NAME,
+                         // This file lives in lib/, so the PixInsight root is five
+                         // levels up from src/scripts/CaeloWorks/<Name>/lib/.
+                         here + "/../../../../../rsc/icons/script/ForaxxPaletteStudio/" + FX_ICON_NAME ];
+      let px = (typeof this.logicalPixelsToPhysical == "function")
+             ? this.logicalPixelsToPhysical( 44 ) : 44;
+      let bmp = null;
+      for ( let i = 0; i < candidates.length && bmp == null; ++i )
+         try
+         {
+            if ( File.exists( candidates[i] ) )
+            {
+               let b = new Bitmap( candidates[i] );
+               bmp = (typeof b.scaledTo == "function") ? b.scaledTo( px, px ) : b;
+            }
+         }
+         catch ( x )
+         {
+            bmp = null;
+         }
+      if ( bmp == null )
+         return null;
+      let ctrl = new Control( this );
+      ctrl.setScaledFixedSize( 44, 44 );
+      ctrl.__bmp = bmp;
+      ctrl.onPaint = function()
+      {
+         let g = new Graphics( this );
+         try { g.drawBitmap( 0, 0, this.__bmp ); } catch ( x ) {}
+         g.end();
+      };
+      return ctrl;
+   };
+
+   /*
+    * Re-reads every string from the table. Called once at construction and
+    * again on every language change - which is why the strings are not written
+    * inline: a literal left in place is one that silently stays English, and
+    * nothing on screen would say so.
+    */
+   this.applyLanguage = function()
+   {
+      this.byLabel.text = "<span style=\"color:#5a8fd0; text-decoration:underline;\">"
+                        + fxT( "byLine" ) + "</span>";
+      this.byLabel.toolTip = fxT( "byLineTip" ) + " \u2014 build " + VERSION;
+      this.taglineLabel.text = "<i>" + fxT( "tagline" ) + "</i>";
+      this.bannerLabel.text = fxT( "bannerLinear" );
+      this.langLabel.text = fxT( "language" );
+      this.langCombo.toolTip = fxT( "languageTip" );
+
+      this.generalBar.title = fxT( "secGeneral" );
+      this.channelsBar.title = fxT( "images" );
+      this.normalizeBar.title = fxT( "secNormalize" );
+      this.scnrBar.title = fxT( "secScnr" );
+      this.hdrBar.title = fxT( "secHdr" );
+      this.lumBar.title = fxT( "secLuminance" );
+
+      this.refreshButton.text = fxT( "refresh" );
+      this.resetAllButton.text = fxT( "resetAll" );
+      this.executeButton.text = fxT( "execute" );
+      this.cancelButton.text = fxT( "close" );
+      this.reloadButton.text = fxT( "reloadList" );
+      this.reloadButton.toolTip = fxT( "reloadListTip" );
+
+      this.threeChannelRadio.text = fxT( "threeChannels" );
+      this.twoChannelRadio.text = fxT( "twoChannels" );
+   };
+
    /* ==========================================================================
     * Header
     * ========================================================================== */
 
-   this.header = new Label( this );
-   this.header.useRichText = true;
-   this.header.wordWrapping = true;
-   this.header.text =
-      "<b>" + TITLE + "</b> &nbsp; v" + VERSION + " &nbsp;&mdash;&nbsp; " +
-      "dynamic and classic narrowband palettes with a live preview, per-channel weighting, " +
-      "adjustable transitions and independent star and luminance control." +
-      "<br/><b>SUPPLY NON-LINEAR (STRETCHED) IMAGES.</b> Linear data is not supported: stretch " +
-      "each channel before you run this.";
-   this.header.minHeight = this.logicalPixelsToPhysical( 42 );
+   // Emblem, name, tagline, and the language selector. The same shape every
+   // CaeloWorks script wears, so a user who knows one recognises the next.
+   this.emblem = this.makeEmblem();
+
+   this.titleLabel = new Label( this );
+   this.titleLabel.text = TITLE;
+   let tf = this.titleLabel.font;
+   tf.bold = true;
+   tf.pointSize = Math.round( this.font.pointSize * 1.7 );
+   this.titleLabel.font = tf;
+
+   this.byLabel = new Label( this );
+   this.byLabel.useRichText = true;
+   this.byLabel.textAlignment = TextAlign_Left | TextAlign_VertCenter;
+   this.byLabel.onMousePress = function()
+   {
+      fxOpenInBrowser( "https://pixinsight-scripts.caelo.works/" );
+   };
+   try { this.byLabel.cursor = new Cursor( StdCursor_PointingHand ); } catch ( x ) {}
+
+   this.taglineLabel = new Label( this );
+   this.taglineLabel.useRichText = true;
+   this.taglineLabel.wordWrapping = true;
+
+   this.titleColumn = new VerticalSizer;
+   this.titleColumn.add( this.titleLabel );
+   this.titleColumn.add( this.byLabel );
+
+   this.langLabel = new Label( this );
+   this.langLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
+
+   this.langCombo = new ComboBox( this );
+   this.langCombo.addItem( "English" );
+   this.langCombo.addItem( "Fran\u00e7ais" );
+   this.langCombo.currentItem = (FX.lang == "fr") ? 1 : 0;
+   this.langCombo.onItemSelected = function( index )
+   {
+      FX.lang = (index == 1) ? "fr" : "en";
+      dlg.applyLanguage();
+   };
+
+   this.headerSizer = new HorizontalSizer;
+   this.headerSizer.spacing = 10;
+   if ( this.emblem != null )
+      this.headerSizer.add( this.emblem );
+   this.headerSizer.add( this.titleColumn );
+   this.headerSizer.addStretch();
+   this.headerSizer.add( this.langLabel );
+   this.headerSizer.addSpacing( 4 );
+   this.headerSizer.add( this.langCombo );
+
+   // The non-linear requirement keeps its own line, below the identity block.
+   // It is the one thing on this dialog a user must read before running.
+   this.bannerLabel = new Label( this );
+   this.bannerLabel.useRichText = true;
+   this.bannerLabel.wordWrapping = true;
+
+   // The three rows go straight into the dialog's own sizer. Wrapping them in an
+   // intermediate Control laid out everything before the stretch and dropped
+   // everything after it off the right edge - the language selector rendered
+   // nowhere at all, with no error to say so.
 
    /* ==========================================================================
     * Data: how many channels, stars or not, and which palette
@@ -700,6 +863,23 @@ function ForaxxStudioDialog()
       this.updateControls();
       this.requestPreview();
    };
+
+   /* ==========================================================================
+    * General section
+    *
+    * The three choices that decide what everything below means: how many
+    * channels you have, whether a stars image is built, and which palette. They
+    * used to sit loose above the first section bar, which made them look like
+    * part of the banner rather than the first thing to set.
+    * ========================================================================== */
+
+   this.generalControl = fxGroupControl( this );
+   this.generalControl.sizer.add( dataSizer );
+   this.generalControl.sizer.add( this.starlessOnlyCheck );
+   this.generalControl.sizer.addSpacing( 4 );
+   this.generalControl.sizer.add( styleSizer );
+
+   this.generalBar = fxSection( this, "General", this.generalControl, false );
 
    this.channelsControl = fxGroupControl( this );
    this.channelsControl.sizer.add( this.siiRow.sizer );
@@ -1710,11 +1890,8 @@ function ForaxxStudioDialog()
 
    this.leftSizer = new VerticalSizer;
    this.leftSizer.spacing = 4;
-   this.leftSizer.add( dataSizer );
-   this.leftSizer.add( this.starlessOnlyCheck );
-   this.leftSizer.addSpacing( 4 );
-   this.leftSizer.add( styleSizer );
-   this.leftSizer.addSpacing( 6 );
+   this.leftSizer.add( this.generalBar );
+   this.leftSizer.add( this.generalControl );
    this.leftSizer.add( this.channelsBar );
    this.leftSizer.add( this.channelsControl );
    this.leftSizer.add( this.normalizeBar );
@@ -1755,10 +1932,16 @@ function ForaxxStudioDialog()
    this.columnsSizer.addSpacing( 2 );
    this.columnsSizer.add( this.rightPanel, 100 );
 
+   // Every control exists by now, so the table can be read into all of them.
+   this.applyLanguage();
+
    this.sizer = new VerticalSizer;
    this.sizer.margin = 8;
    this.sizer.spacing = 6;
-   this.sizer.add( this.header );
+   this.sizer.add( this.headerSizer );
+   this.sizer.add( this.taglineLabel );
+   this.sizer.add( this.bannerLabel );
+   this.sizer.addSpacing( 2 );
    this.sizer.add( this.columnsSizer, 100 );
    this.sizer.add( bottomSizer );
 

@@ -49,7 +49,11 @@ UNBUNDLED=(
 # Strip PI preprocessor directives, including backslash-continued ones, and CR
 # line endings; the lib files are plain JavaScript otherwise.
 strip() {
-   awk '{ sub(/\r$/,"") } cont { cont = /\\$/; next } /^[[:space:]]*#/ { cont = /\\$/; next } { print }' "$1"
+   # #__FILE__ is a preprocessor token used mid-expression, which a line-based
+   # strip cannot see and node cannot parse. Rewrite it to a string literal
+   # first, then drop the directive lines.
+   sed -e 's/#__FILE__/"__FILE__"/g' "$1" |
+      awk '{ sub(/\r$/,"") } cont { cont = /\\$/; next } /^[[:space:]]*#/ { cont = /\\$/; next } { print }'
 }
 
 mkdir -p "$BUILD"

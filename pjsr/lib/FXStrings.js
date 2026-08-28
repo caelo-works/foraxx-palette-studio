@@ -55,6 +55,7 @@ var FX_UI =
                     + "opening this dialog.</p>",
 
       // --- sections --------------------------------------------------------
+      secGeneral:     "General",
       secNormalize:   "Channel normalization",
       secWeighting:   "Weighting, transition and colour",
       secStars:       "Stars",
@@ -119,6 +120,7 @@ var FX_UI =
                     + "des images apr\u00e8s avoir ouvert ce dialogue.</p>",
 
       // --- sections --------------------------------------------------------
+      secGeneral:     "G\u00e9n\u00e9ral",
       secNormalize:   "Normalisation des couches",
       secWeighting:   "Pond\u00e9ration, transition et couleur",
       secStars:       "\u00c9toiles",
