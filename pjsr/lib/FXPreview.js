@@ -524,32 +524,41 @@ FXPreviewEngine.prototype.ensureChannels = function( p, factor, needStars )
    if ( starlessKey != this.starlessKey || this.channelIds == null )
    {
       this.releaseStarless();
+      // Publish the list BEFORE filling it. It used to be assigned only after
+      // all three succeeded, so a throw on the second or third left the first
+      // channel's hidden image referenced by nothing the engine could close -
+      // and every retry made another one.
       let list = [];
+      this.starlessTemps = list;
       this.channelIds = {
          sii:  needsSii ? this.makeChannel( p.siiView, factor, "sii", list, false ).id : null,
          ha:   this.makeChannel( p.haView,   factor, "ha",   list, false ).id,
          oiii: this.makeChannel( p.oiiiView, factor, "oiii", list, false ).id
       };
-      this.starlessTemps = list;
       this.starlessKey = starlessKey;
    }
 
-   let starsKey = (srcStars == null) ? "-"
-                : [ factor, srcStars.sii, srcStars.ha, srcStars.oiii ].join( "|" );
-   if ( starsKey != this.starsKey || (srcStars != null && this.starIds == null) )
+   // A render that does not need the stars must leave them alone. Deriving the
+   // key from a null source produced a sentinel that never matched, so every
+   // starless render released a perfectly valid star set and the next switch
+   // back paid three full-resolution duplications and three resamples again.
+   // The starless branch was never treated this way; the asymmetry was
+   // accidental, and it made the documented independent caching half false.
+   if ( srcStars != null )
    {
-      this.releaseStars();
-      if ( srcStars != null )
+      let starsKey = [ factor, srcStars.sii, srcStars.ha, srcStars.oiii ].join( "|" );
+      if ( starsKey != this.starsKey || this.starIds == null )
       {
+         this.releaseStars();
          let list = [];
+         this.starsTemps = list;
          let cs = needsSii ? this.makeChannel( p.siiStarsView, factor, "siis", list, true ) : null;
          let ch = this.makeChannel( p.haStarsView,   factor, "has",   list, true );
          let co = this.makeChannel( p.oiiiStarsView, factor, "oiiis", list, true );
          this.starIds = { sii: (cs == null) ? null : cs.id, ha: ch.id, oiii: co.id };
          this.starPeaksPreserved = ch.peaks && co.peaks && (cs == null || cs.peaks);
-         this.starsTemps = list;
+         this.starsKey = starsKey;
       }
-      this.starsKey = starsKey;
    }
 
    return true;

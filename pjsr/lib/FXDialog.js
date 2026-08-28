@@ -1253,10 +1253,19 @@ function ForaxxStudioDialog()
    this.refreshButton = new PushButton( this );
    this.refreshButton.text = "Refresh";
    fxSetIcon( this, this.refreshButton, ":/icons/reload.png", null );
-   this.refreshButton.toolTip = "<p>Re-render the preview now, re-measuring the sources.</p>";
+   this.refreshButton.toolTip = "<p>Re-render the preview now, re-reading and re-measuring the "
+                              + "source images.</p>"
+                              + "<p>Use this after editing a channel in PixInsight: the preview "
+                              + "works from its own downsampled copies, and nothing else drops "
+                              + "them while the image keeps its identifier.</p>";
    this.refreshButton.onClick = function()
    {
+      // Release the downsampled copies, not just the statistics. They are keyed
+      // on image identifiers, never on content, so editing a channel in place -
+      // stretching it, say - left Refresh re-rendering the pre-edit pixels while
+      // its own tooltip promised it was re-measuring the sources.
       fxClearStatsCache();
+      dlg.engine.release();
       dlg.refreshPreview();
    };
 
@@ -1560,6 +1569,17 @@ function ForaxxStudioDialog()
       // has to go too: dismissing the dialog mid-render would fire onHide and
       // release the engine while fxRenderFinal is still on the stack.
       this.cancelButton.enabled = false;
+      // For the same reason, every other control has to go with it. The render
+      // reads FX incrementally - the palette, the weights, the star settings and
+      // the three levels sets are each picked up at a different point - while a
+      // control handler writes FX the instant it fires. One slider nudged during
+      // a run therefore splices two parameter sets into a single image, and
+      // fxReport then prints the final state as though it had been used
+      // throughout, which is exactly the reproducibility that report exists to
+      // provide. Locking the panels is what makes the console log true.
+      this.leftPanel.enabled = false;
+      this.previewGroup.enabled = false;
+      this.levelsGroup.enabled = false;
       this.cursor = new Cursor( StdCursor_Wait );
 
       Console.show();
@@ -1589,6 +1609,9 @@ function ForaxxStudioDialog()
          this.engine.release();
          fxSweepTemporaries();
          this.cursor = new Cursor( StdCursor_Arrow );
+         this.leftPanel.enabled = true;
+         this.previewGroup.enabled = true;
+         this.levelsGroup.enabled = true;
          this.executeButton.enabled = true;
          this.refreshButton.enabled = true;
          this.cancelButton.enabled = true;
