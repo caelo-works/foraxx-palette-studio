@@ -50,8 +50,6 @@ var FX_UI =
       starlessOnly:   "Starless only - do not build a stars image",
       palette:        "Palette:",
       reloadList:     "Reload image list",
-      reloadListTip:  "<p>Rescan the workspace. Use it if you created or renamed images after "
-                    + "opening this dialog.</p>",
 
       // --- sections --------------------------------------------------------
       secGeneral:     "General",
@@ -79,16 +77,190 @@ var FX_UI =
       refresh:        "Refresh",
       selectChannels: "Select your channels to build a preview.",
       rendering:      "Rendering preview...",
+      renderingShort: "rendering preview...",
       renderFailed:   "The render failed - see the console.",
       noHistogram:    "No histogram yet - render a preview first.",
 
       // --- levels ----------------------------------------------------------
-      levelsFor:      "Levels",
       reset:          "Reset",
       resetAll:       "Reset all",
       imageName:      "Image name:",
       execute:        "Execute",
       close:          "Close",
+
+      // --- notices, section notes, palette names ----------------------------
+      noteLevelsElsewhere: "levels also in force on:",
+      noteLinear:     "THESE CHANNELS LOOK LINEAR. Stretch them first; this script needs "
+                      + "non-linear images.",
+      noteMultiscale: "multiscale stages are approximate at this sampling",
+      notePeaks:      "star peaks are averaged at this sampling, so previewed stars are dimmer "
+                      + "than the final ones; use Detail 1:1 to judge them",
+      renderedAt:     "%d x %d rendered at 1:%d, shown at %d%%",
+      levelsStarless: "Levels - starless image",
+      levelsStars:    "Levels - stars image",
+      levelsLum:      "Levels - luminance layer",
+      levelsReadout:  "black %.4f mid %.4f white %.4f",
+      zoomNote:       "<p>How large the rendered preview is drawn. This is a display scale only "
+                      + "- it repaints the image already in hand and never runs the pipeline "
+                      + "again.</p><p><b>Roll the mouse wheel over the panel</b> to zoom "
+                      + "continuously about the cursor: the pixel under the pointer stays under "
+                      + "the pointer. Drag to pan, and double click anywhere in the panel to go "
+                      + "back to Fit.</p><p>How much detail there is to zoom into is set by "
+                      + "<b>Detail</b>, next to this.</p>",
+      baseIdNote:     "<p>Base identifier of the images produced. The stars image gets a _stars "
+                      + "suffix, the screen combination _combined, the luminance _L.</p><p>It "
+                      + "follows the palette you choose, so a Warhol run lands in Warhol and an "
+                      + "HSO run in HSO. Type your own if you prefer; it will be replaced the "
+                      + "next time you change palette.</p><p>Existing identifiers are never "
+                      + "overwritten: a numeric suffix is added to the whole group at once, so "
+                      + "the set always matches.</p>",
+      lumNote:        "<p>The CIE L*a*b* lightness of the colour result, extracted as its own "
+                      + "greyscale layer named <i>name</i>_L. Because it is a standard lightness "
+                      + "it behaves in an LRGB combination, in a mask or in a curve exactly as "
+                      + "any other luminance does.</p><p>To stretch it, set the preview "
+                      + "<b>Target</b> to <b>Luminance</b> and use the histogram below the "
+                      + "preview - it belongs to whichever image is on screen, and the layer "
+                      + "keeps its own three markers.</p>",
+      scnrNote:       "<p>The stock <b>SCNR</b> process, average neutral, applied to the nebula "
+                      + "only. Green is removed directly; magenta is green in the inverse.</p>",
+      starsNote:      "<p>The star field is a fixed broadband-style "
+                      + "combination:<br/>&nbsp;&nbsp;R = 0.5&middot;Ha + "
+                      + "0.5&middot;Sii&nbsp;&nbsp;&nbsp;G = 0.3&middot;Ha + "
+                      + "0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>Stars are broadband "
+                      + "sources, not line emitters, so mixing them this way gives more "
+                      + "believable colour than running the nebula's palette over them.</p>",
+      styleNote:      "<p>One list for the palette and its starting point: choosing an entry "
+                      + "sets the channel mapping, every tuning slider and the output image name "
+                      + "at once. You are free to move any slider afterwards.</p><p>The "
+                      + "<b>Foraxx</b> entries blend red and green between two sources with "
+                      + "dynamic masks, so the palette changes across the frame. The rest are "
+                      + "fixed mappings: the three letters give the source of R, G and B in "
+                      + "order, so <b>HSO</b> means red from Ha, green from Sii, blue from "
+                      + "Oiii.</p><p><b>Andy Warhol</b> pushes saturation hard and posterises the "
+                      + "result into flat blocks of colour, like a screen print.</p><p>Entries "
+                      + "that need Sii are hidden while you are in 2 channel mode.</p>",
+      noticeLevelsReset: "Source image changed - levels reset (%s).",
+      noticeCreated:  "Created %s. Change palette and run again, or Close.",
+      normalizeBarTip: "<p>Brings the channels to a common brightness before they are combined, "
+                      + "following the published narrowband channel normalization "
+                      + "method.</p><p>Each channel gets a black point interpolated between its "
+                      + "minimum and its median, then a midtones curve that moves its median onto "
+                      + "the reference channel's - a curve stretch, not a linear scale, so faint "
+                      + "structure is lifted without the bright cores running away.</p><p>This is "
+                      + "the real fix for an SHO that comes out overwhelmingly green: Ha is "
+                      + "typically several times stronger than Sii and Oiii, and no amount of "
+                      + "per-pixel colour correction afterwards can undo that. Fix the balance "
+                      + "first and the palette behaves.</p>",
+      scnrBarTip:     "<p>Enable or skip the whole colour suppression stage.</p><p>It applies "
+                      + "to the <b>nebula only</b>. The stars have their own green removal in the "
+                      + "Stars section, because this correction is tuned for green that comes "
+                      + "from the channel imbalance and would flatten real broadband star colour "
+                      + "into grey.</p>",
+      hdrBarTip:      "<p>Enable or skip highlight compression, HDRMultiscaleTransform and "
+                      + "local contrast as a group. Off by default, with every amount at "
+                      + "zero.</p>",
+      lumBarTip:      "<p>Produce a synthetic luminance layer from the narrowband channels, "
+                      + "named <i>name</i>_L.</p>",
+      normalizeRef:   "Reference:",
+      normalizeRefTip: "<p>The channel every other one is brought up to. Ha is almost always the "
+                      + "strongest, so it is the usual reference.</p>",
+      styleForaxxClassic: "Foraxx - classic (starless identical to the original)",
+      styleForaxxClean: "Foraxx - with colour clean-up (recommended)",
+      styleForaxxSoft: "Foraxx - soft transition",
+      styleForaxxGold: "Foraxx - gold forward",
+      styleForaxxTeal: "Foraxx - teal forward",
+      styleForaxxHOO: "Foraxx HOO - dynamic, Ha and Oiii only",
+      styleWarhol:    "Andy Warhol - poster colour",
+      styleSHO:       "SHO (Hubble)",
+      styleHSO:       "HSO",
+      styleHOS:       "HOS",
+      styleOHS:       "OHS",
+      styleOSH:       "OSH",
+      styleSOH:       "SOH",
+      styleHOO:       "HOO (bicolour)",
+      styleOHH:       "OHH",
+
+      // --- plain control tooltips -------------------------------------------
+      threeChannelRadioTip: "<p>You collected Sii, Ha and Oiii. Every palette is available.</p>",
+      twoChannelRadioTip: "<p>Dual narrowband OSC data, or mono Ha and Oiii only. The Sii rows are "
+                      + "disabled, and the palette list is limited to the mappings that do not "
+                      + "need Sii.</p><p>If a Sii palette is selected when you choose this, it "
+                      + "moves to Foraxx HOO - the first entry that works without Sii, not a "
+                      + "matching two-channel mapping. Pick the one you want afterwards.</p>",
+      reloadTip:      "<p>Rescan the workspace. Use this if you created or renamed images after "
+                      + "opening this dialog.</p>",
+      previewTargetTip: "<p>Which image to show, and which image the histogram below belongs to. "
+                      + "Each of the three carries its own black point, midtones and white point; "
+                      + "switching here brings that image's markers back, and each set is applied "
+                      + "only to its own image when you press Execute.</p><p><b>Luminance</b> is "
+                      + "the extracted L layer. You can look at it without switching the "
+                      + "Artificial luminance section on - it is only written out when that "
+                      + "section is on.</p>",
+      previewDetailTip: "<p>The sampling the pipeline actually runs at. Changing this <i>does</i> "
+                      + "re-render.</p><p><b>Auto</b> renders at twice the panel resolution, so "
+                      + "zooming to 200% is still pixel exact. Choose 1:1 when you want to "
+                      + "inspect the real result - it is slow on a large frame and uses a lot of "
+                      + "memory.</p>",
+      refreshTip:     "<p>Re-render the preview now, re-reading and re-measuring the source "
+                      + "images.</p><p>Use this after editing a channel in PixInsight: the "
+                      + "preview works from its own downsampled copies, and nothing else drops "
+                      + "them while the image keeps its identifier.</p>",
+      levelsTip:      "<p>Histogram of the image the preview is showing, as it stands "
+                      + "immediately before its own levels transform, drawn as one outline per "
+                      + "channel on a logarithmic vertical scale.</p><p>Drag the three triangles: "
+                      + "the dark one on the left is the black point, the grey one in the middle "
+                      + "is the midtones balance, the light one on the right is the white point. "
+                      + "Double click a triangle to reset just that one.</p><p><b>Each image "
+                      + "keeps its own three markers.</b> Change the preview target and this "
+                      + "panel switches to that image's set; at Execute each set is applied to "
+                      + "its own image and to nothing else.</p>",
+      levelsReadoutTip: "<p>Black point, midtones balance and white point of the image the "
+                      + "preview is showing.</p>",
+      levelsAutoTip:  "<p>Read a starting point off the current histogram: clip the black point "
+                      + "just below where real signal begins, and place the median at a "
+                      + "comfortable 0.30.</p><p>Applies to the image the preview is showing.</p>",
+      levelsResetTip: "<p>Put this image's three markers back to black 0, mid 0.5, white 1 - an "
+                      + "identity transform. The other images keep theirs.</p>",
+      newInstanceTip: "<p>New Instance - drag this onto the workspace to save the current "
+                      + "settings as a process icon.</p>",
+      resetAllTip:    "<p>Put every slider and checkbox back to its factory default. Your "
+                      + "channel selection is kept.</p>",
+      executeTip:     "<p>Build the full resolution images with the current settings.</p><p>The "
+                      + "dialog stays open, so you can change palette and run it again. Each run "
+                      + "gets its own set of image names.</p>",
+      cancelTip:      "<p>Close the dialog. Anything you already built with Execute stays where "
+                      + "it is.</p>",
+
+      // --- checkboxes -------------------------------------------------------
+      starlessOnlyTip: "<p>Tick this if your images still contain stars, or if you do not want a "
+                      + "separate colour stars image. The star columns and the whole Stars "
+                      + "section are disabled.</p>",
+      starCleanGreen: "Remove green from the stars",
+      starCleanGreenTip: "<p>A two-pass green removal: remove green, push hard into the highlights "
+                      + "with a midtones transfer, remove green again on the stretched data, then "
+                      + "undo the push. Working on the stretched version is what lets the second "
+                      + "pass reach the faint fringing the first one misses.</p><p>The <b>Green / "
+                      + "magenta suppression</b> section below does not touch the stars at all: "
+                      + "that correction is tuned for green coming from the channel imbalance, "
+                      + "and over a star field it flattens real broadband star colour into "
+                      + "grey.</p>",
+      scnrPreserveL:  "Preserve lightness",
+      scnrPreserveLTip: "<p>Keeps the pixel's brightness where it was after the cast is removed, "
+                      + "which is what stops the result going flat and dim.</p>",
+      makeCombined:   "Also create a screen combination of the starless and stars images",
+      makeCombinedTip: "<p>Produces <i>name</i>_combined as ~(~starless * ~stars) - the screen "
+                      + "blend - after the levels have been applied to each of them. It can only "
+                      + "be seen after Execute - the preview no longer has a combined target.</p>",
+      makeFactors:    "Keep the 'o' and 'ho' dynamic factor images",
+      makeFactorsTip: "<p>The masks the dynamic blend is built from, written out as images for "
+                      + "inspection or for reuse as masks elsewhere.</p>"
+                      + "<p>A three-channel palette produces two, <i>name</i>_o and "
+                      + "<i>name</i>_ho; a two-channel one has no Sii to switch away from, so it "
+                      + "produces only _ho. On a fixed mapping they are written but nothing uses "
+                      + "them, because the Foraxx amount is held at 0 there.</p>",
+      autoPreview:    "Auto",
+      autoPreviewTip: "<p>Re-render the preview automatically a moment after a control settles. "
+                      + "Turn it off on very large images and use Refresh instead.</p>",
 
       // --- sliders: label and tooltip, keyed on the row name --------------
       normSii:        "Sii level:",
@@ -235,8 +407,6 @@ var FX_UI =
       starlessOnly:   "Starless seulement - ne pas construire d'image d'\u00e9toiles",
       palette:        "Palette :",
       reloadList:     "Recharger la liste",
-      reloadListTip:  "<p>Relit l'espace de travail. \u00c0 utiliser si vous avez cr\u00e9\u00e9 ou renomm\u00e9 "
-                    + "des images apr\u00e8s avoir ouvert ce dialogue.</p>",
 
       // --- sections --------------------------------------------------------
       secGeneral:     "G\u00e9n\u00e9ral",
@@ -264,16 +434,207 @@ var FX_UI =
       refresh:        "Rafra\u00eechir",
       selectChannels: "Choisissez vos couches pour construire un aper\u00e7u.",
       rendering:      "Calcul de l'aper\u00e7u...",
+      renderingShort: "calcul de l'aper\u00e7u...",
       renderFailed:   "Le calcul a \u00e9chou\u00e9 - voir la console.",
       noHistogram:    "Pas encore d'histogramme - calculez un aper\u00e7u d'abord.",
 
       // --- niveaux ---------------------------------------------------------
-      levelsFor:      "Niveaux",
       reset:          "R\u00e9initialiser",
       resetAll:       "Tout r\u00e9initialiser",
       imageName:      "Nom de l'image :",
       execute:        "Ex\u00e9cuter",
       close:          "Fermer",
+
+      // --- notices, notes de section, noms de palettes ---------------------
+      noteLevelsElsewhere: "niveaux \u00e9galement en vigueur sur :",
+      noteLinear:     "CES COUCHES SEMBLENT LIN\u00c9AIRES. Stretchez-les d'abord ; ce script a besoin "
+                      + "d'images non lin\u00e9aires.",
+      noteMultiscale: "les \u00e9tapes multi-\u00e9chelles sont approximatives \u00e0 cet \u00e9chantillonnage",
+      notePeaks:      "les pics des \u00e9toiles sont moyenn\u00e9s \u00e0 cet \u00e9chantillonnage : les \u00e9toiles de "
+                      + "l'aper\u00e7u ressortent plus sombres que les finales ; utilisez D\u00e9tail 1:1 "
+                      + "pour les juger",
+      renderedAt:     "%d x %d calcul\u00e9 en 1:%d, affich\u00e9 \u00e0 %d %%",
+      levelsStarless: "Niveaux - image starless",
+      levelsStars:    "Niveaux - image d'\u00e9toiles",
+      levelsLum:      "Niveaux - couche de luminance",
+      levelsReadout:  "noir %.4f moyen %.4f blanc %.4f",
+      zoomNote:       "<p>La taille \u00e0 laquelle l'aper\u00e7u calcul\u00e9 est dessin\u00e9. Ce n'est qu'une "
+                      + "\u00e9chelle d'affichage : elle redessine l'image d\u00e9j\u00e0 en main et ne relance "
+                      + "jamais la cha\u00eene de traitement.</p><p><b>Faites tourner la molette "
+                      + "au-dessus du panneau</b> pour zoomer en continu autour du pointeur : le "
+                      + "pixel sous le pointeur reste sous le pointeur. Faites glisser pour vous "
+                      + "d\u00e9placer, et double-cliquez n'importe o\u00f9 dans le panneau pour revenir \u00e0 "
+                      + "Ajuster.</p><p>La quantit\u00e9 de d\u00e9tail dans laquelle vous pouvez zoomer "
+                      + "est fix\u00e9e par <b>D\u00e9tail</b>, juste \u00e0 c\u00f4t\u00e9.</p>",
+      baseIdNote:     "<p>Identifiant de base des images produites. L'image d'\u00e9toiles re\u00e7oit le "
+                      + "suffixe _stars, la combinaison en mode \u00e9cran _combined, la luminance "
+                      + "_L.</p><p>Il suit la palette que vous choisissez : une ex\u00e9cution Warhol "
+                      + "atterrit dans Warhol, une ex\u00e9cution HSO dans HSO. Tapez le v\u00f4tre si "
+                      + "vous pr\u00e9f\u00e9rez ; il sera remplac\u00e9 au prochain changement de "
+                      + "palette.</p><p>Les identifiants existants ne sont jamais \u00e9cras\u00e9s : un "
+                      + "suffixe num\u00e9rique est ajout\u00e9 \u00e0 tout le groupe d'un coup, pour que le "
+                      + "jeu reste toujours coh\u00e9rent.</p>",
+      lumNote:        "<p>La luminosit\u00e9 CIE L*a*b* du r\u00e9sultat couleur, extraite comme couche \u00e0 "
+                      + "part en niveaux de gris, nomm\u00e9e <i>nom</i>_L. Parce que c'est une "
+                      + "luminosit\u00e9 standard, elle se comporte dans une combinaison LRGB, dans "
+                      + "un masque ou dans une courbe exactement comme n'importe quelle autre "
+                      + "luminance.</p><p>Pour la stretcher, mettez la <b>cible</b> de l'aper\u00e7u "
+                      + "sur <b>Luminance</b> et servez-vous de l'histogramme sous l'aper\u00e7u : il "
+                      + "se rapporte \u00e0 l'image affich\u00e9e, et cette couche conserve ses trois "
+                      + "marqueurs \u00e0 elle.</p>",
+      scnrNote:       "<p>Le processus <b>SCNR</b> standard, en neutre moyen, appliqu\u00e9 \u00e0 la "
+                      + "n\u00e9buleuse seule. Le vert est retir\u00e9 directement ; le magenta est du "
+                      + "vert dans l'inverse.</p>",
+      starsNote:      "<p>Le champ d'\u00e9toiles est une combinaison fixe de type large bande "
+                      + ":<br/>&nbsp;&nbsp;R = 0.5&middot;Ha + 0.5&middot;Sii&nbsp;&nbsp;&nbsp;G "
+                      + "= 0.3&middot;Ha + 0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>Les "
+                      + "\u00e9toiles sont des sources large bande, pas des \u00e9metteurs de raies : les "
+                      + "m\u00e9langer ainsi donne une couleur plus cr\u00e9dible que de passer la palette "
+                      + "de la n\u00e9buleuse par-dessus.</p>",
+      styleNote:      "<p>Une seule liste pour la palette et son point de d\u00e9part : choisir une "
+                      + "entr\u00e9e fixe d'un coup le mappage des couches, tous les curseurs de "
+                      + "r\u00e9glage et le nom de l'image de sortie. Vous restez libre de bouger "
+                      + "ensuite n'importe quel curseur.</p><p>Les entr\u00e9es <b>Foraxx</b> "
+                      + "m\u00e9langent le rouge et le vert entre deux sources \u00e0 l'aide de masques "
+                      + "dynamiques : la palette change donc d'un bout \u00e0 l'autre de l'image. Les "
+                      + "autres sont des mappages fixes : les trois lettres donnent dans l'ordre "
+                      + "la source de R, G et B, si bien que <b>HSO</b> signifie rouge depuis "
+                      + "Ha, vert depuis Sii, bleu depuis Oiii.</p><p><b>Andy Warhol</b> pousse "
+                      + "la saturation \u00e0 fond et post\u00e9rise le r\u00e9sultat en aplats de couleur, "
+                      + "comme une s\u00e9rigraphie.</p><p>Les entr\u00e9es qui ont besoin de Sii sont "
+                      + "cach\u00e9es tant que vous \u00eates en mode 2 couches.</p>",
+      noticeLevelsReset: "Image source chang\u00e9e - niveaux r\u00e9initialis\u00e9s (%s).",
+      noticeCreated:  "Images cr\u00e9\u00e9es : %s. Changez de palette et relancez, ou Fermer.",
+      normalizeBarTip: "<p>Am\u00e8ne les couches \u00e0 une luminosit\u00e9 commune avant leur combinaison, en "
+                      + "suivant la m\u00e9thode publi\u00e9e de normalisation des couches en bande "
+                      + "\u00e9troite.</p><p>Chaque couche re\u00e7oit un point noir interpol\u00e9 entre son "
+                      + "minimum et sa m\u00e9diane, puis une courbe de tons moyens qui am\u00e8ne sa "
+                      + "m\u00e9diane sur celle de la couche de r\u00e9f\u00e9rence - un stretch par courbe, "
+                      + "pas une mise \u00e0 l'\u00e9chelle lin\u00e9aire : la structure t\u00e9nue est relev\u00e9e sans "
+                      + "que les c\u0153urs brillants s'emballent.</p><p>C'est le vrai rem\u00e8de \u00e0 un "
+                      + "SHO qui ressort massivement vert : Ha est en g\u00e9n\u00e9ral plusieurs fois "
+                      + "plus fort que Sii et Oiii, et aucune correction de couleur pixel par "
+                      + "pixel effectu\u00e9e ensuite ne peut d\u00e9faire cela. Corrigez l'\u00e9quilibre "
+                      + "d'abord, et la palette se tient.</p>",
+      scnrBarTip:     "<p>Active ou saute toute l'\u00e9tape de suppression de couleur.</p><p>Elle "
+                      + "s'applique \u00e0 la <b>n\u00e9buleuse seule</b>. Les \u00e9toiles ont leur propre "
+                      + "suppression du vert dans la section \u00c9toiles, car cette correction est "
+                      + "r\u00e9gl\u00e9e pour le vert issu du d\u00e9s\u00e9quilibre des couches et aplatirait en "
+                      + "gris la vraie couleur large bande des \u00e9toiles.</p>",
+      hdrBarTip:      "<p>Active ou saute d'un bloc la compression des hautes lumi\u00e8res, "
+                      + "HDRMultiscaleTransform et le contraste local. D\u00e9sactiv\u00e9 par d\u00e9faut, "
+                      + "avec toutes les quantit\u00e9s \u00e0 z\u00e9ro.</p>",
+      lumBarTip:      "<p>Produit une couche de luminance de synth\u00e8se \u00e0 partir des couches en "
+                      + "bande \u00e9troite, nomm\u00e9e <i>nom</i>_L.</p>",
+      normalizeRef:   "R\u00e9f\u00e9rence :",
+      normalizeRefTip: "<p>La couche \u00e0 laquelle toutes les autres sont remont\u00e9es. Ha est presque "
+                      + "toujours la plus forte : c'est la r\u00e9f\u00e9rence habituelle.</p>",
+      styleForaxxClassic: "Foraxx - classique (starless identique \u00e0 l'original)",
+      styleForaxxClean: "Foraxx - avec nettoyage des couleurs (recommand\u00e9)",
+      styleForaxxSoft: "Foraxx - transition douce",
+      styleForaxxGold: "Foraxx - or dominant",
+      styleForaxxTeal: "Foraxx - turquoise dominant",
+      styleForaxxHOO: "Foraxx HOO - dynamique, Ha et Oiii seulement",
+      styleWarhol:    "Andy Warhol - couleur d'affiche",
+      styleSHO:       "SHO (Hubble)",
+      styleHSO:       "HSO",
+      styleHOS:       "HOS",
+      styleOHS:       "OHS",
+      styleOSH:       "OSH",
+      styleSOH:       "SOH",
+      styleHOO:       "HOO (bicolore)",
+      styleOHH:       "OHH",
+
+      // --- infobulles des contrôles simples --------------------------------
+      threeChannelRadioTip: "<p>Vous avez collect\u00e9 Sii, Ha et Oiii. Toutes les palettes sont "
+                      + "disponibles.</p>",
+      twoChannelRadioTip: "<p>Donn\u00e9es OSC duo-bande, ou mono Ha et Oiii seulement. Les lignes Sii "
+                      + "sont d\u00e9sactiv\u00e9es, et la liste des palettes se limite aux mappages qui "
+                      + "n'ont pas besoin de Sii.</p><p>Si une palette Sii est s\u00e9lectionn\u00e9e au "
+                      + "moment o\u00f9 vous choisissez ceci, elle bascule vers Foraxx HOO - la "
+                      + "premi\u00e8re entr\u00e9e qui fonctionne sans Sii, et non un mappage \u00e0 deux "
+                      + "couches correspondant. Choisissez ensuite celle que vous voulez.</p>",
+      reloadTip:      "<p>Relit l'espace de travail. \u00c0 utiliser si vous avez cr\u00e9\u00e9 ou renomm\u00e9 des "
+                      + "images apr\u00e8s avoir ouvert ce dialogue.</p>",
+      previewTargetTip: "<p>Quelle image afficher, et \u00e0 quelle image se rapporte l'histogramme "
+                      + "ci-dessous. Chacune des trois porte son propre point noir, ses tons "
+                      + "moyens et son point blanc ; changer de cible ici ram\u00e8ne les marqueurs de "
+                      + "cette image, et chaque jeu n'est appliqu\u00e9 qu'\u00e0 sa propre image lorsque "
+                      + "vous pressez Ex\u00e9cuter.</p><p><b>Luminance</b> est la couche L extraite. "
+                      + "Vous pouvez la regarder sans activer la section Luminance artificielle - "
+                      + "elle n'est \u00e9crite en sortie que si cette section est active.</p>",
+      previewDetailTip: "<p>L'\u00e9chantillonnage auquel la cha\u00eene de traitement tourne r\u00e9ellement. Le "
+                      + "changer <i>relance</i> bien le calcul.</p><p><b>Auto</b> calcule au "
+                      + "double de la r\u00e9solution du panneau : un zoom \u00e0 200 % reste exact au pixel "
+                      + "pr\u00e8s. Choisissez 1:1 pour inspecter le vrai r\u00e9sultat - c'est lent sur une "
+                      + "grande image et cela consomme beaucoup de m\u00e9moire.</p>",
+      refreshTip:     "<p>Relance maintenant le calcul de l'aper\u00e7u, en relisant et en remesurant "
+                      + "les images sources.</p><p>\u00c0 utiliser apr\u00e8s avoir modifi\u00e9 une couche dans "
+                      + "PixInsight : l'aper\u00e7u travaille sur ses propres copies "
+                      + "sous-\u00e9chantillonn\u00e9es, et rien d'autre ne les lib\u00e8re tant que l'image "
+                      + "garde son identifiant.</p>",
+      levelsTip:      "<p>Histogramme de l'image affich\u00e9e dans l'aper\u00e7u, telle qu'elle est juste "
+                      + "avant sa propre transformation de niveaux, trac\u00e9 en un contour par couche "
+                      + "sur une \u00e9chelle verticale logarithmique.</p><p>Faites glisser les trois "
+                      + "triangles : le sombre \u00e0 gauche est le point noir, le gris au milieu "
+                      + "l'\u00e9quilibre des tons moyens, le clair \u00e0 droite le point blanc. "
+                      + "Double-cliquez sur un triangle pour ne r\u00e9initialiser que "
+                      + "celui-l\u00e0.</p><p><b>Chaque image conserve ses trois marqueurs.</b> Changez "
+                      + "la cible de l'aper\u00e7u et ce panneau bascule sur le jeu de cette image ; \u00e0 "
+                      + "l'ex\u00e9cution, chaque jeu est appliqu\u00e9 \u00e0 sa propre image et \u00e0 aucune "
+                      + "autre.</p>",
+      levelsReadoutTip: "<p>Point noir, \u00e9quilibre des tons moyens et point blanc de l'image "
+                      + "affich\u00e9e dans l'aper\u00e7u.</p>",
+      levelsAutoTip:  "<p>Lit un point de d\u00e9part sur l'histogramme courant : \u00e9cr\u00eate le point noir "
+                      + "juste en dessous du d\u00e9but du signal r\u00e9el, et place la m\u00e9diane \u00e0 un "
+                      + "confortable 0.30.</p><p>S'applique \u00e0 l'image affich\u00e9e dans l'aper\u00e7u.</p>",
+      levelsResetTip: "<p>Remet les trois marqueurs de cette image \u00e0 noir 0, moyen 0.5, blanc 1 - "
+                      + "une transformation identit\u00e9. Les autres images gardent les leurs.</p>",
+      newInstanceTip: "<p>Nouvelle instance - faites glisser ce bouton sur l'espace de travail "
+                      + "pour enregistrer les r\u00e9glages actuels sous forme d'ic\u00f4ne de processus.</p>",
+      resetAllTip:    "<p>Remet chaque curseur et chaque case \u00e0 cocher \u00e0 sa valeur d'usine. Votre "
+                      + "s\u00e9lection de couches est conserv\u00e9e.</p>",
+      executeTip:     "<p>Construit les images en pleine r\u00e9solution avec les r\u00e9glages "
+                      + "actuels.</p><p>Le dialogue reste ouvert : vous pouvez changer de palette "
+                      + "et relancer. Chaque ex\u00e9cution re\u00e7oit son propre jeu de noms d'images.</p>",
+      cancelTip:      "<p>Ferme le dialogue. Tout ce que vous avez d\u00e9j\u00e0 construit avec Ex\u00e9cuter "
+                      + "reste en place.</p>",
+
+      // --- cases à cocher --------------------------------------------------
+      starlessOnlyTip: "<p>Cochez ceci si vos images contiennent encore les \u00e9toiles, ou si vous ne "
+                      + "voulez pas d'image d'\u00e9toiles couleur s\u00e9par\u00e9e. Les colonnes d'\u00e9toiles et "
+                      + "toute la section \u00c9toiles sont d\u00e9sactiv\u00e9es.</p>",
+      starCleanGreen: "Retirer le vert des \u00e9toiles",
+      starCleanGreenTip: "<p>Une suppression du vert en deux passes : retirer le vert, pousser "
+                      + "fortement vers les hautes lumi\u00e8res avec un transfert des tons moyens, "
+                      + "retirer \u00e0 nouveau le vert sur les donn\u00e9es stretch\u00e9es, puis annuler la "
+                      + "pouss\u00e9e. C'est de travailler sur la version stretch\u00e9e qui permet \u00e0 la "
+                      + "seconde passe d'atteindre les franges t\u00e9nues que la premi\u00e8re laisse "
+                      + "passer.</p><p>La section <b>Suppression du vert et du magenta</b> "
+                      + "ci-dessous ne touche pas du tout aux \u00e9toiles : cette correction est "
+                      + "r\u00e9gl\u00e9e pour le vert issu du d\u00e9s\u00e9quilibre des couches, et sur un champ "
+                      + "d'\u00e9toiles elle aplatit en gris la vraie couleur large bande des "
+                      + "\u00e9toiles.</p>",
+      scnrPreserveL:  "Pr\u00e9server la luminosit\u00e9",
+      scnrPreserveLTip: "<p>Conserve la luminosit\u00e9 du pixel l\u00e0 o\u00f9 elle \u00e9tait une fois la dominante "
+                      + "retir\u00e9e, ce qui emp\u00eache le r\u00e9sultat de devenir plat et terne.</p>",
+      makeCombined:   "Cr\u00e9er aussi une combinaison en mode \u00e9cran des images starless et \u00e9toiles",
+      makeCombinedTip: "<p>Produit <i>nom</i>_combined selon ~(~starless * ~stars) - le m\u00e9lange en "
+                      + "mode \u00e9cran - une fois les niveaux appliqu\u00e9s \u00e0 chacune d'elles. Le "
+                      + "r\u00e9sultat ne se voit qu'apr\u00e8s Ex\u00e9cuter : l'aper\u00e7u n'a plus de cible "
+                      + "combin\u00e9e.</p>",
+      makeFactors:    "Conserver les images des facteurs dynamiques",
+      makeFactorsTip: "<p>Les masques dont le m\u00e9lange dynamique est construit, \u00e9crits comme "
+                      + "images pour inspection ou pour \u00eatre r\u00e9utilis\u00e9s comme masques "
+                      + "ailleurs.</p>"
+                      + "<p>Une palette \u00e0 trois couches en produit deux, <i>nom</i>_o et "
+                      + "<i>nom</i>_ho ; une palette \u00e0 deux couches n'a pas de Sii dont s'\u00e9carter, "
+                      + "elle ne produit donc que _ho. Sur un mappage fixe elles sont \u00e9crites "
+                      + "mais rien ne les utilise, la quantit\u00e9 de Foraxx y \u00e9tant tenue \u00e0 0.</p>",
+      autoPreview:    "Auto",
+      autoPreviewTip: "<p>Relance automatiquement le calcul de l'aper\u00e7u peu apr\u00e8s qu'un r\u00e9glage "
+                      + "s'est stabilis\u00e9. D\u00e9sactivez-le sur les tr\u00e8s grandes images et utilisez "
+                      + "plut\u00f4t Rafra\u00eechir.</p>",
 
       // --- curseurs : libellé et infobulle, sur le nom de la ligne ---------
       normSii:        "Niveau Sii :",

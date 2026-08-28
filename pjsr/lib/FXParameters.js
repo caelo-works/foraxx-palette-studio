@@ -32,6 +32,7 @@
 var FXStyles =
 [
    {
+      key: "styleForaxxClassic",
       name: "Foraxx - classic (starless identical to the original)",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx",
       values: {
@@ -44,6 +45,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleForaxxClean",
       name: "Foraxx - with colour clean-up (recommended)",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx",
       values: {
@@ -56,6 +58,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleForaxxSoft",
       name: "Foraxx - soft transition",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx_soft",
       values: {
@@ -68,6 +71,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleForaxxGold",
       name: "Foraxx - gold forward",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx_gold",
       values: {
@@ -80,6 +84,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleForaxxTeal",
       name: "Foraxx - teal forward",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx_teal",
       values: {
@@ -92,6 +97,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleForaxxHOO",
       name: "Foraxx HOO - dynamic, Ha and Oiii only",
       dynamic: true, map: "HOO", needsSii: false, id: "Foraxx_HOO",
       values: {
@@ -104,6 +110,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleWarhol",
       name: "Andy Warhol - poster colour",
       dynamic: true, map: "SHO", needsSii: true, id: "Warhol",
       values: {
@@ -116,6 +123,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleSHO",
       name: "SHO (Hubble)",
       dynamic: false, map: "SHO", needsSii: true, id: "SHO",
       values: {
@@ -128,6 +136,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleHSO",
       name: "HSO",
       dynamic: false, map: "HSO", needsSii: true, id: "HSO",
       values: {
@@ -140,6 +149,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleHOS",
       name: "HOS",
       dynamic: false, map: "HOS", needsSii: true, id: "HOS",
       values: {
@@ -152,6 +162,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleOHS",
       name: "OHS",
       dynamic: false, map: "OHS", needsSii: true, id: "OHS",
       values: {
@@ -164,6 +175,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleOSH",
       name: "OSH",
       dynamic: false, map: "OSH", needsSii: true, id: "OSH",
       values: {
@@ -176,6 +188,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleSOH",
       name: "SOH",
       dynamic: false, map: "SOH", needsSii: true, id: "SOH",
       values: {
@@ -188,6 +201,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleHOO",
       name: "HOO (bicolour)",
       dynamic: false, map: "HOO", needsSii: false, id: "HOO",
       values: {
@@ -200,6 +214,7 @@ var FXStyles =
       }
    },
    {
+      key: "styleOHH",
       name: "OHH",
       dynamic: false, map: "OHH", needsSii: false, id: "OHH",
       values: {

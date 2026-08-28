@@ -418,7 +418,9 @@ controls — install Mike Cranfield's module itself; it does more than this stag
   sets the channel mapping, every tuning slider *and* the output image name at once — a Warhol run
   lands in `Warhol`, an HSO run in `HSO`.
 - **Channel count is back.** Explicit 2-channel / 3-channel radios, plus **Starless only**, at the
-  top of the dialog. Switching to 2 channels moves a Sii palette to its Ha/Oiii equivalent.
+  top of the dialog. Switching to 2 channels moves a Sii palette to the first entry that works
+  without Sii, which is **Foraxx HOO** — not to a matching two-channel mapping. Pick the one you
+  want from the list afterwards.
 - **Andy Warhol palette.** Hard transitions, saturation pushed to the limit and the result
   posterised into flat blocks of colour. Its two ingredients — **Overall saturation** and
   **Posterise levels** — are ordinary sliders you can use on any palette.

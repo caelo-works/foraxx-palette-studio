@@ -176,34 +176,51 @@ function fxNumericRow( dialog, name, onUpdate )
    return row;
 }
 
-function fxCheckBox( parent, text, toolTipText, checked, onCheck )
+/*
+ * A checkbox that reads its own label and tooltip from the string table, under
+ * `key` and key + "Tip". `dialog` may be null for a box built before the
+ * registry exists; it then keeps whatever the table said at construction.
+ */
+function fxCheckBox( parent, key, checked, onCheck, dialog )
 {
    let cb = new CheckBox( parent );
-   cb.text = text;
-   cb.toolTip = toolTipText;
    cb.checked = checked;
    cb.onCheck = onCheck;
+   cb.retranslate = function()
+   {
+      cb.text = fxT( key );
+      cb.toolTip = fxT( key + "Tip" );
+   };
+   cb.retranslate();
+   if ( dialog != null )
+      dialog.fxRegisterRow( cb );
    return cb;
 }
 
 /*
  * A labelled combo box, with the tooltip on both halves.
  */
-function fxComboRow( dialog, labelText, items, toolTipText, current, onSelect )
+function fxComboRow( dialog, key, items, current, onSelect )
 {
    let row = new Control( dialog );
 
    let label = new Label( row );
-   label.text = labelText;
    label.textAlignment = TextAlign_Right | TextAlign_VertCenter;
    label.setFixedWidth( dialog.labelWidth );
-   label.toolTip = toolTipText;
 
    let combo = new ComboBox( row );
    for ( let i = 0; i < items.length; ++i )
       combo.addItem( items[i] );
-   combo.toolTip = toolTipText;
    combo.currentItem = current;
+
+   row.retranslate = function()
+   {
+      label.text = fxT( key );
+      label.toolTip = fxT( key + "Tip" );
+      combo.toolTip = fxT( key + "Tip" );
+   };
+   row.retranslate();
+   dialog.fxRegisterRow( row );
    combo.onItemSelected = onSelect;
 
    row.sizer = new HorizontalSizer;
@@ -314,8 +331,8 @@ function ForaxxStudioDialog()
       this.rendering = true;
       this.refreshButton.enabled = false;
       this.previewStatus.text = (this.notice.length > 0)
-                              ? (this.notice + "  -  rendering preview...")
-                              : "Rendering preview...";
+                              ? (this.notice + "  -  " + fxT( "renderingShort" ))
+                              : fxT( "rendering" );
       this.cursor = new Cursor( StdCursor_Wait );
       processEvents();
 
@@ -414,31 +431,34 @@ function ForaxxStudioDialog()
       // was broken.
       let elsewhere = fxLevelsInForceElsewhere( FX.previewTarget );
       if ( elsewhere.length > 0 )
-         note += "  -  levels also in force on: " + elsewhere.join( ", " );
+         note += "  -  " + fxT( "noteLevelsElsewhere" ) + elsewhere.join( ", " );
       // This script takes non-linear data only, and linear channels produce a
       // black preview with no explanation. Say so.
       if ( fxLooksLinear( FX ) )
-         note += "  -  THESE CHANNELS LOOK LINEAR. Stretch them first; this script needs "
-               + "non-linear images.";
+         note += "  -  " + fxT( "noteLinear" );
       // Appends, like its two neighbours. A bare assignment here discarded both
       // the capitalised linear-data warning and the off-screen-levels note
       // whenever a multiscale stage was on - silencing, in exactly the
       // configuration where the preview is least trustworthy, the only guard
       // rail left on the one input type this version does not support.
-      if ( FX.hdrEnabled && (FX.hdrLayers > 0 || FX.localContrast > 0) )
-         note += "  -  multiscale stages are approximate at this sampling";
+      // Only when the render really is downsampled. Unlike its neighbour below,
+      // this used not to test the factor, so it warned about approximation at
+      // Detail 1:1 - where there is none - and a warning that cries wolf is one
+      // people learn to read past.
+      if ( FX.hdrEnabled && (FX.hdrLayers > 0 || FX.localContrast > 0)
+        && this.engine.factor > 1 )
+         note += "  -  " + fxT( "noteMultiscale" );
       // A star's peak is a handful of pixels. If the resampling averaged them
       // away, the brightness stretch has nothing left to lift and the previewed
       // stars come out far dimmer than the ones Execute produces.
       if ( FX.previewTarget == 1 && FX.makeStars
         && this.engine.factor > 1
         && this.engine.starPeaksPreserved === false )
-         note += "  -  star peaks are averaged at this sampling, so previewed stars are "
-               + "dimmer than the final ones; use Detail 1:1 to judge them";
+         note += "  -  " + fxT( "notePeaks" );
 
       let head = (this.notice.length > 0) ? (this.notice + "  -  ") : "";
       this.previewStatus.text = head
-                             + format( "%d x %d rendered at 1:%d, shown at %d%%",
+                             + format( fxT( "renderedAt" ),
                                         image.width, image.height, this.engine.factor,
                                         Math.round( this.preview.effectiveZoom() * 100 ) )
                              + note;
@@ -506,23 +526,101 @@ function ForaxxStudioDialog()
       this.taglineLabel.text = "<i>" + fxT( "tagline" ) + "</i>";
       this.bannerLabel.text = fxT( "bannerLinear" );
       this.langLabel.text = fxT( "language" );
-      this.langCombo.toolTip = fxT( "languageTip" );
 
       this.generalBar.title = fxT( "secGeneral" );
+      this.paletteBar.title = fxT( "secWeighting" );
+      this.starsBar.title = fxT( "secStars" );
       this.normalizeBar.title = fxT( "secNormalize" );
       this.scnrBar.title = fxT( "secScnr" );
       this.hdrBar.title = fxT( "secHdr" );
       this.lumBar.title = fxT( "secLuminance" );
+      this.normalizeBar.toolTip = fxT( "normalizeBarTip" );
+      this.scnrBar.toolTip = fxT( "scnrBarTip" );
+      this.hdrBar.toolTip = fxT( "hdrBarTip" );
+      this.lumBar.toolTip = fxT( "lumBarTip" );
 
       this.refreshButton.text = fxT( "refresh" );
       this.resetAllButton.text = fxT( "resetAll" );
       this.executeButton.text = fxT( "execute" );
       this.cancelButton.text = fxT( "close" );
       this.reloadButton.text = fxT( "reloadList" );
-      this.reloadButton.toolTip = fxT( "reloadListTip" );
 
       this.threeChannelRadio.text = fxT( "threeChannels" );
       this.twoChannelRadio.text = fxT( "twoChannels" );
+
+      // Plain controls, whose tooltips are single strings rather than a row's
+      // label-plus-body pair.
+      this.styleLabel.text = fxT( "palette" );
+      this.baseIdLabel.text = fxT( "imageName" );
+      this.outputBar.title = fxT( "secOutput" );
+      this.previewGroup.title = fxT( "preview" );
+      this.zoomFitButton.text = fxT( "fit" );
+      this.zoomOneButton.text = fxT( "oneToOne" );
+      this.levelsAutoButton.text = fxT( "auto" );
+      this.levelsResetButton.text = fxT( "reset" );
+
+      // Both combos hold strings, so they are rebuilt and the selection put
+      // back - the same treatment the palette list gets.
+      let keptTarget = this.previewTargetCombo.currentItem;
+      this.previewTargetCombo.clear();
+      this.previewTargetCombo.addItem( fxT( "targetStarless" ) );
+      this.previewTargetCombo.addItem( fxT( "targetStars" ) );
+      this.previewTargetCombo.addItem( fxT( "targetLum" ) );
+      this.previewTargetCombo.currentItem = keptTarget;
+
+      let keptDetail = this.previewDetailCombo.currentItem;
+      this.previewDetailCombo.clear();
+      this.previewDetailCombo.addItem( fxT( "detailAuto" ) );
+      this.previewDetailCombo.addItem( fxT( "detail11" ) );
+      this.previewDetailCombo.addItem( fxT( "detail12" ) );
+      this.previewDetailCombo.addItem( fxT( "detail14" ) );
+      this.previewDetailCombo.addItem( fxT( "detail18" ) );
+      this.previewDetailCombo.currentItem = keptDetail;
+
+      this.styleCombo.toolTip = fxT( "styleNote" );
+      this.starsNote.text = fxT( "starsNote" );
+      this.scnrNote.text = fxT( "scnrNote" );
+      this.lumNote.text = fxT( "lumNote" );
+      let baseIdTip = fxT( "baseIdNote" );
+      this.baseIdEdit.toolTip = baseIdTip;
+      this.baseIdLabel.toolTip = baseIdTip;
+      let zoomTip = fxT( "zoomNote" );
+      this.zoomFitButton.toolTip = zoomTip;
+      this.zoomOneButton.toolTip = zoomTip;
+      this.zoomOutButton.toolTip = zoomTip;
+      this.zoomInButton.toolTip = zoomTip;
+      this.zoomReadout.toolTip = zoomTip;
+      this.langCombo.toolTip = fxT( "languageTip" );
+      this.threeChannelRadio.toolTip = fxT( "threeChannelRadioTip" );
+      this.twoChannelRadio.toolTip = fxT( "twoChannelRadioTip" );
+      this.reloadButton.toolTip = fxT( "reloadTip" );
+      this.previewTargetCombo.toolTip = fxT( "previewTargetTip" );
+      this.previewDetailCombo.toolTip = fxT( "previewDetailTip" );
+      this.refreshButton.toolTip = fxT( "refreshTip" );
+      this.levels.toolTip = fxT( "levelsTip" );
+      this.levelsReadout.toolTip = fxT( "levelsReadoutTip" );
+      this.levelsAutoButton.toolTip = fxT( "levelsAutoTip" );
+      this.levelsResetButton.toolTip = fxT( "levelsResetTip" );
+      this.newInstanceButton.toolTip = fxT( "newInstanceTip" );
+      this.resetAllButton.toolTip = fxT( "resetAllTip" );
+      this.executeButton.toolTip = fxT( "executeTip" );
+      this.cancelButton.toolTip = fxT( "cancelTip" );
+
+      // The palette list is rebuilt rather than retranslated in place: the item
+      // model holds strings, and the selection has to survive the rebuild.
+      let keep = this.styleCombo.currentItem;
+      this.styleCombo.clear();
+      let map = this.styleMap;
+      if ( map == null )
+      {
+         map = [];
+         for ( let i = 0; i < FXStyles.length; ++i )
+            map.push( i );
+      }
+      for ( let i = 0; i < map.length; ++i )
+         this.styleCombo.addItem( this.styleName( FXStyles[ map[i] ] ) );
+      if ( keep >= 0 && keep < map.length )
+         this.styleCombo.currentItem = keep;
 
       for ( let i = 0; i < this.translatableRows.length; ++i )
          this.translatableRows[i].retranslate();
@@ -603,9 +701,6 @@ function ForaxxStudioDialog()
     * ========================================================================== */
 
    this.threeChannelRadio = new RadioButton( this );
-   this.threeChannelRadio.text = "3 channels (Sii / Ha / Oiii)";
-   this.threeChannelRadio.toolTip = "<p>You collected Sii, Ha and Oiii. Every palette is "
-                                  + "available.</p>";
    this.threeChannelRadio.onCheck = function( checked )
    {
       if ( !checked || dlg.syncing )
@@ -617,12 +712,6 @@ function ForaxxStudioDialog()
    };
 
    this.twoChannelRadio = new RadioButton( this );
-   this.twoChannelRadio.text = "2 channels (Ha / Oiii)";
-   this.twoChannelRadio.toolTip = "<p>Dual narrowband OSC data, or mono Ha and Oiii only. The Sii "
-                                + "rows are disabled, and the palette list is limited to the "
-                                + "mappings that do not need Sii.</p>"
-                                + "<p>If a Sii palette is selected when you choose this, it moves "
-                                + "to the Ha / Oiii equivalent.</p>";
    this.twoChannelRadio.onCheck = function( checked )
    {
       if ( !checked || dlg.syncing )
@@ -633,17 +722,14 @@ function ForaxxStudioDialog()
       dlg.requestPreview();
    };
 
-   this.starlessOnlyCheck = fxCheckBox( this,
-      "Starless only - do not build a stars image",
-      "<p>Tick this if your images still contain stars, or if you do not want a separate colour "
-      + "stars image. The star columns and the whole Stars section are disabled.</p>",
+   this.starlessOnlyCheck = fxCheckBox( this, "starlessOnly",
       !FX.makeStars,
       function( checked )
       {
          FX.makeStars = !checked;
          dlg.updateControls();
          dlg.requestPreview();
-      } );
+      } , this );
 
    let dataSizer = new HorizontalSizer;
    dataSizer.spacing = 10;
@@ -652,25 +738,22 @@ function ForaxxStudioDialog()
    dataSizer.addStretch();
 
    this.styleLabel = new Label( this );
-   this.styleLabel.text = "Palette:";
    this.styleLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
    this.styleLabel.setFixedWidth( this.labelWidth );
 
+   // The palette's display name comes from the string table under the style's
+   // own key, and falls back to the English name carried by the table itself -
+   // so a style added without a translation still reads, rather than showing a
+   // bare key in the one control the user cannot avoid.
+   this.styleName = function( style )
+   {
+      let t = fxT( style.key );
+      return (t === style.key) ? style.name : t;
+   };
+
    this.styleCombo = new ComboBox( this );
    for ( let i = 0; i < FXStyles.length; ++i )
-      this.styleCombo.addItem( FXStyles[i].name );
-   let styleTip =
-      "<p>One list for the palette and its starting point: choosing an entry sets the channel "
-      + "mapping, every tuning slider and the output image name at once. You are free to move any "
-      + "slider afterwards.</p>"
-      + "<p>The <b>Foraxx</b> entries blend red and green between two sources with dynamic "
-      + "masks, so the palette changes across the frame. The rest are fixed "
-      + "mappings: the three letters give the source of R, G and B in order, so <b>HSO</b> means "
-      + "red from Ha, green from Sii, blue from Oiii.</p>"
-      + "<p><b>Andy Warhol</b> pushes saturation hard and posterises the result into flat blocks "
-      + "of colour, like a screen print.</p>"
-      + "<p>Entries that need Sii are hidden while you are in 2 channel mode.</p>";
-   this.styleCombo.toolTip = styleTip;
+      this.styleCombo.addItem( this.styleName( FXStyles[i] ) );
    this.styleLabel.toolTip = styleTip;
    this.styleCombo.onItemSelected = function( index )
    {
@@ -708,7 +791,7 @@ function ForaxxStudioDialog()
             for ( let i = 0; i < FXStyles.length; ++i )
                if ( !(FX.twoChannels && FXStyles[i].needsSii) )
                {
-                  this.styleCombo.addItem( FXStyles[i].name );
+                  this.styleCombo.addItem( this.styleName( FXStyles[i] ) );
                   this.styleMap.push( i );
                }
          }
@@ -812,8 +895,7 @@ function ForaxxStudioDialog()
       // setting ours afterwards is what makes it outlive the render it starts.
       this.requestPreview();
       if ( cleared.length > 0 )
-         this.setNotice( "Source image changed - levels reset ("
-                       + cleared.join( ", " ) + ")." );
+         this.setNotice( format( fxT( "noticeLevelsReset" ), cleared.join( ", " ) ) );
    };
 
    this.siiRow = this.makeViewRow( "Sii:", "Sii stars:",
@@ -830,8 +912,6 @@ function ForaxxStudioDialog()
 
    this.reloadButton = new PushButton( this );
    this.reloadButton.text = "Reload image list";
-   this.reloadButton.toolTip = "<p>Rescan the workspace. Use this if you created or renamed "
-                             + "images after opening this dialog.</p>";
    this.reloadButton.onClick = function()
    {
       dlg.reloadViewLists();
@@ -920,9 +1000,7 @@ function ForaxxStudioDialog()
     * Channel normalization section
     * ========================================================================== */
 
-   this.normRefRow = fxComboRow( this, "Reference:", [ "Sii", "Ha", "Oiii" ],
-      "<p>The channel every other one is brought up to. Ha is almost always the strongest, so it "
-      + "is the usual reference.</p>",
+   this.normRefRow = fxComboRow( this, "normalizeRef", [ "Sii", "Ha", "Oiii" ],
       FX.normalizeRef,
       function( index )
       {
@@ -954,15 +1032,6 @@ function ForaxxStudioDialog()
    this.normalizeBar.setSection( this.normalizeControl );
    this.normalizeBar.enableCheckBox();
    this.normalizeBar.checkBox.checked = FX.normalizeEnabled;
-   this.normalizeBar.checkBox.toolTip =
-      "<p>Brings the channels to a common brightness before they are combined, following the "
-      + "published narrowband channel normalization method.</p>"
-      + "<p>Each channel gets a black point interpolated between its minimum and its median, then "
-      + "a midtones curve that moves its median onto the reference channel's - a curve stretch, "
-      + "not a linear scale, so faint structure is lifted without the bright cores running away.</p>"
-      + "<p>This is the real fix for an SHO that comes out overwhelmingly green: Ha is typically "
-      + "several times stronger than Sii and Oiii, and no amount of per-pixel colour correction "
-      + "afterwards can undo that. Fix the balance first and the palette behaves.</p>";
    this.normalizeBar.onCheckSection = function( bar )
    {
       FX.normalizeEnabled = bar.checkBox.checked;
@@ -1029,23 +1098,10 @@ function ForaxxStudioDialog()
    this.starsNote = new Label( this );
    this.starsNote.useRichText = true;
    this.starsNote.wordWrapping = true;
-   this.starsNote.text =
-      "<p>The star field is a fixed broadband-style combination:<br/>"
-      + "&nbsp;&nbsp;R = 0.5&middot;Ha + 0.5&middot;Sii&nbsp;&nbsp;&nbsp;"
-      + "G = 0.3&middot;Ha + 0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p>"
-      + "<p>Stars are broadband sources, not line emitters, so mixing them this way gives more "
-      + "believable colour than running the nebula's palette over them.</p>";
 
-   this.starCleanGreenCheck = fxCheckBox( this, "Remove green from the stars",
-      "<p>A two-pass green removal: remove green, push hard into the highlights with a midtones "
-      + "transfer, remove green again on the stretched data, then undo the push. Working on the "
-      + "stretched version is what lets the second pass reach the faint fringing the first one "
-      + "misses.</p>"
-      + "<p>The <b>Green / magenta suppression</b> section below does not touch the stars at all: "
-      + "that correction is tuned for green coming from the channel imbalance, and over a star "
-      + "field it flattens real broadband star colour into grey.</p>",
+   this.starCleanGreenCheck = fxCheckBox( this, "starCleanGreen",
       FX.starCleanGreen,
-      function( checked ) { FX.starCleanGreen = checked; dlg.requestPreview(); } );
+      function( checked ) { FX.starCleanGreen = checked; dlg.requestPreview(); } , this );
 
    this.starStretchRow = fxNumericRow( this, "starStretch",
       function( value ) { FX.starStretch = value; dlg.requestPreview(); } );
@@ -1069,9 +1125,6 @@ function ForaxxStudioDialog()
    this.scnrNote = new Label( this );
    this.scnrNote.useRichText = true;
    this.scnrNote.wordWrapping = true;
-   this.scnrNote.text =
-      "<p>The stock <b>SCNR</b> process, average neutral, applied to the nebula only. Green is "
-      + "removed directly; magenta is green in the inverse.</p>";
 
    this.greenRow = fxNumericRow( this, "scnrGreen",
       function( value ) { FX.scnrGreen = value; dlg.requestPreview(); } );
@@ -1079,11 +1132,9 @@ function ForaxxStudioDialog()
    this.magentaRow = fxNumericRow( this, "scnrMagenta",
       function( value ) { FX.scnrMagenta = value; dlg.requestPreview(); } );
 
-   this.preserveLightnessCheck = fxCheckBox( this, "Preserve lightness",
-      "<p>Keeps the pixel's brightness where it was after the cast is removed, which is what "
-      + "stops the result going flat and dim.</p>",
+   this.preserveLightnessCheck = fxCheckBox( this, "scnrPreserveL",
       FX.scnrPreserveL,
-      function( checked ) { FX.scnrPreserveL = checked; dlg.requestPreview(); } );
+      function( checked ) { FX.scnrPreserveL = checked; dlg.requestPreview(); } , this );
 
    this.scnrControl = fxGroupControl( this );
    this.scnrControl.sizer.add( this.scnrNote );
@@ -1097,11 +1148,6 @@ function ForaxxStudioDialog()
    this.scnrBar.setSection( this.scnrControl );
    this.scnrBar.enableCheckBox();
    this.scnrBar.checkBox.checked = FX.scnrEnabled;
-   this.scnrBar.checkBox.toolTip = "<p>Enable or skip the whole colour suppression stage.</p>"
-                                 + "<p>It applies to the <b>nebula only</b>. The stars have their "
-                                 + "own green removal in the Stars section, because this correction "
-                                 + "is tuned for green that comes from the channel imbalance and "
-                                 + "would flatten real broadband star colour into grey.</p>";
    this.scnrBar.onCheckSection = function( bar )
    {
       FX.scnrEnabled = bar.checkBox.checked;
@@ -1137,9 +1183,6 @@ function ForaxxStudioDialog()
    this.hdrBar.setSection( this.hdrControl );
    this.hdrBar.enableCheckBox();
    this.hdrBar.checkBox.checked = FX.hdrEnabled;
-   this.hdrBar.checkBox.toolTip = "<p>Enable or skip highlight compression, "
-                                + "HDRMultiscaleTransform and local contrast as a group. Off by "
-                                + "default, with every amount at zero.</p>";
    this.hdrBar.onCheckSection = function( bar )
    {
       FX.hdrEnabled = bar.checkBox.checked;
@@ -1156,13 +1199,6 @@ function ForaxxStudioDialog()
    this.lumNote = new Label( this );
    this.lumNote.useRichText = true;
    this.lumNote.wordWrapping = true;
-   this.lumNote.text =
-      "<p>The CIE L*a*b* lightness of the colour result, extracted as its own greyscale layer "
-      + "named <i>name</i>_L. Because it is a standard lightness it behaves in an LRGB "
-      + "combination, in a mask or in a curve exactly as any other luminance does.</p>"
-      + "<p>To stretch it, set the preview <b>Target</b> to <b>Luminance</b> and use the histogram "
-      + "below the preview - it belongs to whichever image is on screen, and the layer keeps its "
-      + "own three markers.</p>";
 
    this.lumApplyRow = fxNumericRow( this, "lumApply",
       function( value ) { FX.lumApply = value; dlg.requestPreview(); } );
@@ -1176,8 +1212,6 @@ function ForaxxStudioDialog()
    this.lumBar.setSection( this.lumControl );
    this.lumBar.enableCheckBox();
    this.lumBar.checkBox.checked = FX.makeLuminance;
-   this.lumBar.checkBox.toolTip = "<p>Produce a synthetic luminance layer from the narrowband "
-                                + "channels, named <i>name</i>_L.</p>";
    this.lumBar.onCheckSection = function( bar )
    {
       FX.makeLuminance = bar.checkBox.checked;
@@ -1192,21 +1226,11 @@ function ForaxxStudioDialog()
     * ========================================================================== */
 
    this.baseIdLabel = new Label( this );
-   this.baseIdLabel.text = "Image name:";
    this.baseIdLabel.textAlignment = TextAlign_Right | TextAlign_VertCenter;
    this.baseIdLabel.setFixedWidth( this.labelWidth );
 
    this.baseIdEdit = new Edit( this );
    this.baseIdEdit.text = FX.baseId;
-   let baseIdTip = "<p>Base identifier of the images produced. The stars image gets a _stars "
-                 + "suffix, the screen combination _combined, the luminance _L.</p>"
-                 + "<p>It follows the palette you choose, so a Warhol run lands in Warhol and an "
-                 + "HSO run in HSO. Type your own if you prefer; it will be replaced the next time "
-                 + "you change palette.</p>"
-                 + "<p>Existing identifiers are never overwritten: a numeric suffix is added to "
-                 + "the whole group at once, so the set always matches.</p>";
-   this.baseIdEdit.toolTip = baseIdTip;
-   this.baseIdLabel.toolTip = baseIdTip;
    this.baseIdEdit.onEditCompleted = function()
    {
       FX.baseId = this.text.trim();
@@ -1218,17 +1242,13 @@ function ForaxxStudioDialog()
    baseIdSizer.add( this.baseIdLabel );
    baseIdSizer.add( this.baseIdEdit, 100 );
 
-   this.combinedCheck = fxCheckBox( this,
-      "Also create a screen combination of the starless and stars images",
-      "<p>Produces <i>name</i>_combined as ~(~starless * ~stars) - the screen blend - after the "
-      + "levels have been applied to each of them. It can only be seen after Execute - the preview no longer has a combined target.</p>",
+   this.combinedCheck = fxCheckBox( this, "makeCombined",
       FX.makeCombined,
-      function( checked ) { FX.makeCombined = checked; } );
+      function( checked ) { FX.makeCombined = checked; } , this );
 
-   this.factorsCheck = fxCheckBox( this, "Keep the 'o' and 'ho' dynamic factor images",
-      "<p>The intermediate mask images. Useful for inspection or for reusing as masks.</p>",
+   this.factorsCheck = fxCheckBox( this, "makeFactors",
       FX.makeFactors,
-      function( checked ) { FX.makeFactors = checked; } );
+      function( checked ) { FX.makeFactors = checked; } , this );
 
    this.outputControl = fxGroupControl( this );
    this.outputControl.sizer.add( baseIdSizer );
@@ -1290,18 +1310,6 @@ function ForaxxStudioDialog()
    };
 
    this.previewTargetCombo = new ComboBox( this );
-   this.previewTargetCombo.addItem( "Starless" );
-   this.previewTargetCombo.addItem( "Stars" );
-   this.previewTargetCombo.addItem( "Luminance" );
-   this.previewTargetCombo.toolTip = "<p>Which image to show, and which image the histogram below "
-                                   + "belongs to. Each of the three carries its own black point, "
-                                   + "midtones and white point; switching here brings that image's "
-                                   + "markers back, and each set is applied only to its own image "
-                                   + "when you press Execute.</p>"
-                                   + "<p><b>Luminance</b> is the extracted L layer. You can look "
-                                   + "at it without switching the Artificial luminance section "
-                                   + "on - it is only written out when that section is on.</p>"
-;
    this.previewTargetCombo.onItemSelected = function( index )
    {
       if ( dlg.syncing ) return;
@@ -1313,17 +1321,8 @@ function ForaxxStudioDialog()
     * Zoom controls. The wheel over the panel is the main gesture; these are for
     * getting to Fit and 1:1 without hunting, and for anyone on a trackpad.
     */
-   let zoomTip = "<p>How large the rendered preview is drawn. This is a display scale only - it "
-               + "repaints the image already in hand and never runs the pipeline again.</p>"
-               + "<p><b>Roll the mouse wheel over the panel</b> to zoom continuously about the "
-               + "cursor: the pixel under the pointer stays under the pointer. Drag to pan, and "
-               + "double click anywhere in the panel to go back to Fit.</p>"
-               + "<p>How much detail there is to zoom into is set by <b>Detail</b>, next to "
-               + "this.</p>";
 
    this.zoomFitButton = new PushButton( this );
-   this.zoomFitButton.text = "Fit";
-   this.zoomFitButton.toolTip = zoomTip;
    this.zoomFitButton.setScaledMinWidth( 34 );
    this.zoomFitButton.onClick = function()
    {
@@ -1332,8 +1331,6 @@ function ForaxxStudioDialog()
    };
 
    this.zoomOneButton = new PushButton( this );
-   this.zoomOneButton.text = "1:1";
-   this.zoomOneButton.toolTip = zoomTip;
    this.zoomOneButton.setScaledMinWidth( 34 );
    this.zoomOneButton.onClick = function()
    {
@@ -1346,7 +1343,6 @@ function ForaxxStudioDialog()
 
    this.zoomOutButton = new PushButton( this );
    this.zoomOutButton.text = "-";
-   this.zoomOutButton.toolTip = zoomTip;
    this.zoomOutButton.setScaledMinWidth( 26 );
    this.zoomOutButton.onClick = function()
    {
@@ -1356,7 +1352,6 @@ function ForaxxStudioDialog()
 
    this.zoomInButton = new PushButton( this );
    this.zoomInButton.text = "+";
-   this.zoomInButton.toolTip = zoomTip;
    this.zoomInButton.setScaledMinWidth( 26 );
    this.zoomInButton.onClick = function()
    {
@@ -1365,23 +1360,11 @@ function ForaxxStudioDialog()
    };
 
    this.zoomReadout = new Label( this );
-   this.zoomReadout.text = "Fit";
+   this.zoomReadout.text = fxT( "fit" );
    this.zoomReadout.textAlignment = TextAlign_Left | TextAlign_VertCenter;
-   this.zoomReadout.toolTip = zoomTip;
    this.zoomReadout.setScaledMinWidth( 54 );
 
    this.previewDetailCombo = new ComboBox( this );
-   this.previewDetailCombo.addItem( "Detail: auto" );
-   this.previewDetailCombo.addItem( "Detail: 1:1" );
-   this.previewDetailCombo.addItem( "Detail: 1:2" );
-   this.previewDetailCombo.addItem( "Detail: 1:4" );
-   this.previewDetailCombo.addItem( "Detail: 1:8" );
-   this.previewDetailCombo.toolTip = "<p>The sampling the pipeline actually runs at. Changing this "
-                                   + "<i>does</i> re-render.</p>"
-                                   + "<p><b>Auto</b> renders at twice the panel resolution, so "
-                                   + "zooming to 200% is still pixel exact. Choose 1:1 when you "
-                                   + "want to inspect the real result - it is slow on a large "
-                                   + "frame and uses a lot of memory.</p>";
    this.previewDetailCombo.onItemSelected = function( index )
    {
       if ( dlg.syncing ) return;
@@ -1389,25 +1372,18 @@ function ForaxxStudioDialog()
       dlg.refreshPreview();
    };
 
-   this.autoPreviewCheck = fxCheckBox( this, "Auto",
-      "<p>Re-render the preview automatically a moment after a control settles. Turn it off on "
-      + "very large images and use Refresh instead.</p>",
+   this.autoPreviewCheck = fxCheckBox( this, "autoPreview",
       FX.autoPreview,
       function( checked )
       {
          FX.autoPreview = checked;
          if ( checked )
             dlg.requestPreview();
-      } );
+      } , this );
 
    this.refreshButton = new PushButton( this );
    this.refreshButton.text = "Refresh";
    fxSetIcon( this, this.refreshButton, ":/icons/reload.png", null );
-   this.refreshButton.toolTip = "<p>Re-render the preview now, re-reading and re-measuring the "
-                              + "source images.</p>"
-                              + "<p>Use this after editing a channel in PixInsight: the preview "
-                              + "works from its own downsampled copies, and nothing else drops "
-                              + "them while the image keeps its identifier.</p>";
    this.refreshButton.onClick = function()
    {
       // Release the downsampled copies, not just the statistics. They are keyed
@@ -1422,7 +1398,7 @@ function ForaxxStudioDialog()
    this.previewStatus = new Label( this );
    this.previewStatus.wordWrapping = true;
    this.previewStatus.textAlignment = TextAlign_Left | TextAlign_VertCenter;
-   this.previewStatus.text = "Select your channels to build a preview.";
+   this.previewStatus.text = fxT( "selectChannels" );
    this.previewStatus.minHeight = this.logicalPixelsToPhysical( 30 );
 
    let previewToolSizer = new HorizontalSizer;
@@ -1439,7 +1415,6 @@ function ForaxxStudioDialog()
    previewToolSizer.add( this.refreshButton );
 
    this.previewGroup = new GroupBox( this );
-   this.previewGroup.title = "Preview";
    this.previewGroup.sizer = new VerticalSizer;
    this.previewGroup.sizer.margin = 6;
    this.previewGroup.sizer.spacing = 4;
@@ -1462,11 +1437,11 @@ function ForaxxStudioDialog()
     * the nebula.
     */
    const FX_LEVEL_KEYS = [
-      { title: "Levels - starless image",  low: "levelsLow",
+      { titleKey: "levelsStarless",       low: "levelsLow",
         mid: "levelsMid",     high: "levelsHigh" },
-      { title: "Levels - stars image",     low: "starLevelsLow",
+      { titleKey: "levelsStars",          low: "starLevelsLow",
         mid: "starLevelsMid", high: "starLevelsHigh" },
-      { title: "Levels - luminance layer", low: "lumLow",
+      { titleKey: "levelsLum",            low: "lumLow",
         mid: "lumMid",        high: "lumHigh" }
    ];
 
@@ -1476,15 +1451,6 @@ function ForaxxStudioDialog()
    };
 
    this.levels = new FXLevelsControl( this );
-   this.levels.toolTip =
-      "<p>Histogram of the image the preview is showing, as it stands immediately before its own "
-      + "levels transform, drawn as one outline per channel on a logarithmic vertical scale.</p>"
-      + "<p>Drag the three triangles: the dark one on the left is the black point, the grey one in "
-      + "the middle is the midtones balance, the light one on the right is the white point. Double "
-      + "click a triangle to reset just that one.</p>"
-      + "<p><b>Each image keeps its own three markers.</b> Change the preview target and this "
-      + "panel switches to that image's set; at Execute each set is applied to its own image and "
-      + "to nothing else.</p>";
    this.levels.onValueChanged = function( low, mid, high, finished )
    {
       let k = dlg.levelKeys();
@@ -1497,13 +1463,11 @@ function ForaxxStudioDialog()
 
    this.levelsReadout = new Label( this );
    this.levelsReadout.textAlignment = TextAlign_Left | TextAlign_VertCenter;
-   this.levelsReadout.toolTip = "<p>Black point, midtones balance and white point of the image the "
-                              + "preview is showing.</p>";
 
    this.updateLevelsReadout = function()
    {
       let k = this.levelKeys();
-      this.levelsReadout.text = format( "black %.4f    mid %.4f    white %.4f",
+      this.levelsReadout.text = format( fxT( "levelsReadout" ),
                                         FX[k.low], FX[k.mid], FX[k.high] );
    };
 
@@ -1539,23 +1503,18 @@ function ForaxxStudioDialog()
    this.syncLevelsToTarget = function()
    {
       let k = this.levelKeys();
-      this.levelsGroup.title = k.title;
+      this.levelsGroup.title = fxT( k.titleKey );
       this.levels.setValues( FX[k.low], FX[k.mid], FX[k.high] );
       this.updateLevelsReadout();
    };
 
    this.levelsAutoButton = new PushButton( this );
-   this.levelsAutoButton.text = "Auto";
-   this.levelsAutoButton.toolTip = "<p>Read a starting point off the current histogram: clip the "
-                                 + "black point just below where real signal begins, and place "
-                                 + "the median at a comfortable 0.30.</p>"
-                                 + "<p>Applies to the image the preview is showing.</p>";
    this.levelsAutoButton.onClick = function()
    {
       let v = dlg.levels.autoValues();
       if ( v == null )
       {
-         dlg.setNotice( "No histogram yet - render a preview first." );
+         dlg.setNotice( fxT( "noHistogram" ) );
          return;
       }
       let k = dlg.levelKeys();
@@ -1568,10 +1527,6 @@ function ForaxxStudioDialog()
    };
 
    this.levelsResetButton = new PushButton( this );
-   this.levelsResetButton.text = "Reset";
-   this.levelsResetButton.toolTip = "<p>Put this image's three markers back to black 0, mid 0.5, "
-                                  + "white 1 - an identity transform. The other images keep "
-                                  + "theirs.</p>";
    this.levelsResetButton.onClick = function()
    {
       let k = dlg.levelKeys();
@@ -1590,7 +1545,7 @@ function ForaxxStudioDialog()
    levelsButtonSizer.add( this.levelsResetButton );
 
    this.levelsGroup = new GroupBox( this );
-   this.levelsGroup.title = "Levels - starless image";
+   this.levelsGroup.title = fxT( "levelsStarless" );
    this.levelsGroup.sizer = new VerticalSizer;
    this.levelsGroup.sizer.margin = 6;
    this.levelsGroup.sizer.spacing = 4;
@@ -1654,8 +1609,6 @@ function ForaxxStudioDialog()
    this.newInstanceButton = new ToolButton( this );
    fxSetIcon( this, this.newInstanceButton, ":/process-interface/new-instance.png", "■" );
    this.newInstanceButton.setScaledFixedSize( 24, 24 );
-   this.newInstanceButton.toolTip = "<p>New Instance - drag this onto the workspace to save the "
-                                  + "current settings as a process icon.</p>";
    this.newInstanceButton.onMousePress = function()
    {
       this.hasFocus = true;
@@ -1670,8 +1623,6 @@ function ForaxxStudioDialog()
 
    this.resetAllButton = new PushButton( this );
    this.resetAllButton.text = "Reset all";
-   this.resetAllButton.toolTip = "<p>Put every slider and checkbox back to its factory default. "
-                               + "Your channel selection is kept.</p>";
    this.resetAllButton.onClick = function()
    {
       // paletteSchema is bookkeeping, not a setting: it records which migrations
@@ -1694,9 +1645,6 @@ function ForaxxStudioDialog()
    this.executeButton = new PushButton( this );
    this.executeButton.text = "Execute";
    fxSetIcon( this, this.executeButton, ":/icons/power.png", null );
-   this.executeButton.toolTip = "<p>Build the full resolution images with the current settings.</p>"
-                              + "<p>The dialog stays open, so you can change palette and run it "
-                              + "again. Each run gets its own set of image names.</p>";
    this.executeButton.onClick = function()
    {
       dlg.runFinal();
@@ -1777,7 +1725,7 @@ function ForaxxStudioDialog()
       if ( created == null )
       {
          this.rendering = false;
-         this.previewStatus.text = "The render failed - see the console.";
+         this.previewStatus.text = fxT( "renderFailed" );
          return;
       }
 
@@ -1797,18 +1745,16 @@ function ForaxxStudioDialog()
       // standing notice. The list of what was just created is the one thing the
       // user needs off this screen, and it used to be wiped by the very refresh
       // this function set in motion.
-      this.setNotice( "Created " + created.starless
-                    + (created.stars ? (", " + created.stars) : "")
-                    + (created.combined ? (", " + created.combined) : "")
-                    + (created.luminance ? (", " + created.luminance) : "")
-                    + ".  Change palette and run again, or Close." );
+      this.setNotice( format( fxT( "noticeCreated" ),
+                              created.starless
+                              + (created.stars ? (", " + created.stars) : "")
+                              + (created.combined ? (", " + created.combined) : "")
+                              + (created.luminance ? (", " + created.luminance) : "") ) );
    };
 
    this.cancelButton = new PushButton( this );
    this.cancelButton.text = "Close";
    fxSetIcon( this, this.cancelButton, ":/icons/close.png", null );
-   this.cancelButton.toolTip = "<p>Close the dialog. Anything you already built with Execute "
-                             + "stays where it is.</p>";
    this.cancelButton.onClick = function()
    {
       dlg.cancel();

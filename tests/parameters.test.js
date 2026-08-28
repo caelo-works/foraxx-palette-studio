@@ -112,7 +112,7 @@ const KEYS = Object.keys( fx.FX );
 // index, so a reordering silently repoints everyone's saved palette.
 // ---------------------------------------------------------------------------
 {
-   const names = {}, ids = {};
+   const names = {}, ids = {}, keys = {};
    fx.FXStyles.forEach( ( s, i ) => {
       ok( typeof s.name === 'string' && s.name.length > 0, 'style ' + i + ' has a name' );
       ok( !names[s.name], 'style name "' + s.name + '" is unique' );
@@ -126,6 +126,15 @@ const KEYS = Object.keys( fx.FX );
       ok( /^[A-Za-z][A-Za-z0-9_]*$/.test( s.id ),
           '"' + s.name + '" output name is a valid PixInsight identifier: ' + s.id );
       ids[s.id] = true;
+
+      // The display name comes from the string table under this key. It is
+      // deliberately not the array index: settings store the index, and keying
+      // the translation on it too would mean a reordering silently relabels
+      // every palette as well as repointing it.
+      ok( typeof s.key === 'string' && /^style[A-Za-z]+$/.test( s.key ),
+          '"' + s.name + '" carries a translation key: ' + s.key );
+      ok( !keys[s.key], 'translation key "' + s.key + '" is unique' );
+      keys[s.key] = true;
 
       ok( typeof s.values === 'object' && s.values !== null, '"' + s.name + '" carries a value set' );
       Object.keys( s.values ).forEach( k =>

@@ -115,4 +115,62 @@ LANGS.forEach( lang => {
    fx.FX.lang = saved;
 }
 
+// ---------------------------------------------------------------------------
+// Every key is actually read, and no user-facing literal was left behind.
+//
+// This is the failure mode the table itself cannot see: a string translated
+// into both languages and then never displayed, because the literal is still
+// hard-coded in the dialog. The French is perfect, the test is green, and the
+// interface stays English. It happened three times while this file was being
+// built - twice to keys that had just been translated, and once to a tooltip
+// deleted outright by an over-broad edit - so it is asserted rather than
+// remembered.
+// ---------------------------------------------------------------------------
+{
+   const fs = require( 'fs' );
+   const path = require( 'path' );
+   const root = path.join( __dirname, '..', 'pjsr' );
+   const files = [ 'ForaxxPaletteStudio.js', 'lib/FXDialog.js', 'lib/FXProcessing.js',
+                   'lib/FXPreview.js', 'lib/FXHistogram.js', 'lib/FXParameters.js' ];
+   const code = files.map( f => fs.readFileSync( path.join( root, f ), 'utf8' ) ).join( '\n' );
+
+   // Keys reached through a variable rather than a literal: the row helpers look
+   // up fxT( name ) and fxT( name + "Tip" ) from the parameter name they are
+   // given, the styles carry their key in the table, and the level sets carry
+   // theirs as titleKey.
+   const indirect = new Set();
+   const add = ( re, tip ) => {
+      let m;
+      while ( ( m = re.exec( code ) ) !== null )
+      {
+         indirect.add( m[1] );
+         if ( tip ) indirect.add( m[1] + 'Tip' );
+      }
+   };
+   add( /fxNumericRow\(\s*this,\s*"(\w+)"/g, true );
+   add( /fxCheckBox\(\s*this,\s*"(\w+)"/g, true );
+   add( /fxComboRow\(\s*this,\s*"(\w+)"/g, true );
+   add( /key:\s*"(\w+)"/g, false );
+   add( /titleKey:\s*"(\w+)"/g, false );
+
+   Object.keys( EN ).forEach( k => {
+      ok( indirect.has( k ) || code.indexOf( 'fxT( "' + k + '" )' ) >= 0,
+          'the string "' + k + '" is read somewhere - a translated key nothing '
+          + 'displays leaves the interface in English' );
+   } );
+
+   // And the other direction: a literal sentence still sitting in the dialog is
+   // a sentence that cannot be translated. Section bar titles are exempt - they
+   // are constructed with an English default that applyLanguage overwrites.
+   const dialog = fs.readFileSync( path.join( root, 'lib/FXDialog.js' ), 'utf8' )
+                    .replace( /\/\*[\s\S]*?\*\//g, '' )
+                    .replace( /^\s*\/\/.*$/gm, '' )
+                    .replace( /(?:new SectionBar|fxSection)\([^)]*\)/g, '' );
+   const leftovers = ( dialog.match( /"(?:[^"\\]|\\.){25,}"/g ) || [] )
+      .filter( s => /^"[A-Z][a-z]+ [a-z]/.test( s ) );
+   ok( leftovers.length === 0,
+       'no English sentence is left hard-coded in the dialog'
+       + ( leftovers.length ? ': ' + leftovers.slice( 0, 3 ).join( ' | ' ) : '' ) );
+}
+
 report( 'strings' );
