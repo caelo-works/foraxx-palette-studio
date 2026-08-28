@@ -96,6 +96,9 @@ var FX_UI =
       notePeaks:      "star peaks are averaged at this sampling, so previewed stars are dimmer "
                       + "than the final ones; use Detail 1:1 to judge them",
       renderedAt:     "%d x %d rendered at 1:%d, shown at %d%%",
+      setStarless:    "starless",
+      setStars:       "stars",
+      setLum:         "luminance",
       levelsStarless: "Levels - starless image",
       levelsStars:    "Levels - stars image",
       levelsLum:      "Levels - luminance layer",
@@ -454,6 +457,9 @@ var FX_UI =
                       + "l'aper\u00e7u ressortent plus sombres que les finales ; utilisez D\u00e9tail 1:1 "
                       + "pour les juger",
       renderedAt:     "%d x %d calcul\u00e9 en 1:%d, affich\u00e9 \u00e0 %d %%",
+      setStarless:    "starless",
+      setStars:       "\u00e9toiles",
+      setLum:         "luminance",
       levelsStarless: "Niveaux - image starless",
       levelsStars:    "Niveaux - image d'\u00e9toiles",
       levelsLum:      "Niveaux - couche de luminance",

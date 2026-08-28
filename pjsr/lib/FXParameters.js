@@ -376,10 +376,17 @@ var FX =
  * render is what makes the nebula come out crushed while the stars - whose set
  * is still at its identity - look fine.
  */
+// name is for the log and for anything that reads a set by hand; nameKey is what
+// the interface shows. The two are separate because the console is deliberately
+// not translated - a log has to be comparable between users - while a sentence
+// on screen that ends in a list of English words is just a sentence half done.
 var FX_LEVEL_SETS = [
-   { name: "starless",  low: "levelsLow",     mid: "levelsMid",     high: "levelsHigh" },
-   { name: "stars",     low: "starLevelsLow", mid: "starLevelsMid", high: "starLevelsHigh" },
-   { name: "luminance", low: "lumLow",        mid: "lumMid",        high: "lumHigh" }
+   { name: "starless",  nameKey: "setStarless", titleKey: "levelsStarless",
+     low: "levelsLow",     mid: "levelsMid",     high: "levelsHigh" },
+   { name: "stars",     nameKey: "setStars",    titleKey: "levelsStars",
+     low: "starLevelsLow", mid: "starLevelsMid", high: "starLevelsHigh" },
+   { name: "luminance", nameKey: "setLum",      titleKey: "levelsLum",
+     low: "lumLow",        mid: "lumMid",        high: "lumHigh" }
 ];
 
 function fxLevelsAreIdentity( set )
@@ -399,7 +406,7 @@ function fxResetAllLevels()
    {
       let set = FX_LEVEL_SETS[i];
       if ( !fxLevelsAreIdentity( set ) )
-         cleared.push( set.name );
+         cleared.push( set.nameKey );
       FX[set.low] = FXDefaults[set.low];
       FX[set.mid] = FXDefaults[set.mid];
       FX[set.high] = FXDefaults[set.high];
@@ -417,7 +424,7 @@ function fxLevelsInForceElsewhere( shownIndex )
    let names = [];
    for ( let i = 0; i < FX_LEVEL_SETS.length; ++i )
       if ( i != shownIndex && !fxLevelsAreIdentity( FX_LEVEL_SETS[i] ) )
-         names.push( FX_LEVEL_SETS[i].name );
+         names.push( FX_LEVEL_SETS[i].nameKey );
    return names;
 }
 

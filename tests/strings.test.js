@@ -152,6 +152,7 @@ LANGS.forEach( lang => {
    add( /fxComboRow\(\s*this,\s*"(\w+)"/g, true );
    add( /key:\s*"(\w+)"/g, false );
    add( /titleKey:\s*"(\w+)"/g, false );
+   add( /nameKey:\s*"(\w+)"/g, false );
    add( /fxSection\(\s*this,\s*"(\w+)"/g, false );
    add( /__titleKey = "(\w+)"/g, false );
 

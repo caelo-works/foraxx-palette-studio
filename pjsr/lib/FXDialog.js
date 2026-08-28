@@ -482,7 +482,8 @@ function ForaxxStudioDialog()
       // was broken.
       let elsewhere = fxLevelsInForceElsewhere( FX.previewTarget );
       if ( elsewhere.length > 0 )
-         note += "  -  " + fxT( "noteLevelsElsewhere" ) + elsewhere.join( ", " );
+         note += "  -  " + fxT( "noteLevelsElsewhere" )
+               + elsewhere.map( fxT ).join( ", " );
       // This script takes non-linear data only, and linear channels produce a
       // black preview with no explanation. Say so.
       if ( fxLooksLinear( FX ) )
@@ -949,7 +950,8 @@ function ForaxxStudioDialog()
       // setting ours afterwards is what makes it outlive the render it starts.
       this.requestPreview();
       if ( cleared.length > 0 )
-         this.setNotice( format( fxT( "noticeLevelsReset" ), cleared.join( ", " ) ) );
+         this.setNotice( format( fxT( "noticeLevelsReset" ),
+                                 cleared.map( fxT ).join( ", " ) ) );
    };
 
    this.siiRow = this.makeViewRow( "Sii:", "Sii stars:",
