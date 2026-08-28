@@ -64,16 +64,14 @@ to a black point and a midtones balance the expression writer folds into the
 combination. That is why they cost nothing, and why they are still there.
 
 
----
-
-# Appendix — a scrollable settings column, attempted twice and abandoned
+# Appendix — a scrollable settings column, three attempts and the answer
 
 Same day, same shape of lesson, so it is recorded in the same place.
 
 The settings column is taller than most screens with every section open, and
-with the window no longer resizing itself on collapse the bottom of it is out of
-reach. A ScrollBox around the column is the obvious answer. It does not work,
-and the reason is worth writing down so it is not rediscovered.
+with the window no longer resizing itself on collapse the bottom of it was out
+of reach. A ScrollBox around the column is the obvious answer. It took three
+attempts, and each failure hid the next problem, so all four are written down.
 
 **Attempt 1** put the panel in `ScrollBox.viewport.sizer` with no height of its
 own. Every section compressed to a few pixels: a sizer given less room than its
@@ -82,9 +80,8 @@ viewport and there was nothing to scroll.
 
 **Attempt 2** set the panel's height explicitly, measured from its contents.
 Measured at construction it returned zero - no control reports itself visible
-before the dialog is shown, so the guard against a zero sum returned early and
-the height was never applied at all. Moved to `onShow`, the measurement came
-back like this, on a 1152-pixel screen:
+before the dialog is shown. Moved to `onShow`, the measurement came back like
+this, on a 1152-pixel screen:
 
 | item | height | minHeight |
 |---|---|---|
@@ -92,19 +89,36 @@ back like this, on a 1152-pixel screen:
 | section controls (odd) | 38 | 0 |
 | total | 589 | viewport 585 |
 
-Two facts, each sufficient on its own. `minHeight` is 0 for the section
-controls, so PJSR does not expose the natural height. And by `onShow` they are
-already compressed to 38 pixels, where they need 100 to 250. The measurement
-therefore measures the compression it exists to correct, and no amount of
-re-measuring escapes that.
+`minHeight` is 0 for the section controls, so PJSR does not expose the natural
+height; and by `onShow` they are already compressed to 38 pixels where they need
+100 to 250. The measurement measured the compression it existed to correct.
 
-**What would be needed.** An explicit fixed height per section, computed from
-what each one contains rather than measured from what it has been given - which
-is what the one script that makes this work does, with fixed row heights
-throughout. That is bookkeeping across eighteen controls that has to be kept in
-step with every future control added to any of them, to buy a scrollbar. The
-cost is not obviously worth it, and it was not paid.
+**Attempt 3 — the answer.** Give the panel far more room than it could ever
+want, let the layout run, and measure there. At 20000 pixels nothing is
+compressed, every control settles at its own size, and the sum is honest: 1559
+against a 585-pixel viewport. Then set the panel to the measured height.
 
-**What was kept instead.** Section toggles no longer resize the window, which
-was the larger complaint. The column being too tall only bites with every
-section open on a short screen.
+That fixed the measurement and exposed three more faults, each of which had been
+invisible behind the one before it.
+
+- **A ScrollBox does not move its viewport's children.** Measured, not assumed:
+  range set to 0..974, position driven to 300, panel still at y 0. The offset
+  has to be applied by hand, and the panel therefore cannot belong to a sizer -
+  one would undo `move()` at the next layout pass. `AstroColorMixer`, the only
+  script shipped with PixInsight that puts real controls in a ScrollBox, keeps a
+  sizer on the viewport and has no scroll handler at all. It is not a model to
+  copy: it does not scroll.
+
+- **The range must be set before `pageHeight`.** A page set first is left to be
+  clamped by the range that follows, and a page as large as its range draws a
+  thumb that fills the track.
+
+- **`showScrollBars()` is not optional.** A ScrollBox hides both bars until
+  asked. A range set on a hidden bar changes nothing anyone can see. Two
+  relaunches went into diagnosing a correct range on a bar that was not there -
+  helped along by the dark strip at the column's edge being the width splitter,
+  which looks enough like a scrollbar to be dragged in vain.
+
+**What shipped.** `scrollLeftTo()` is the single entry point; the bar and the
+wheel both route through it. Folding a section remeasures the column in place
+and leaves the window alone.
