@@ -113,6 +113,14 @@ Removed.
   the fallback warns once a run: on a 16-bit source it makes every image the run
   produces a 16-bit integer, which bands in exactly the transition zones the
   palette is built around.
+- **Closing the dialog during a preview no longer crashes PixInsight.** The
+  event loop is pumped from inside a running process, so `onHide` fires between
+  two pipeline stages; releasing the engine's channels and sweeping the
+  temporaries there freed views the next process was about to read, which came
+  back as an access violation rather than anything a script could catch. A hide
+  during a render now only asks, and the render tears down in its own `finally`.
+  The **Reload image list** and **Refresh** buttons released the same views
+  through the same window and are guarded too.
 - **`HDRMultiscaleTransform` and `UnsharpMask` failures are no longer reported as
   the process being absent.** A missing process and a process that refused the
   image are distinguished, and neither is recorded by the console report as

@@ -425,14 +425,17 @@ function ForaxxStudioDialog()
       this.cursor = new Cursor( StdCursor_Wait );
       processEvents();
 
-      // processEvents can have closed the dialog. onHide has then already
-      // released the channels, and starting a render here would rebuild a set
-      // of hidden windows that nothing will ever clean up.
+      // processEvents can have closed the dialog. Starting a render here would
+      // rebuild a set of hidden windows that nothing will ever clean up - and
+      // onHide, finding a render in progress, will have deferred its teardown
+      // to a render that is about to not happen.
       if ( !this.visible )
       {
          this.rendering = false;
          this.refreshButton.enabled = true;
          this.cursor = new Cursor( StdCursor_Arrow );
+         if ( this.teardownPending )
+            this.releaseEverything();
          return;
       }
 
@@ -448,6 +451,15 @@ function ForaxxStudioDialog()
          this.cursor = new Cursor( StdCursor_Arrow );
          this.refreshButton.enabled = true;
          this.rendering = false;
+      }
+
+      // The dialog was closed while that render was running. Nothing below has
+      // anywhere to draw, and the temporaries are ours to clear now that no
+      // process is holding them.
+      if ( this.teardownPending )
+      {
+         this.releaseEverything();
+         return;
       }
 
       if ( result == null )
@@ -1020,6 +1032,12 @@ function ForaxxStudioDialog()
    this.reloadButton.text = "Reload image list";
    this.reloadButton.onClick = function()
    {
+      // Same hazard as closing the dialog mid-render: reloadViewLists releases
+      // the engine's downsampled channels, and a running pipeline is holding
+      // them. The event loop is pumped from inside a process, so this click
+      // does land mid-render.
+      if ( dlg.rendering )
+         return;
       dlg.reloadViewLists();
    };
 
@@ -1555,6 +1573,8 @@ function ForaxxStudioDialog()
       // on image identifiers, never on content, so editing a channel in place -
       // stretching it, say - left Refresh re-rendering the pre-edit pixels while
       // its own tooltip promised it was re-measuring the sources.
+      if ( dlg.rendering )
+         return;
       fxClearStatsCache();
       dlg.engine.release();
       dlg.refreshPreview();
@@ -1863,8 +1883,7 @@ function ForaxxStudioDialog()
          // The sweep below closes the engine's cached channels along with
          // everything else, so tell it rather than leaving it holding
          // identifiers for windows that no longer exist.
-         this.engine.release();
-         fxSweepTemporaries();
+         this.releaseEverything();
          this.cursor = new Cursor( StdCursor_Arrow );
          this.leftPanel.enabled = true;
          this.previewGroup.enabled = true;
@@ -2274,12 +2293,38 @@ function ForaxxStudioDialog()
       this.requestPreview();
    };
 
+   /*
+    * Teardown, and the one rule about when it may happen.
+    *
+    * PixInsight pumps the event loop from inside a running process, so onHide
+    * fires while a render is between two stages. Sweeping the temporaries there
+    * closes windows the pipeline is still holding, and the next stage reads
+    * freed memory - an access violation inside HDRMultiscaleTransform, not a
+    * JavaScript error anything can catch. Closing the dialog mid-preview did
+    * exactly that.
+    *
+    * So a hide during a render only asks; whichever render is running does the
+    * work itself, in its own finally, once the process it started has returned.
+    */
+   this.releaseEverything = function()
+   {
+      this.teardownPending = false;
+      try { this.preview.setImage( null ); } catch ( x ) {}
+      this.engine.release();
+      fxSweepTemporaries();
+   };
+
+   this.teardownPending = false;
+
    this.onHide = function()
    {
       this.updateTimer.stop();
-      this.preview.setImage( null );
-      this.engine.release();
-      fxSweepTemporaries();
+      if ( this.rendering )
+      {
+         this.teardownPending = true;
+         return;
+      }
+      this.releaseEverything();
    };
 
    this.pullFromParameters();
