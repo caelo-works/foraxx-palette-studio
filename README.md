@@ -4,7 +4,7 @@
 
 ### Narrowband palettes with a live preview that is the real thing, not an approximation
 
-[![Version](https://img.shields.io/badge/version-3.1.1-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
+[![Version](https://img.shields.io/badge/version-3.1.2-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
 [![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.9.0-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
 [![Status](https://img.shields.io/badge/status-stable-34d399?style=for-the-badge&labelColor=0f172a)](https://pixinsight-scripts.caelo.works/en/scripts/foraxx-palette-studio)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-94a3b8?style=for-the-badge&labelColor=0f172a)](LICENSE)
@@ -64,6 +64,18 @@ PixInsight 1.8.9 does not provide.
 <summary><b>Previous changelog</b></summary>
 
 <br>
+
+### What's new in 3.1.2
+
+- **Stars are no longer blue.** Two faults, the first hiding the second. An HOO
+  palette discarded your Sii star frame even when you had selected one, because
+  the star mix was gated on what the *nebula* mapping needs. And with only Ha
+  and Oiii the field was blue anyway: the star frames took the nebula's
+  conditioning curve **per channel**, so Oiii carried its rebalancing lift into
+  the mix while red, being Ha alone, carried none. Measured on the reference
+  masters, blue sat 70% above red; it now sits 25% below. All three star
+  channels share one curve — the Ha one — and each keeps its own black point.
+  **This changes the stars image** wherever normalization or linear input is on.
 
 ### What's new in 3.1.1
 

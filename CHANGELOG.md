@@ -11,6 +11,18 @@ releases.
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-08-28
+
+Two faults in the star field, the first hiding the second. **The stars image
+changes**; the starless image at the defaults does not, and the parity gate
+against 3.1.0 reads 0.
+
+**Validation.** Node harness green: 3935 assertions across nine suites, with the
+new rules pinned and verified by mutation. Both faults were measured on the
+reference masters before and after, headless, in the configuration that
+reported them - HOO, two channels, Ha and Oiii only. The variants were then
+compared on screen before the curve was chosen.
+
 ### Fixed
 - **Stars no longer come out blue on the HOO palettes.** The star combination
   was given the palette's `needsSii`, which describes what the *nebula* mapping
