@@ -86,10 +86,10 @@ Effort: S = under half a day · M = 1–3 days · L = more than 3 days.
 Medium findings that recur across reports and are folded into the backlog: `fxStyle()` returns
 `undefined` for a non-integer or NaN index and the migrations dereference it before `fxSanitize`
 runs, so a corrupt settings file bricks the dialog on every subsequent launch (03-M1); "Reset all"
-rewinds `paletteSchema`, re-arming non-idempotent one-shot migrations (03-M2); `fxSampleFormat32`
-falls back to `SameAsTarget` silently, dropping the 32-bit invariant into 16-bit banding (02-M2);
-`fxApplyHDRMT`/`fxApplyLocalContrast` swallow every failure while `fxReport` records the stage as
-run (02-M3); peak-first downsampling biases the star histogram ~2.5σ upward, so **Auto** on the
+rewinds `paletteSchema`, re-arming non-idempotent one-shot migrations (03-M2); ~~`fxSampleFormat32`
+falls back to `SameAsTarget` silently, dropping the 32-bit invariant into 16-bit banding (02-M2)~~
+**fixed 2026-08-28**; ~~`fxApplyHDRMT`/`fxApplyLocalContrast` swallow every failure while `fxReport`
+records the stage as run (02-M3)~~ **fixed 2026-08-28**; peak-first downsampling biases the star histogram ~2.5σ upward, so **Auto** on the
 Stars target fits a distribution the real image does not have (05-M1); `valueCtx` in
 `fxBuildExpressions` is dead in production although `ARCHITECTURE.md` presents it as live (01-M3);
 settings are saved on every close, not only on Execute, contradicting the README and

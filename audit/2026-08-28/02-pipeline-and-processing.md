@@ -129,6 +129,10 @@ No Critical findings. Counts: High 1, Medium 5, Low 6, Nit 3.
   result may band, and keep the fallback. Better: also try `PixelMath.prototype.f64` before falling
   through to `SameAsTarget`. Add a harness assertion that `fxPixelMathNew` sets
   `newImageSampleFormat` to the 32-bit enumerator under the shim.
+- **Fixed 2026-08-28.** `f32`, then `f64`, then `SameAsTarget` behind a once-a-run
+  `Console.warningln` naming the banding. Covered by `tests/processes.test.js`, including the
+  assertion on `fxPixelMathNew` — verified by mutation, since removing the `f64` branch or
+  repeating the warning both break it.
 
 #### M3. `HDRMultiscaleTransform` and `UnsharpMask` failures are swallowed as "unavailable", and the console report still claims the stage ran
 - **Location:** `pjsr/lib/FXProcessing.js:690-717` and `722-737`; report at
@@ -148,6 +152,11 @@ No Critical findings. Counts: High 1, Medium 5, Low 6, Nit 3.
   `created`), distinguish "constructor threw" (genuinely unavailable) from "executeOn threw"
   (stage failed), and make `fxReport` print the effective values — including the layer count
   actually used after the `affordable` cap at 706-708 — rather than the requested ones.
+- **Fixed 2026-08-28.** Both helpers return `{ ran, layers|amount, why }`, with `why` separating
+  `"unavailable"` (the constructor threw) from `"failed"` (`executeOn` threw), and each message
+  points at the matching place to look. `fxRenderParts` records the effective values on `created`;
+  `fxReport` prints those and warns when they differ from what was asked. Covered by
+  `tests/processes.test.js` — verified by mutation on the failure returns and on the layer cap.
 
 #### M4. The swap-file policy is inconsistent, and `fxPixelMathNew` writes an undo record against a target it never modifies
 - **Location:** `pjsr/lib/FXProcessing.js:540`; contrast with `1006` and `1304`
