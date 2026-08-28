@@ -4,7 +4,7 @@
 
 ### Narrowband palettes with a live preview that is the real thing, not an approximation
 
-[![Version](https://img.shields.io/badge/version-3.0.1-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
+[![Version](https://img.shields.io/badge/version-3.1.0-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
 [![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.8.9-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
 [![Status](https://img.shields.io/badge/status-stable-34d399?style=for-the-badge&labelColor=0f172a)](https://pixinsight-scripts.caelo.works/en/scripts/foraxx-palette-studio)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-94a3b8?style=for-the-badge&labelColor=0f172a)](LICENSE)
@@ -20,19 +20,15 @@
 
 A PixInsight script for narrowband palette construction — dynamic Foraxx and the classic fixed
 mappings — with a live preview, per-channel weighting, independent star controls, a draggable
-histogram, HDR compression and hue-selective green/magenta suppression.
+histogram, HDR compression and hue-selective green/magenta suppression. The interface is available
+in English and French.
+
+Bring it stretched channels, or linear ones with **Linear input (auto stretch)** switched on.
 
 It began as a rewrite of the **Foraxx Palette Utility** by Paul Hancock, which implements Bill
-Blanshan's dynamic PixelMath expressions. In *Foraxx — dynamic SHO* at default settings its
+Blanshan's dynamic PixelMath expressions. In *Foraxx — classic* at default settings its
 **starless** image is the same as the original's, bit for bit; everything else sits around that
 core as parameters. The stars are the one deliberate departure — see 2.3.1 below.
-
-> ## ⚠ THIS SCRIPT REQUIRES NON-LINEAR (STRETCHED) IMAGES
->
-> **Stretch every channel before you run it** — with HistogramTransformation, a masked stretch, or
-> whatever you normally use. **LINEAR DATA IS NOT SUPPORTED** and will produce a black or
-> washed-out result. The status line under the preview tells you, in capitals, if the channels you
-> selected look linear.
 
 ---
 
@@ -67,6 +63,32 @@ Requires PixInsight 1.8.9 or later; developed and checked against the 1.9.x API.
 <summary><b>Previous changelog</b></summary>
 
 <br>
+
+### What's new in 3.1.0
+
+- **Linear input is supported again**, under its own switched section, with a choice of **Screen
+  transfer (STF)** or **Statistical stretch**. It was withdrawn in 3.0.0 after four failed attempts;
+  all four traced back to a stretch target defined *relative* to the reference channel, which on
+  linear data leaves every channel on the floor and the result black. The target is absolute now.
+- **The interface is available in French**, chosen from the header. Image identifiers and console
+  output stay in English — they are what you type and what you paste into a forum post.
+- **The settings column scrolls** instead of the window resizing itself to fit it, and collapsing a
+  section leaves the window alone. The two draggable dividers were removed along the way: they sat
+  beside the new scroll bar and were routinely dragged in mistake for it.
+- **A Complete preview target** — the screen combination of the starless image and the stars.
+- **The star treatment is the broadband combination and the brightness stretch, and nothing else.**
+  The two-pass green removal and the hue-weighted colour boost that ran after it are gone. A star
+  field's green is real broadband colour, and both stages were correcting a combination that no
+  longer needs correcting. **This changes the stars image.** The starless image at the defaults is
+  untouched.
+- **Closing the dialog during a preview no longer crashes PixInsight.** PixInsight pumps the event
+  loop from inside a running process, so the close handler fired between two pipeline stages and
+  freed views the next process was about to read. **Reload image list** and **Refresh** reached the
+  same release through the same window and are guarded too.
+- **A missing 32-bit float enumerator no longer degrades the output silently**, and
+  **HDRMultiscaleTransform / UnsharpMask failures are no longer reported as the process being
+  absent** — nor recorded by the console report as having run.
+- The header carries the script's emblem and a link to CaeloWorks, and **Reset all** has an icon.
 
 ### What's new in 3.0.1
 
@@ -389,11 +411,12 @@ the whole frame carries green excess. A per-pixel correction is then either invi
 there is no setting in between. The imbalance has to be fixed *before* the channels are combined.
 
 **The fix.** Tick **Channel normalization**. Each channel gets a black point interpolated between
-its minimum and its median, then a midtones curve that moves its median onto the reference
-channel's — a curve stretch, not a linear scale, so faint structure is lifted without the bright
-cores running away. **Sii level** and **Oiii level** then let you place each channel above or below
-the reference deliberately. With the channels balanced, SHO stops being green and the per-pixel
-suppression has something meaningful to do.
+its minimum and its median, then a midtones curve that moves its median onto a target — the
+reference channel's median times that channel's own level — a curve stretch, not a linear
+scale, so faint structure is lifted without the bright cores running away. **Sii level** and
+**Oiii level** then let you place each channel above or below the reference deliberately. With the
+channels balanced, SHO stops being green and the per-pixel suppression has something meaningful to
+do.
 
 For the bracketed palettes, use the new **Background cast** protection mode. Instead of comparing
 green with red and blue at each pixel, it measures the image's own per-channel medians and removes
@@ -465,8 +488,15 @@ image look the way it does.
 
 ## What it expects
 
-Single-channel greyscale images, all the same size, and **NON-LINEAR — stretched before you bring
-them here.** Linear data straight out of stacking is not supported; stretch each channel first.
+Single-channel greyscale images, all the same size.
+
+**Stretched channels** are the straightforward case: bring them in and the palette is built from
+what you give it.
+
+**Linear channels** work too, with **Linear input (auto stretch)** switched on — the script then
+stretches each one for you before combining. That section is off by default, and the status line
+under the preview says so when the channels you selected look linear and nothing is set to stretch
+them. It also says so the other way round: auto stretch on, channels that already look stretched.
 
 - Modes containing **S** need Sii, Ha and Oiii.
 - Modes without an S need only Ha and Oiii, and grey out the Sii rows.
@@ -477,6 +507,29 @@ them here.** Linear data straight out of stacking is not supported; stretch each
 
 ## The controls
 
+### Linear input — auto stretch (off by default)
+
+Tick the section's checkbox to enable it. With it off, nothing here runs and the channels are used
+exactly as you supply them.
+
+Each channel gets a black point of its own, taken from its median and its MAD, and then a midtones
+curve onto an absolute target. That last word is the whole difference from the version withdrawn in
+3.0.0: channel normalization aims at a target *relative* to the reference channel, which on linear
+data means every channel aims at something that is itself on the floor.
+
+| Control | What it does |
+|---|---|
+| **Method** | **Statistical stretch** never places the black point above the channel's darkest pixel, so nothing is discarded — it also rescues a channel whose own nebulosity inflates its MAD. **Screen transfer (STF)** is the familiar autostretch shape. |
+| **Stretch amount** | Where the background lands after the stretch. This is the absolute target the midtones curve solves for. |
+| **Shadow clipping** | How many MAD sigmas below the median the black point sits. |
+| **Never clip the black point** | Forces the statistical-stretch rule on either method: the black point never rises above the frame's minimum. |
+
+Star frames are stretched with the nebula's curve and keep their own black point. Solving them
+separately would lift their empty background into a grey floor that the screen combination then
+cannot go below.
+
+The result is a screen transfer, not a considered final stretch — judge it in the preview.
+
 ### Channel normalization (collapsed by default)
 
 Tick the section's checkbox to enable it.
@@ -484,7 +537,7 @@ Tick the section's checkbox to enable it.
 | Control | What it does |
 |---|---|
 | **Reference** | The channel every other one is brought up to. Ha is almost always the strongest, so it is the usual reference. |
-| **Sii / Ha / Oiii level** | Where that channel's median lands, as a multiple of the reference's. 1.00 matches it exactly; **Oiii level** is the slider that decides how much teal the palette ends up with. |
+| **Sii / Ha / Oiii level** | Where that channel's median lands, as a multiple of the reference's. 1.00 matches it exactly; **Oiii level** is the slider that decides how much teal the palette ends up with. With **Linear input** on, the reference median is replaced by that section's absolute stretch target and these levels multiply it. |
 | **Shadow point** | Where the black point sits, interpolated from each channel's darkest pixel towards its median. 0 puts it on the minimum and discards nothing. |
 
 ### Weighting, transition and colour
@@ -515,14 +568,16 @@ B = Oiii
 | Control | What it does |
 |---|---|
 | **Star brightness** | `((3^k)*$T)/((3^k-1)*$T+1)` — fixes 0 and 1 and is monotonic, so it lifts faint stars hard without ever clipping a bright core. **0 leaves the stars exactly as the combination produced them.** Above about 5 on stars that were already stretched, the multiplier is 243 and every core goes flat white. |
-There is no combination choice and no Ha/Oiii ratio. Those were removed in 2.5.0: tuning them was
-what kept producing star fields that didn't match. The green removal and the colour boost went the
-same way: the broadband combination and the brightness stretch are the whole of the star treatment,
-and nothing corrects the colour it produces afterwards.
 
-Green / magenta suppression does **not** touch the stars. That stage is tuned for the nebula, where
-green is an artefact of the channel imbalance; a star field's green is real broadband colour and the
-same correction desaturates it into grey.
+It is the only control in the section, and that is the point. The combination choice and the Ha/Oiii
+ratio went in 2.5.0 — tuning them was what kept producing star fields that didn't match. The
+two-pass green removal and the hue-weighted colour boost went in 3.1.0, for the same reason at one
+remove: they were correcting a combination that no longer needs correcting.
+
+Nothing touches the star colour after the combination. Green / magenta suppression does **not** run
+on the stars either: it is tuned for the nebula, where green is an artefact of the channel
+imbalance, while a star field's green is real broadband colour and the same correction desaturates
+it into grey.
 
 The combined view is a screen blend, `~(~starless · ~stars)`, so stars are added to the nebula
 rather than pasted over it and never clip a bright core to flat white.
@@ -613,8 +668,8 @@ once, then runs **the same pipeline the Execute button runs** on them — the sa
 expression strings, the same process instances. The only difference is spatial sampling, and the
 only stages where that matters are the two labelled above.
 
-- **Target** — starless, stars, or the luminance layer. This also chooses which image the histogram
-  belongs to.
+- **Target** — starless, stars, the luminance layer, or **Complete**: the screen combination of the
+  starless image and the stars. This also chooses which image the histogram belongs to.
 - **Zoom** — roll the mouse wheel over the panel. The zoom is continuous and anchored on the
   cursor: one notch multiplies the scale by 1.25 or 0.8, and the pixel under the pointer stays
   under the pointer. **Fit**, **1:1**, **−** and **+** are there for the keyboard-and-trackpad
@@ -665,8 +720,12 @@ bar and were routinely mistaken for it.
   or not you ran anything — so a session spent tuning is not thrown away, but neither is one spent
   inspecting a process icon you dropped in. Use **New Instance** to keep a configuration you care
   about rather than relying on what is stored.
-- Output is always 32-bit floating point. The dynamic factors involve fractional powers, and
-  rounding those into a 16-bit container produces visible banding in the transition zones.
+- Output is floating point, whatever you feed it. The dynamic factors involve fractional powers,
+  and rounding those into a 16-bit integer container bands visibly in the transition zones the
+  palette is built around. If your PixInsight build offers no floating point output at all, the
+  script says so once in the console rather than degrading quietly.
+- **Language** is chosen in the header, and remembered. Image identifiers and console output are
+  deliberately left in English: they are what you type and what you paste into a forum post.
 - Everything is validated before anything runs: missing channels, colour images where greyscale is
   required, mismatched geometry and invalid identifiers are reported rather than thrown.
 - **Reload image list** rescans the workspace — use it if you created or renamed images after
