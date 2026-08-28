@@ -281,6 +281,13 @@ function fxReport( created, elapsedMs )
    Console.noteln( "<end><cbr><br>* " + TITLE + " " + VERSION );
    Console.writeln( "Palette ............. " + fxStyle( FX ).name );
    Console.writeln( "Channels ............ " + (FX.twoChannels ? "Ha / Oiii" : "Sii / Ha / Oiii") );
+   // The auto stretch changes every pixel it touches, so it belongs in the
+   // record that makes a run reproducible from the log alone.
+   if ( FX.linearInput )
+      Console.writeln( format( "Auto stretch ........ %s, target %.3f, shadows clip %.2f sigma%s",
+                               FX.linearMethod == 1 ? "statistical stretch" : "screen transfer",
+                               FX.linearTarget, FX.linearClip,
+                               FX.linearNoClip ? ", black point never clipped" : "" ) );
    if ( FX.normalizeEnabled )
       Console.writeln( format( "Normalization ....... reference %s, levels Sii %.2f Ha %.2f "
                              + "Oiii %.2f, shadow %.2f",

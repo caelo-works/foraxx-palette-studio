@@ -459,6 +459,17 @@ function ForaxxStudioDialog()
 
    this.notice = "";
 
+   /*
+    * The banner says what the script will accept right now. With the auto
+    * stretch off it is the flat refusal 3.0.0 introduced; with it on, that
+    * refusal would be a lie - so it becomes what the stretch is for, and how
+    * to tell whether it worked.
+    */
+   this.updatePreviewStatusBanner = function()
+   {
+      this.bannerLabel.text = FX.linearInput ? fxT( "bannerAuto" ) : fxT( "bannerLinear" );
+   };
+
    this.setNotice = function( text )
    {
       this.notice = text || "";
@@ -486,8 +497,13 @@ function ForaxxStudioDialog()
                + elsewhere.map( fxT ).join( ", " );
       // This script takes non-linear data only, and linear channels produce a
       // black preview with no explanation. Say so.
-      if ( fxLooksLinear( FX ) )
+      // Only when nothing is going to stretch them. Telling a user to stretch
+      // channels the script is about to stretch itself is how a warning stops
+      // being read.
+      if ( fxLooksLinear( FX ) && !FX.linearInput )
          note += "  -  " + fxT( "noteLinear" );
+      else if ( FX.linearInput && !fxLooksLinear( FX ) )
+         note += "  -  " + fxT( "noteAlreadyStretched" );
       // Appends, like its two neighbours. A bare assignment here discarded both
       // the capitalised linear-data warning and the off-screen-levels note
       // whenever a multiscale stage was on - silencing, in exactly the
@@ -576,9 +592,16 @@ function ForaxxStudioDialog()
                         + fxT( "byLine" ) + "</span>";
       this.byLabel.toolTip = fxT( "byLineTip" ) + " \u2014 build " + VERSION;
       this.taglineLabel.text = "<i>" + fxT( "tagline" ) + "</i>";
-      this.bannerLabel.text = fxT( "bannerLinear" );
+      this.updatePreviewStatusBanner();
       this.langLabel.text = fxT( "language" );
 
+      this.linearNote.text = fxT( "linearNote" );
+      this.linearBar.toolTip = fxT( "linearBarTip" );
+      this.linearMethodRow.combo.clear();
+      this.linearMethodRow.combo.addItem( fxT( "linearMethodStf" ) );
+      this.linearMethodRow.combo.addItem( fxT( "linearMethodStat" ) );
+      this.linearMethodRow.combo.currentItem = FX.linearMethod;
+      fxRetitleSection( this.linearBar );
       fxRetitleSection( this.generalBar );
       fxRetitleSection( this.paletteBar );
       fxRetitleSection( this.starsBar );
@@ -1051,6 +1074,58 @@ function ForaxxStudioDialog()
    this.generalControl.sizer.add( reloadSizer );
 
    this.generalBar = fxSection( this, "secGeneral", this.generalControl, false );
+
+   /* ==========================================================================
+    * Linear input section
+    *
+    * Ahead of Channel normalization, because it runs first in the pipeline and
+    * because the two compose: the auto stretch supplies the absolute level, and
+    * normalization then places the channels relative to it.
+    * ========================================================================== */
+
+   this.linearMethodRow = fxComboRow( this, "linearMethod",
+      [ fxT( "linearMethodStf" ), fxT( "linearMethodStat" ) ],
+      FX.linearMethod,
+      function( index )
+      {
+         if ( dlg.syncing ) return;
+         FX.linearMethod = index;
+         dlg.requestPreview();
+      } );
+
+   this.linearTargetRow = fxNumericRow( this, "linearTarget",
+      function( value ) { FX.linearTarget = value; dlg.requestPreview(); } );
+
+   this.linearClipRow = fxNumericRow( this, "linearClip",
+      function( value ) { FX.linearClip = value; dlg.requestPreview(); } );
+
+   this.linearNoClipCheck = fxCheckBox( this, "linearNoClip", FX.linearNoClip,
+      function( checked ) { FX.linearNoClip = checked; dlg.requestPreview(); }, this );
+
+   this.linearNote = new Label( this );
+   this.linearNote.useRichText = true;
+   this.linearNote.wordWrapping = true;
+
+   this.linearControl = fxGroupControl( this );
+   this.linearControl.sizer.add( this.linearNote );
+   this.linearControl.sizer.add( this.linearMethodRow );
+   this.linearControl.sizer.add( this.linearTargetRow );
+   this.linearControl.sizer.add( this.linearClipRow );
+   this.linearControl.sizer.add( this.linearNoClipCheck );
+
+   this.linearBar = new SectionBar( this, fxT( "secLinear" ) );
+   this.linearBar.__titleKey = "secLinear";
+   this.linearBar.setSection( this.linearControl );
+   this.linearBar.enableCheckBox();
+   this.linearBar.checkBox.checked = FX.linearInput;
+   this.linearBar.onCheck = function( bar )
+   {
+      FX.linearInput = bar.checkBox.checked;
+      dlg.updatePreviewStatusBanner();
+      dlg.requestPreview();
+   };
+   if ( !FX.linearInput )
+      this.linearControl.hide();
 
    /* ==========================================================================
     * Channel normalization section
@@ -1838,6 +1913,8 @@ function ForaxxStudioDialog()
    this.leftSizer.spacing = 4;
    this.leftSizer.add( this.generalBar );
    this.leftSizer.add( this.generalControl );
+   this.leftSizer.add( this.linearBar );
+   this.leftSizer.add( this.linearControl );
    this.leftSizer.add( this.normalizeBar );
    this.leftSizer.add( this.normalizeControl );
    this.leftSizer.add( this.paletteBar );

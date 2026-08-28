@@ -240,6 +240,29 @@ function fxChannelStats( view )
  */
 function fxBlackPointFor( stats, p )
 {
+   if ( p.linearInput )
+   {
+      // PixInsight's own screen transfer rule: the black point sits linearClip
+      // MAD sigmas below the median. This is where the unused MAD finally goes.
+      let c0 = 0;
+      if ( isFinite( stats.madn ) && stats.madn > 0 )
+         c0 = fxClamp( stats.median - p.linearClip * stats.madn, 0, 0.999 );
+
+      if ( p.linearMethod == 1 || p.linearNoClip )
+      {
+         // Statistical stretch, after SetiAstro: never place the black point
+         // above the darkest pixel, so nothing is thrown away. It also rescues
+         // a channel whose own nebulosity inflates its MAD - on the reference
+         // masters Ha's unclipped point lands 2.1e-3 below its floor, which
+         // would leave that one channel sitting on a grey pedestal the other
+         // two do not have.
+         let floorValue = fxClamp( stats.minimum, 0, 0.999 );
+         if ( p.linearNoClip || c0 < floorValue )
+            c0 = floorValue;
+      }
+      return c0;
+   }
+
    if ( p.normalizeEnabled )
    {
       // Interpolated from the minimum towards the median, as the module's
@@ -285,7 +308,7 @@ function fxChannelTransform( view, p, key, referenceMedian )
 {
    if ( view == null || view.isNull )
       return null;
-   if ( !p.normalizeEnabled )
+   if ( !p.linearInput && !p.normalizeEnabled )
       return null;
 
    let stats = fxChannelStats( view );
@@ -298,10 +321,18 @@ function fxChannelTransform( view, p, key, referenceMedian )
       c0 = 0;
    let xm = fxMedianAfterBlackPoint( stats, c0 );
 
-   // Normalisation is a *relative* statement - "put Oiii at 0.8x of Ha" - so it
-   // multiplies whatever the reference channel already sits at.
-   let target = fxClamp( referenceMedian * fxNormalizationBoost( p, key ),
-                         0.001, 0.999 );
+   // The anchor the boost multiplies. Normalization on its own is a *relative*
+   // statement - "put Oiii at 0.8x of Ha" - and multiplies whatever the
+   // reference channel already sits at. The auto stretch supplies an absolute
+   // one instead, and when both are on the absolute anchor wins: the two used
+   // to exclude each other, so ticking normalization on linear data replaced a
+   // target of 0.25 with the reference channel's raw linear median and the
+   // result came out 250x darker than either setting alone. The reference
+   // channel drops out of the calculation entirely once there is an absolute
+   // level to aim at.
+   let anchor = p.linearInput ? fxClamp( p.linearTarget, 0.001, 0.999 )
+                              : referenceMedian;
+   let target = fxClamp( anchor * fxNormalizationBoost( p, key ), 0.001, 0.999 );
 
    if ( !(xm > 0) )
    {
@@ -329,12 +360,13 @@ function fxChannelTransform( view, p, key, referenceMedian )
  */
 function fxStretchMapFor( p, siiView, haView, oiiiView )
 {
-   if ( !p.normalizeEnabled )
+   if ( !p.linearInput && !p.normalizeEnabled )
       return null;
 
-   // The reference channel sets the median every other channel is moved onto.
+   // The reference channel sets the median every other channel is moved onto -
+   // but only when there is no absolute target to aim at instead.
    let referenceMedian = 0;
-   if ( p.normalizeEnabled )
+   if ( p.normalizeEnabled && !p.linearInput )
    {
       // A palette without Sii must not be normalised to a Sii image left
       // selected from an earlier session.
@@ -1459,7 +1491,7 @@ function fxLooksLinear( p )
 
 function fxCollectStretch( p, stars )
 {
-   if ( !p.normalizeEnabled )
+   if ( !p.linearInput && !p.normalizeEnabled )
       return null;
 
    let map = fxStretchMapFor( p, p.siiView, p.haView, p.oiiiView );
@@ -1474,6 +1506,15 @@ function fxCollectStretch( p, stars )
    {
       if ( map[key] == null )
          continue;
+      // The 2.6.1 rule, and it is what makes linear input survivable. A star
+      // frame is almost entirely empty background, so its median IS that
+      // background: solving it its own stretch puts the void on the target and
+      // drives every star past 0.99, and the screen combination then cannot go
+      // below that floor. Measured on the reference masters: the void reaches
+      // 0.25 and the combined background 0.4375 that way, against 0.0002 and
+      // 0.2501 with the curve shared. So the midtones curve comes from the
+      // nebula and only the black point is measured per frame - the nebula's
+      // would subtract a sky pedestal the star frame no longer has.
       let view = views[key];
       let c0 = map[key].c0;
       if ( view != null && !view.isNull )

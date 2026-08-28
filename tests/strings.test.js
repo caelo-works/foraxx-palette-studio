@@ -162,6 +162,22 @@ LANGS.forEach( lang => {
           + 'displays leaves the interface in English' );
    } );
 
+   // The mirror, and the half that was missing: every fxT( "..." ) in the code
+   // must name a key that exists. A missing one is not an error - fxT returns
+   // the key itself, deliberately, so the gap shows on screen - but it shows on
+   // screen to the user rather than here, and fifteen of them were added in one
+   // sitting before this assertion existed.
+   {
+      const calls = new Set();
+      let c;
+      const re = /fxT\(\s*"(\w+)"\s*\)/g;
+      while ( ( c = re.exec( code ) ) !== null )
+         calls.add( c[1] );
+      calls.forEach( k =>
+         ok( EN[k] !== undefined,
+             'fxT( "' + k + '" ) names a string that exists in the table' ) );
+   }
+
    // And the other direction: a literal sentence still sitting in the dialog is
    // a sentence that cannot be translated. Section bar titles are exempt - they
    // are constructed with an English default that applyLanguage overwrites.

@@ -51,6 +51,51 @@ var FX_UI =
       palette:        "Palette:",
       reloadList:     "Reload image list",
 
+
+      // --- linear input -----------------------------------------------------
+      secLinear:      "Linear input (auto stretch)",
+      linearBarTip:   "<p>Stretch the channels for you before anything else runs.</p>"
+                    + "<p><b>Experimental.</b> This was withdrawn in 3.0.0 after four attempts to "
+                    + "make it reliable, and is back because the faults behind those attempts are "
+                    + "fixed. It has been validated on reference frames whose sky background sits "
+                    + "between 2e-3 and 5e-3; deeper data, with the pedestal already subtracted, "
+                    + "is not yet tested. Look at the preview before you trust it.</p>",
+      linearNote:     "<p>Each channel gets a black point from its own median and MAD, then a "
+                    + "midtones curve that puts its background on the target below. Star frames "
+                    + "share the nebula's curve and keep their own black point - solving them "
+                    + "separately lifts their empty background into a grey floor the screen "
+                    + "combination then cannot go below.</p>",
+      bannerAuto:     "<b>AUTO STRETCH IS ON.</b> The channels are stretched for you, and the "
+                    + "result is a screen transfer, not a considered final stretch - judge it in "
+                    + "the preview.",
+      noteAlreadyStretched: "the auto stretch is on but these channels already look stretched",
+      linearMethodStf:  "Screen transfer (STF)",
+      linearMethodStat: "Statistical stretch",
+      linearMethod:   "Method:",
+      linearMethodTip: "<p><b>Screen transfer</b> places the black point at the shadows clip below "
+                    + "the median, exactly as PixInsight's own auto stretch does.</p>"
+                    + "<p><b>Statistical stretch</b> is the same, except that the black point is "
+                    + "never placed above the darkest pixel in the frame, so nothing is discarded. "
+                    + "It also rescues a channel whose own nebulosity inflates its MAD, which on "
+                    + "real Ha data is common enough to be the default.</p>",
+      linearTarget:   "Stretch amount:",
+      linearTargetTip: "<p>Where the sky background lands after the stretch. 0.25 is the usual "
+                    + "screen-transfer target and a good place to judge from.</p>"
+                    + "<p>Higher lifts the faint signal and flattens the highlights; lower keeps "
+                    + "the contrast and hides the faintest structure. This is a starting point to "
+                    + "work from, not a finished stretch.</p>",
+      linearClip:     "Shadows clip:",
+      linearClipTip:  "<p>How far below the median the black point sits, in MAD sigmas.</p>"
+                    + "<p>2.80 is the screen-transfer convention and clips almost nothing - "
+                    + "measured on the reference frames, 0.002% of Sii and 0.036% of Oiii. Lower "
+                    + "it if a channel comes out sitting on a pedestal; at 1.00 it would discard "
+                    + "10 to 13% of those same frames.</p>",
+      linearNoClip:   "Never clip the black point",
+      linearNoClipTip: "<p>Hold the black point at the darkest pixel in the frame, whatever the "
+                    + "shadows clip asks for. Nothing is discarded at all.</p>"
+                    + "<p>Already implied by the statistical stretch method; this forces it for "
+                    + "the screen transfer one too.</p>",
+
       // --- sections --------------------------------------------------------
       secGeneral:     "General",
       secNormalize:   "Channel normalization",
@@ -410,6 +455,56 @@ var FX_UI =
       starlessOnly:   "Starless seulement - ne pas construire d'image d'\u00e9toiles",
       palette:        "Palette :",
       reloadList:     "Recharger la liste",
+
+
+      // --- entree lineaire --------------------------------------------------
+      secLinear:      "Entr\u00e9e lin\u00e9aire (auto-stretch)",
+      linearBarTip:   "<p>Stretche les couches pour vous avant tout le reste.</p>"
+                    + "<p><b>Exp\u00e9rimental.</b> Retir\u00e9 en 3.0.0 apr\u00e8s quatre tentatives pour le "
+                    + "rendre fiable, et de retour parce que les fautes \u00e0 l'origine de ces "
+                    + "tentatives sont corrig\u00e9es. Valid\u00e9 sur des images de r\u00e9f\u00e9rence dont le "
+                    + "fond de ciel se situe entre 2e-3 et 5e-3 ; des donn\u00e9es plus profondes, "
+                    + "pi\u00e9destal d\u00e9j\u00e0 soustrait, ne sont pas encore test\u00e9es. Regardez l'aper\u00e7u "
+                    + "avant de lui faire confiance.</p>",
+      linearNote:     "<p>Chaque couche re\u00e7oit un point noir tir\u00e9 de sa propre m\u00e9diane et de son "
+                    + "MAD, puis une courbe de tons moyens qui place son fond sur la cible "
+                    + "ci-dessous. Les frames d'\u00e9toiles partagent la courbe de la n\u00e9buleuse et "
+                    + "gardent leur propre point noir : les r\u00e9soudre s\u00e9par\u00e9ment rel\u00e8verait leur "
+                    + "fond vide en un plancher gris sous lequel la combinaison en mode \u00e9cran ne "
+                    + "peut plus descendre.</p>",
+      bannerAuto:     "<b>L'AUTO-STRETCH EST ACTIF.</b> Les couches sont stretch\u00e9es pour vous, et "
+                    + "le r\u00e9sultat est un transfert d'\u00e9cran, pas un stretch final r\u00e9fl\u00e9chi : "
+                    + "jugez-le dans l'aper\u00e7u.",
+      noteAlreadyStretched: "l'auto-stretch est actif mais ces couches semblent d\u00e9j\u00e0 stretch\u00e9es",
+      linearMethodStf:  "Transfert d'\u00e9cran (STF)",
+      linearMethodStat: "Stretch statistique",
+      linearMethod:   "M\u00e9thode :",
+      linearMethodTip: "<p>Le <b>transfert d'\u00e9cran</b> place le point noir \u00e0 l'\u00e9cr\u00eatage des "
+                    + "basses lumi\u00e8res sous la m\u00e9diane, exactement comme l'auto-stretch de "
+                    + "PixInsight.</p>"
+                    + "<p>Le <b>stretch statistique</b> fait de m\u00eame, sauf que le point noir "
+                    + "n'est jamais plac\u00e9 au-dessus du pixel le plus sombre de l'image : rien "
+                    + "n'est jet\u00e9. Il rattrape aussi une couche dont la n\u00e9bulosit\u00e9 gonfle son "
+                    + "propre MAD, ce qui sur du Ha r\u00e9el est assez courant pour en faire la "
+                    + "valeur par d\u00e9faut.</p>",
+      linearTarget:   "Quantit\u00e9 de stretch :",
+      linearTargetTip: "<p>O\u00f9 atterrit le fond de ciel apr\u00e8s le stretch. 0.25 est la cible "
+                    + "habituelle d'un transfert d'\u00e9cran, et un bon point d'observation.</p>"
+                    + "<p>Plus haut rel\u00e8ve le signal faible et aplatit les hautes lumi\u00e8res ; "
+                    + "plus bas conserve le contraste et masque les structures les plus t\u00e9nues. "
+                    + "C'est un point de d\u00e9part, pas un stretch abouti.</p>",
+      linearClip:     "\u00c9cr\u00eatage des basses lumi\u00e8res :",
+      linearClipTip:  "<p>\u00c0 quelle distance sous la m\u00e9diane se place le point noir, en sigmas de "
+                    + "MAD.</p>"
+                    + "<p>2.80 est la convention du transfert d'\u00e9cran et n'\u00e9cr\u00eate presque rien : "
+                    + "mesur\u00e9 sur les images de r\u00e9f\u00e9rence, 0,002 % de Sii et 0,036 % de Oiii. "
+                    + "Abaissez-le si une couche ressort pos\u00e9e sur un pi\u00e9destal ; \u00e0 1.00 il "
+                    + "jetterait 10 \u00e0 13 % de ces m\u00eames images.</p>",
+      linearNoClip:   "Ne jamais \u00e9cr\u00eater le point noir",
+      linearNoClipTip: "<p>Maintient le point noir sur le pixel le plus sombre de l'image, quoi que "
+                    + "demande l'\u00e9cr\u00eatage des basses lumi\u00e8res. Rien n'est jet\u00e9.</p>"
+                    + "<p>D\u00e9j\u00e0 impliqu\u00e9 par la m\u00e9thode du stretch statistique ; ceci le force "
+                    + "aussi pour le transfert d'\u00e9cran.</p>",
 
       // --- sections --------------------------------------------------------
       secGeneral:     "G\u00e9n\u00e9ral",

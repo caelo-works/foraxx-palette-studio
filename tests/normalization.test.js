@@ -126,35 +126,131 @@ eq( fx.fxNormalizationBoost( P( { normalizeEnabled: false } ), 'sii' ), 1,
 // ---------------------------------------------------------------------------
 // LINEAR INPUT. The load-bearing test.
 //
-// 3.0.0 withdrew linear support and kept channel normalization, and the two
-// facts are easy to confuse: normalization does condition channels, so it looks
-// like it could stand in for the missing stretch. It cannot, because its target
-// is the REFERENCE CHANNEL'S OWN median - a relative statement. On linear data
-// that median is near zero, every target collapses onto the 0.001 clamp, and
-// the result is black.
+// 3.0.0 withdrew linear support; this restores it. The reference frames are the
+// six real masters in testset/, measured over 200k pixels each - the nebula
+// channels sit at 3e-3 to 7e-3 and the star frames some 2000x below that,
+// because a star frame is almost entirely empty background.
 //
-// If this test ever fails because a channel lands somewhere bright, someone has
-// introduced an absolute stretch target. That is the work needed to bring
-// linear input back - and when it happens, the README, the dialog banner and
-// the file header all have to stop saying linear is unsupported.
+// Two failures are pinned here, both of which shipped once.
 // ---------------------------------------------------------------------------
+const MASTERS = {
+   sii:  { median: 3.290e-3, madn: 2.931e-4, minimum: 2.393e-3 },
+   ha:   { median: 7.062e-3, madn: 1.978e-3, minimum: 3.832e-3 },
+   oiii: { median: 5.716e-3, madn: 2.353e-4, minimum: 4.880e-3 },
+   siiStars:  { median: 8.610e-6, madn: 1.072e-5, minimum: 1.553e-7 },
+   haStars:   { median: 3.194e-6, madn: 3.409e-6, minimum: 0 },
+   oiiiStars: { median: 2.482e-6, madn: 2.866e-6, minimum: 1.420e-7 }
+};
+const LINEAR = over => P( Object.assign( {
+   linearInput: true, linearMethod: 1, linearTarget: 0.25, linearClip: 2.80, linearNoClip: false
+}, over ) );
+const master = ( id, k ) => fx.fxTestView( id, MASTERS[k] );
+const applied = ( t, x ) => fx.fxMTFValue( t.m, ( x - t.c0 ) / ( 1 - t.c0 ) );
+
+// Nothing at all happens while the switch is off. Linear support must be
+// strictly additive: the parity promise is that Foraxx classic at defaults
+// still produces the original's starless image bit for bit.
 {
    fx.fxClearStatsCache();
-   const p = NORM();
-   const sii  = fx.fxTestView( 'LS', { median: 3e-5, madn: 5e-6, minimum: 1e-5 } );
-   const ha   = fx.fxTestView( 'LH', { median: 5e-5, madn: 8e-6, minimum: 1e-5 } );
-   const oiii = fx.fxTestView( 'LO', { median: 2e-5, madn: 4e-6, minimum: 1e-5 } );
-   const map = fx.fxStretchMapFor( p, sii, ha, oiii );
+   eq( fx.fxStretchMapFor( P( {} ), master( 'a', 'sii' ), master( 'b', 'ha' ), master( 'c', 'oiii' ) ),
+       null, 'with the auto stretch off and normalization off, nothing is conditioned' );
+}
 
-   ok( map != null, 'linear channels still produce a map - normalization runs' );
-   for ( const key of [ 'sii', 'ha', 'oiii' ] )
-   {
-      const c0 = map[key].c0;
-      const median = { sii: 3e-5, ha: 5e-5, oiii: 2e-5 }[key];
-      const out = fx.fxMTFValue( map[key].m, ( median - c0 ) / ( 1 - c0 ) );
-      near( out, 0.001, key + ' lands on the 0.001 clamp, not on a display level', 1e-5 );
-      ok( out < 0.01, key + ' is still black: normalization is no substitute for a stretch' );
-   }
+// The auto stretch alone puts every channel on the requested background.
+{
+   fx.fxClearStatsCache();
+   const p = LINEAR();
+   const map = fx.fxStretchMapFor( p, master( 'S', 'sii' ), master( 'H', 'ha' ), master( 'O', 'oiii' ) );
+   ok( map != null, 'the auto stretch produces a transform map' );
+   [ [ 'sii', 'sii' ], [ 'ha', 'ha' ], [ 'oiii', 'oiii' ] ].forEach( ( [ key, k ] ) => {
+      near( applied( map[key], MASTERS[k].median ), 0.25,
+            key + ' lands on the requested background, not on a clamp', 1e-4 );
+   } );
+
+   // Every balance stays well clear of the emission floor, so fxNum writes it
+   // with its significant figures intact. This is the 2.3.4 fault, and it is
+   // the reason the target may not be relative.
+   [ 'sii', 'ha', 'oiii' ].forEach( key => {
+      ok( map[key].m > 1e-5, key + ' balance is far above the 1e-8 floor: ' + map[key].m );
+      ok( Number( fx.fxNum( map[key].m ) ) / map[key].m > 0.999,
+          key + ' balance survives being written into an expression' );
+   } );
+}
+
+// The auto stretch and Channel normalization COMPOSE. They used to exclude each
+// other: ticking normalization on linear data replaced the absolute target with
+// the reference channel's raw linear median, and the result came out 250x
+// darker than either setting alone. That is 2.3.4(b), and this is its guard.
+{
+   fx.fxClearStatsCache();
+   const p = LINEAR( { normalizeEnabled: true, normalizeRef: 1,
+                       normSii: 1, normHa: 1, normOiii: 1, normShadow: 0.25 } );
+   const map = fx.fxStretchMapFor( p, master( 'S2', 'sii' ), master( 'H2', 'ha' ), master( 'O2', 'oiii' ) );
+   [ [ 'sii', 'sii' ], [ 'ha', 'ha' ], [ 'oiii', 'oiii' ] ].forEach( ( [ key, k ] ) => {
+      near( applied( map[key], MASTERS[k].median ), 0.25,
+            key + ' still lands on 0.25 with normalization on as well', 1e-4 );
+   } );
+
+   fx.fxClearStatsCache();
+   const q = LINEAR( { normalizeEnabled: true, normalizeRef: 1,
+                       normSii: 1, normHa: 1, normOiii: 0.8, normShadow: 0.25 } );
+   const m2 = fx.fxStretchMapFor( q, master( 'S3', 'sii' ), master( 'H3', 'ha' ), master( 'O3', 'oiii' ) );
+   near( applied( m2.oiii, MASTERS.oiii.median ), 0.25 * 0.8,
+         'a per-channel boost is relative to the absolute target', 1e-4 );
+   near( applied( m2.ha, MASTERS.ha.median ), 0.25,
+         'and leaves the unboosted channels where they were', 1e-4 );
+}
+
+// Normalization ALONE still cannot stretch. It is a relative statement, so on
+// linear data it follows the reference channel down - which is exactly why the
+// absolute target had to come back rather than being emulated.
+{
+   fx.fxClearStatsCache();
+   const p = P( { normalizeEnabled: true, normalizeRef: 1,
+                  normSii: 1, normHa: 1, normOiii: 1, normShadow: 0.25 } );
+   const map = fx.fxStretchMapFor( p, master( 'S4', 'sii' ), master( 'H4', 'ha' ), master( 'O4', 'oiii' ) );
+   [ [ 'sii', 'sii' ], [ 'ha', 'ha' ], [ 'oiii', 'oiii' ] ].forEach( ( [ key, k ] ) => {
+      ok( applied( map[key], MASTERS[k].median ) < 0.01,
+          key + ' stays black under normalization alone' );
+   } );
+}
+
+// The star frames. This is 2.6.1, and it is the failure that made the whole
+// feature look unsalvageable: a star frame's median IS its empty background, so
+// solving it its own stretch puts the void on the target and saturates every
+// star. The curve comes from the nebula; only the black point is per frame.
+{
+   fx.fxClearStatsCache();
+   const p = LINEAR( {
+      makeStars: true,
+      siiView: master( 'S5', 'sii' ), haView: master( 'H5', 'ha' ), oiiiView: master( 'O5', 'oiii' ),
+      siiStarsView: master( 'Ss', 'siiStars' ), haStarsView: master( 'Hs', 'haStars' ),
+      oiiiStarsView: master( 'Os', 'oiiiStars' )
+   } );
+   const neb = fx.fxCollectStretch( p, false );
+   const st  = fx.fxCollectStretch( p, true );
+
+   ok( neb != null && st != null, 'both sets are collected' );
+   [ 'sii', 'ha', 'oiii' ].forEach( k =>
+      eq( st[k].m, neb[k].m, k + ' star frame shares the nebula midtones curve' ) );
+   ok( st.ha.c0 !== neb.ha.c0, 'but keeps its own black point' );
+
+   // The void stays a void.
+   ok( applied( st.ha, MASTERS.haStars.median ) < 0.01,
+       'the empty background of the star frame stays black' );
+   // And the stars keep their range rather than all saturating.
+   const faint = applied( st.ha, 1e-3 ), core = applied( st.ha, 0.5 );
+   ok( faint > 0.01 && faint < 0.5, 'a faint star is lifted but not blown: ' + faint.toFixed( 3 ) );
+   ok( core > 0.9, 'a bright core reaches the highlights: ' + core.toFixed( 3 ) );
+   ok( core - faint > 0.5, 'the star field keeps its dynamic range' );
+
+   // The screen combination cannot go below the brighter input, so a lifted
+   // star background becomes a grey floor over the whole image. 2.6.1 measured
+   // 0.4375 here; the nebula's own level is what it should be.
+   const bgNeb = applied( neb.ha, MASTERS.ha.median );
+   const bgSt  = applied( st.ha, MASTERS.haStars.median );
+   const combined = 1 - ( 1 - bgNeb ) * ( 1 - bgSt );
+   near( combined, 0.25, 'the combined background is the nebula\'s, not a grey floor', 0.01 );
 }
 
 // ---------------------------------------------------------------------------

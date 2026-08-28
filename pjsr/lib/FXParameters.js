@@ -280,6 +280,21 @@ var FX =
    normOiii:       1.00,
    normShadow:     0.25,    // black point, interpolated from minimum to median
 
+   // ---- linear input -------------------------------------------------------
+   //
+   // Withdrawn in 3.0.0 and restored here. What broke it then is fixed now: the
+   // midtones floor is 1e-8 rather than 0.001 and fxNum emits twelve decimals
+   // below 1e-4, so a balance of 2.5e-5 survives being written into an
+   // expression; star frames share the nebula's curve instead of solving their
+   // own; and the target composes with Channel normalization rather than being
+   // replaced by it, which is what made the two together 250x darker than
+   // either alone.
+   linearInput:    false,   // sources are still linear; auto-stretch them first
+   linearMethod:   1,       // 0 = STF, 1 = statistical stretch (SetiAstro)
+   linearTarget:   0.25,    // target background / median of the stretch
+   linearClip:     2.80,    // shadows clipping, in MAD sigmas
+   linearNoClip:   false,   // never place the black point above the darkest pixel
+
    // ---- channel weighting (soft gain, 1.0 = untouched) ---------------------
    gainSii:        1.00,
    gainHa:         1.00,
@@ -540,6 +555,11 @@ var FXPersisted =
    [ "autoPreview",      "boolean" ],
    [ "paletteSchema",    "int"     ],
    [ "lang",             "string"  ],
+   [ "linearInput",      "boolean" ],
+   [ "linearMethod",     "int"     ],
+   [ "linearTarget",     "real"    ],
+   [ "linearClip",       "real"    ],
+   [ "linearNoClip",     "boolean" ],
    [ "previewFit",       "boolean" ],
    [ "previewScale",     "real"    ],
    [ "previewDetail",    "int"     ],
@@ -558,6 +578,8 @@ var FXRanges =
    normHa:          [ 0.20, 3.00, 2 ],
    normOiii:        [ 0.20, 3.00, 2 ],
    normShadow:      [ 0.00, 1.00, 2 ],
+   linearTarget:    [ 0.02, 0.60, 3 ],
+   linearClip:      [ 0.00, 6.00, 2 ],
    gainSii:         [ 0.20, 3.00, 2 ],
    gainHa:          [ 0.20, 3.00, 2 ],
    gainOiii:        [ 0.20, 3.00, 2 ],
@@ -624,6 +646,7 @@ function fxSanitize()
    FX.previewDetail   = clampInt( FX.previewDetail,   0, 4, 0 );
    FX.previewTarget   = clampInt( FX.previewTarget,   0, 2, 0 );
    FX.normalizeRef    = clampInt( FX.normalizeRef,    0, 2, 1 );
+   FX.linearMethod    = clampInt( FX.linearMethod,    0, 1, 1 );
    // A settings file can hold any string at all. An unknown language would make
    // every lookup fall through to English anyway, but storing it back would
    // keep the bad value alive across sessions.
