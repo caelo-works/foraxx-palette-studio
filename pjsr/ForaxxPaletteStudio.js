@@ -286,8 +286,8 @@ function fxReport( created, elapsedMs )
    if ( FX.linearInput )
    {
       if ( FX.linearMethod == 2 )
-         Console.writeln( format( "Auto stretch ........ GHS, D %.2f, b %.2f, SP %s",
-                                  FX.ghsD, FX.ghsB,
+         Console.writeln( format( "Auto stretch ........ GHS, target %.3f, b %.2f, SP %s",
+                                  FX.linearTarget, FX.ghsB,
                                   FX.ghsAutoSP ? "automatic (per channel median)"
                                                : format( "%.4f", FX.ghsSP ) ) );
       else

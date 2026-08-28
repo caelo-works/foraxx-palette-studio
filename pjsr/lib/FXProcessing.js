@@ -1349,6 +1349,78 @@ function fxSetIfPresent( P, name, value )
    return true;
 }
 
+/*
+ * Solves the stretch factor that lands this channel's background on the target.
+ *
+ * GHS has no target of its own - it applies the force it is given, and a factor
+ * that suits data at 3e-3 is wrong for data at 1e-5. Left at a fixed default it
+ * produced, measured on the reference masters, a median of 0.0068 where 0.25
+ * was wanted: mathematically stretched, visually black.
+ *
+ * The process is treated as a black box and inverted numerically rather than
+ * reimplemented. Seven bisection steps on a thumbnail cost a few milliseconds,
+ * need no knowledge of the transfer function, and stay correct if Pleiades ever
+ * changes it - which reimplementing the formula from memory would not.
+ */
+function fxGhsSolveD( view, p, sp, target )
+{
+   const STEPS = 7;
+   const HI = 10;
+   let probe = null;
+   try
+   {
+      // A thumbnail is enough: the median of a background-dominated frame
+      // survives downsampling, and this only has to find a factor.
+      probe = fxPixelMathNew( view, FX_TEMP_PREFIX + "ghsprobe", false, view.id, false, false );
+      let pv = fxRequireView( probe );
+      let shrink = Math.max( 1, Math.round( Math.min( pv.image.width, pv.image.height ) / 200 ) );
+      if ( shrink > 1 )
+      {
+         let R = new IntegerResample;
+         R.zoomFactor = -shrink;
+         R.downsamplingMode = IntegerResample.prototype.Average;
+         R.executeOn( pv, false );
+      }
+
+      let lo = 0, hi = HI;
+      for ( let i = 0; i < STEPS; ++i )
+      {
+         let mid = (lo + hi) / 2;
+         let trial = fxPixelMathNew( pv, FX_TEMP_PREFIX + "ghstrial", false, probe, false, false );
+         let tv = fxRequireView( trial );
+         let median = 0;
+         try
+         {
+            let P = new GeneralizedHyperbolicStretch;
+            fxSetIfPresent( P, "stretchFactor",  mid );
+            fxSetIfPresent( P, "localIntensity", fxClamp( p.ghsB, -5, 15 ) );
+            fxSetIfPresent( P, "symmetryPoint",  sp );
+            P.executeOn( tv, false );
+            median = tv.image.median();
+         }
+         catch ( x )
+         {
+         }
+         fxCloseViewById( trial );
+         if ( median < target )
+            lo = mid;
+         else
+            hi = mid;
+      }
+      return (lo + hi) / 2;
+   }
+   catch ( error )
+   {
+      Console.warningln( "GHS: could not solve the stretch factor (" + error.message
+                       + "); falling back to " + format( "%.2f", p.ghsD ) );
+      return fxClamp( p.ghsD, 0, HI );
+   }
+   finally
+   {
+      fxCloseViewById( probe );
+   }
+}
+
 function fxApplyGHS( view, p, swap )
 {
    try
@@ -1357,8 +1429,11 @@ function fxApplyGHS( view, p, swap )
       let before = 0;
       try { before = view.image.median(); } catch ( x ) {}
 
+      let target = fxClamp( p.linearTarget, 0.001, 0.999 );
+      let D = fxGhsSolveD( view, p, sp, target );
+
       let P = new GeneralizedHyperbolicStretch;
-      fxSetIfPresent( P, "stretchFactor",  fxClamp( p.ghsD, 0, 10 ) );
+      fxSetIfPresent( P, "stretchFactor",  D );
       fxSetIfPresent( P, "localIntensity", fxClamp( p.ghsB, -5, 15 ) );
       fxSetIfPresent( P, "symmetryPoint",  sp );
       P.executeOn( view, swap );
@@ -1368,12 +1443,17 @@ function fxApplyGHS( view, p, swap )
 
       // The record that makes this diagnosable. A stretch that leaves the
       // median where it found it did nothing, whatever the process reported.
-      Console.writeln( format( "GHS %s: D %.2f, b %.2f, SP %.5f - median %.5f -> %.5f",
-                               view.id, p.ghsD, p.ghsB, sp, before, after ) );
-      if ( after <= before * 1.05 )
+      Console.writeln( format( "GHS %s: D %.2f (solved for %.3f), b %.2f, SP %.5f - "
+                             + "median %.5f -> %.5f",
+                               view.id, D, target, p.ghsB, sp, before, after ) );
+
+      // Half the target is the line between "the stretch worked" and "the image
+      // is black". The first version of this check asked only for a 5% change,
+      // and passed a stretch that reached 0.0068 out of 0.25.
+      if ( after < target * 0.5 )
       {
-         Console.warningln( "GHS left " + view.id + " essentially unchanged. The stretch had no "
-                          + "effect, so the channel is still linear." );
+         Console.warningln( format( "GHS reached only %.5f of the %.3f asked for on %s. The "
+                                  + "channel is still too dark to judge.", after, target, view.id ) );
          return false;
       }
       return true;

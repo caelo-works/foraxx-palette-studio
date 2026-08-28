@@ -1109,9 +1109,6 @@ function ForaxxStudioDialog()
    this.linearNoClipCheck = fxCheckBox( this, "linearNoClip", FX.linearNoClip,
       function( checked ) { FX.linearNoClip = checked; dlg.requestPreview(); }, this );
 
-   this.ghsDRow = fxNumericRow( this, "ghsD",
-      function( value ) { FX.ghsD = value; dlg.requestPreview(); } );
-
    this.ghsBRow = fxNumericRow( this, "ghsB",
       function( value ) { FX.ghsB = value; dlg.requestPreview(); } );
 
@@ -1136,7 +1133,6 @@ function ForaxxStudioDialog()
    this.linearControl.sizer.add( this.linearTargetRow );
    this.linearControl.sizer.add( this.linearClipRow );
    this.linearControl.sizer.add( this.linearNoClipCheck );
-   this.linearControl.sizer.add( this.ghsDRow.sizer );
    this.linearControl.sizer.add( this.ghsBRow.sizer );
    this.linearControl.sizer.add( this.ghsAutoSPCheck );
    this.linearControl.sizer.add( this.ghsSPRow.sizer );
@@ -2089,11 +2085,12 @@ function ForaxxStudioDialog()
       // The three methods do not share their controls. Showing all of them at
       // once would be five sliders of which two are inert, and an inert slider
       // is indistinguishable from a broken one.
+      // The target drives all three methods now: the two expression ones solve
+      // their midtones balance for it, and GHS solves its stretch factor for it.
+      // Only the shadows clip belongs to the expression methods alone.
       let ghs = FX.linearMethod == 2;
-      this.linearTargetRow.enabled = !ghs;
       this.linearClipRow.enabled = !ghs;
       this.linearNoClipCheck.enabled = !ghs && FX.linearMethod == 0;
-      this.ghsDRow.enabled = ghs;
       this.ghsBRow.enabled = ghs;
       this.ghsAutoSPCheck.enabled = ghs;
       this.ghsSPRow.enabled = ghs && !FX.ghsAutoSP;

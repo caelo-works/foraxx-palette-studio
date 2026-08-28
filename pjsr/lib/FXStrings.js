@@ -73,12 +73,6 @@ var FX_UI =
       linearMethodStf:  "Screen transfer (STF)",
       linearMethodStat: "Statistical stretch",
       linearMethodGhs:  "GeneralizedHyperbolicStretch",
-      ghsD:           "Stretch factor (D):",
-      ghsDTip:        "<p>How hard the curve lifts. 0 leaves the channel alone; 1 is a moderate "
-                    + "stretch and a sensible place to start.</p>"
-                    + "<p>GHS concentrates its contrast around the symmetry point below, so this "
-                    + "raises the faint signal without flattening the bright cores the way a plain "
-                    + "midtones curve does at the same strength.</p>",
       ghsB:           "Local intensity (b):",
       ghsBTip:        "<p>Shapes the contrast around the symmetry point. 0 is the neutral, "
                     + "hyperbolic form.</p>"
@@ -104,7 +98,9 @@ var FX_UI =
                     + "It also rescues a channel whose own nebulosity inflates its MAD, which on "
                     + "real Ha data is common enough to be the default.</p>",
       linearTarget:   "Stretch amount:",
-      linearTargetTip: "<p>Where the sky background lands after the stretch. 0.25 is the usual "
+      linearTargetTip: "<p>Where the sky background lands after the stretch, whichever method is "
+                    + "chosen: the two expression methods solve their midtones balance for it, "
+                    + "and GHS solves its stretch factor for it. 0.25 is the usual "
                     + "screen-transfer target and a good place to judge from.</p>"
                     + "<p>Higher lifts the faint signal and flattens the highlights; lower keeps "
                     + "the contrast and hides the faintest structure. This is a starting point to "
@@ -505,12 +501,6 @@ var FX_UI =
       linearMethodStf:  "Transfert d'\u00e9cran (STF)",
       linearMethodStat: "Stretch statistique",
       linearMethodGhs:  "GeneralizedHyperbolicStretch",
-      ghsD:           "Facteur de stretch (D) :",
-      ghsDTip:        "<p>Avec quelle force la courbe rel\u00e8ve. 0 laisse la couche intacte ; 1 est "
-                    + "un stretch mod\u00e9r\u00e9 et un bon point de d\u00e9part.</p>"
-                    + "<p>GHS concentre son contraste autour du point de sym\u00e9trie ci-dessous : "
-                    + "il rel\u00e8ve donc le signal faible sans aplatir les c\u0153urs brillants comme "
-                    + "le ferait une simple courbe de tons moyens \u00e0 force \u00e9gale.</p>",
       ghsB:           "Intensit\u00e9 locale (b) :",
       ghsBTip:        "<p>Fa\u00e7onne le contraste autour du point de sym\u00e9trie. 0 est la forme "
                     + "hyperbolique neutre.</p>"
@@ -540,7 +530,9 @@ var FX_UI =
                     + "propre MAD, ce qui sur du Ha r\u00e9el est assez courant pour en faire la "
                     + "valeur par d\u00e9faut.</p>",
       linearTarget:   "Quantit\u00e9 de stretch :",
-      linearTargetTip: "<p>O\u00f9 atterrit le fond de ciel apr\u00e8s le stretch. 0.25 est la cible "
+      linearTargetTip: "<p>O\u00f9 atterrit le fond de ciel apr\u00e8s le stretch, quelle que soit la "
+                    + "m\u00e9thode : les deux m\u00e9thodes par expression y r\u00e9solvent leur balance de "
+                    + "tons moyens, et GHS y r\u00e9sout son facteur de stretch. 0.25 est la cible "
                     + "habituelle d'un transfert d'\u00e9cran, et un bon point d'observation.</p>"
                     + "<p>Plus haut rel\u00e8ve le signal faible et aplatit les hautes lumi\u00e8res ; "
                     + "plus bas conserve le contraste et masque les structures les plus t\u00e9nues. "

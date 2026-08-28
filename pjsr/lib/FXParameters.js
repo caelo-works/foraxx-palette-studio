@@ -298,7 +298,8 @@ var FX =
    // GeneralizedHyperbolicStretch, method 2. Three controls out of the twelve
    // the process exposes: D and SP decide the result, b shapes the contrast
    // around it. The rest keep the process's own defaults.
-   ghsD:           1.00,    // stretch factor
+   ghsD:           1.00,    // stretch factor: only the solver's fallback now,
+                            // since D is solved for the target at render time
    ghsB:           0.00,    // local intensity
    ghsSP:          0.10,    // symmetry point, used when the automatic one is off
    ghsAutoSP:      true,    // place the symmetry point on the channel's median
@@ -592,7 +593,6 @@ var FXRanges =
    normShadow:      [ 0.00, 1.00, 2 ],
    linearTarget:    [ 0.02, 0.60, 3 ],
    linearClip:      [ 0.00, 6.00, 2 ],
-   ghsD:            [ 0.00, 10.00, 2 ],
    ghsB:            [ -5.00, 15.00, 2 ],
    ghsSP:           [ 0.00, 1.00, 4 ],
    gainSii:         [ 0.20, 3.00, 2 ],
