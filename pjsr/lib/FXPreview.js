@@ -488,8 +488,8 @@ FXPreviewEngine.prototype.makeChannel = function( view, factor, tag, list, peaks
             // status line claims otherwise is the one outcome to avoid.
             try
             {
-               R.downsampleMode = IntegerResample.prototype.Maximum;
-               honoured = (R.downsampleMode == IntegerResample.prototype.Maximum);
+               R.downsampleMode = IntegerResample.Maximum;
+               honoured = (R.downsampleMode == IntegerResample.Maximum);
             }
             catch ( x )
             {
@@ -668,7 +668,7 @@ FXPreviewEngine.prototype.render = function( p, detail, panelWidth, panelHeight 
    }
    catch ( error )
    {
-      this.lastError = "Preview failed: " + error.message;
+      this.lastError = "Preview failed: " + fxErrorText( error );
       image = null;
    }
 

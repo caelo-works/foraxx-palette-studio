@@ -128,6 +128,20 @@ to a file) rather than assumed:
   `ForaxxStudioDialog`, `FXPreviewControl` and `FXLevelsControl` are
   `class X extends Y` with a `super()` call.
 
+- **Process enumerators are static on the constructor.** `PixelMath.RGB`, not
+  `PixelMath.prototype.RGB`, which is `undefined` under V8. Assigning that to a
+  process parameter fails as "signed integer value expected", which is how the
+  preview stopped rendering while the dialog opened perfectly. The same applies
+  to `SCNR`, `ColorSaturation`, `CurvesTransformation`, `ChannelExtraction` and
+  `IntegerResample`. `tests/shim.js` mirrors this deliberately: a shim that put
+  them on the prototype would let the whole suite pass against an API that does
+  not exist.
+- **The bare `processEvents()` is deprecated** and warns on every call.
+  `fxProcessEvents()` prefers `CoreApplication.processEvents`.
+- **A thrown value is not always an `Error`.** Reading `.message` off a string
+  gives the literal word "undefined", which swallowed the cause of the failure
+  above. `fxErrorText()` is what every catch clause reports through.
+
 A class body is strict mode, so everything inside those three constructors now
 is too. `tests/undefined.test.js` is what guards the accidental global that
 would previously have been silent.

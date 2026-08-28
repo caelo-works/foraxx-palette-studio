@@ -152,14 +152,17 @@ function __fxMakeProcess( name )
 }
 
 var PixelMath = __fxMakeProcess( 'PixelMath' );
-// The sample format enumerators, as distinguishable values rather than the
-// integers PixInsight uses: a test that asserts on them should fail loudly if
-// the wrapper ever picks the wrong one.
-PixelMath.prototype.f32 = 'f32';
-PixelMath.prototype.f64 = 'f64';
-PixelMath.prototype.SameAsTarget = 'SameAsTarget';
-PixelMath.prototype.RGB = 'RGB';
-PixelMath.prototype.Gray = 'Gray';
+// On the constructor, not the prototype. Under #engine v8 that is where
+// PixInsight puts them, and a shim that put them elsewhere would let the whole
+// suite pass against a model of the API that does not exist - which is exactly
+// how "PixelMath.newImageColorSpace(): signed integer value expected" reached a
+// user. Distinguishable strings rather than the real integers, so a test that
+// asserts on them fails loudly if the wrapper ever picks the wrong one.
+PixelMath.f32 = 'f32';
+PixelMath.f64 = 'f64';
+PixelMath.SameAsTarget = 'SameAsTarget';
+PixelMath.RGB = 'RGB';
+PixelMath.Gray = 'Gray';
 
 var HDRMultiscaleTransform = __fxMakeProcess( 'HDRMultiscaleTransform' );
 var UnsharpMask = __fxMakeProcess( 'UnsharpMask' );
@@ -167,9 +170,14 @@ var UnsharpMask = __fxMakeProcess( 'UnsharpMask' );
 // Lets a test take the 32-bit enumerator away without touching the wrapper.
 function fxTestSampleFormats( formats )
 {
-   delete PixelMath.prototype.f32;
-   delete PixelMath.prototype.f64;
-   if ( formats.f32 ) PixelMath.prototype.f32 = 'f32';
-   if ( formats.f64 ) PixelMath.prototype.f64 = 'f64';
+   delete PixelMath.f32;
+   delete PixelMath.f64;
+   if ( formats.f32 ) PixelMath.f32 = 'f32';
+   if ( formats.f64 ) PixelMath.f64 = 'f64';
    __fxSampleFormatWarned = false;
 }
+
+// The core application object. Only the event pump is reached from the bundled
+// libraries; it has nothing to pump under node.
+var CoreApplication = { processEvents: function () {} };
+function processEvents() {}

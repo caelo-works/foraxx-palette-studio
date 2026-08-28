@@ -25,6 +25,15 @@ releases.
   the old `this.__base__ = Dialog; this.__base__();` pattern calls a class
   constructor as a function.
 
+  Three more followed, each found the same way. The process enumerators are
+  static on the constructor under V8, not on the prototype - `PixelMath.RGB`,
+  not `PixelMath.prototype.RGB`, which is `undefined` and fails as "signed
+  integer value expected". That one let the dialog open perfectly and the
+  preview render nothing. `processEvents()` is deprecated and warns on every
+  call. And a thrown value is not always an `Error`, so reading `.message` off
+  it reported the failure above as "Preview failed: undefined" and took its own
+  cause with it.
+
 ## [3.1.0] - 2026-08-28
 
 No change reaches the starless image at the default settings. The **stars**

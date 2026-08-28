@@ -427,7 +427,7 @@ class ForaxxStudioDialog extends Dialog
                                  ? (this.notice + "  -  " + fxT( "renderingShort" ))
                                  : fxT( "rendering" );
          this.cursor = new Cursor( StdCursor_Wait );
-         processEvents();
+         fxProcessEvents();
 
          // processEvents can have closed the dialog. Starting a render here would
          // rebuild a set of hidden windows that nothing will ever clean up - and
@@ -1866,7 +1866,7 @@ class ForaxxStudioDialog extends Dialog
          Console.show();
          Console.writeln( "<end><cbr><br>" + TITLE + ": building the full resolution images..." );
          Console.flush();
-         processEvents();
+         fxProcessEvents();
 
          let started = (new Date).getTime();
          let created = null;
@@ -1878,8 +1878,8 @@ class ForaxxStudioDialog extends Dialog
          }
          catch ( error )
          {
-            Console.criticalln( "*** " + TITLE + ": " + error.message );
-            (new MessageBox( "The render failed:\n\n" + error.message,
+            Console.criticalln( "*** " + TITLE + ": " + fxErrorText( error ) );
+            (new MessageBox( "The render failed:\n\n" + fxErrorText( error ),
                              TITLE, StdIcon_Error, StdButton_Ok )).execute();
          }
          finally
@@ -2052,7 +2052,7 @@ class ForaxxStudioDialog extends Dialog
             // Give it room, let the layout run, then measure what the controls
             // chose for themselves rather than what they were forced into.
             this.leftPanel.setFixedHeight( this.__roomToBreathe );
-            processEvents();
+            fxProcessEvents();
             let content = this.measureLeftColumn();
             if ( content < 1 )
                return;
@@ -2063,7 +2063,7 @@ class ForaxxStudioDialog extends Dialog
             // Nothing lays the panel out, so its size is set outright: as wide as
             // the viewport, as tall as the column really needs.
             this.leftPanel.setFixedSize( width, height );
-            processEvents();
+            fxProcessEvents();
 
             let overflow = Math.max( 0, content - visible );
             // Range first, page second. Setting the page before the range leaves

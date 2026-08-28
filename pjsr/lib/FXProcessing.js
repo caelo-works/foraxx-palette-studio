@@ -30,6 +30,57 @@
 #define FX_TEMP_PREFIX "FXtmp_"
 
 /*
+ * Pump the event loop.
+ *
+ * The bare global is deprecated under V8 and says so on the console every time
+ * it is called - which, on a dialog that pumps between pipeline stages, is a
+ * warning per keystroke. CoreApplication.processEvents is the current spelling;
+ * the fallback is there because the minimum supported core is 1.9.0 and this
+ * has not been verified on every build in that range.
+ */
+function fxProcessEvents()
+{
+   try
+   {
+      if ( typeof CoreApplication != "undefined"
+        && typeof CoreApplication.processEvents == "function" )
+      {
+         CoreApplication.processEvents();
+         return;
+      }
+   }
+   catch ( x )
+   {
+   }
+   processEvents();
+}
+
+/*
+ * What a thrown thing has to say for itself.
+ *
+ * Under V8 the core does not always throw an Error: a string, or an object with
+ * no message property, both reach a catch clause. Reading .message off those
+ * yields the literal word "undefined", which is how a real failure came back as
+ * "Preview failed: undefined" and took its own cause with it.
+ */
+function fxErrorText( e )
+{
+   if ( e == null )
+      return "unknown error";
+   try
+   {
+      if ( typeof e.message == "string" && e.message.length > 0 )
+         return e.message;
+      let s = String( e );
+      return ( s.length > 0 && s != "[object Object]" ) ? s : "unknown error";
+   }
+   catch ( x )
+   {
+      return "unknown error";
+   }
+}
+
+/*
  * -----------------------------------------------------------------------------
  * Small helpers
  * -----------------------------------------------------------------------------
@@ -445,7 +496,7 @@ function fxViewChannelMedians( view )
       // Returning three equal medians would make the cast correction a silent
       // no-op, which is indistinguishable from it working. Say so.
       Console.warningln( "Background cast: could not measure the channel medians, "
-                       + "stage skipped: " + error.message );
+                       + "stage skipped: " + fxErrorText( error ) );
    }
    return out;
 }
@@ -539,12 +590,12 @@ function fxSampleFormat32()
    // Always produce 32-bit floating point output. The dynamic factors involve
    // fractional powers, and rounding those into a 16-bit integer container
    // introduces visible banding in the low-signal transition zones.
-   if ( typeof PixelMath.prototype.f32 != "undefined" )
-      return PixelMath.prototype.f32;
+   if ( typeof PixelMath.f32 != "undefined" )
+      return PixelMath.f32;
    // Wider than asked for still honours the invariant, which is "not an integer
    // container" rather than "exactly 32 bits".
-   if ( typeof PixelMath.prototype.f64 != "undefined" )
-      return PixelMath.prototype.f64;
+   if ( typeof PixelMath.f64 != "undefined" )
+      return PixelMath.f64;
    // Last resort, and worth saying out loud. On a 16-bit source this makes
    // every image the run produces a 16-bit integer - the starless, the stars,
    // the dynamic factors, the preview channels - and the transition zones the
@@ -556,7 +607,7 @@ function fxSampleFormat32()
                        + "will follow the source format, and 16-bit sources will band in the "
                        + "transition zones." );
    }
-   return PixelMath.prototype.SameAsTarget;
+   return PixelMath.SameAsTarget;
 }
 
 /*
@@ -595,7 +646,7 @@ function fxPixelMathNew( refView, newId, rgb, expr, show, swap )
    P.newImageWidth = 0;
    P.newImageHeight = 0;
    P.newImageAlpha = false;
-   P.newImageColorSpace = rgb ? PixelMath.prototype.RGB : PixelMath.prototype.Gray;
+   P.newImageColorSpace = rgb ? PixelMath.RGB : PixelMath.Gray;
    P.newImageSampleFormat = fxSampleFormat32();
    P.executeOn( refView, swap );
    return newId;
@@ -645,12 +696,12 @@ function fxApplyCurves1( view, kCurve, kSat, swap )
    if ( kCurve > 0 )
    {
       P.H  = fxScaleCurve( FX_CURVE1_H, kCurve );
-      P.Ht = CurvesTransformation.prototype.AkimaSubsplines;
+      P.Ht = CurvesTransformation.AkimaSubsplines;
    }
    if ( kSat > 0 )
    {
       P.S  = fxScaleCurve( FX_CURVE1_S, kSat );
-      P.St = CurvesTransformation.prototype.AkimaSubsplines;
+      P.St = CurvesTransformation.AkimaSubsplines;
    }
    P.executeOn( view, swap );
 }
@@ -661,7 +712,7 @@ function fxApplyCurves2( view, kCurve, swap )
       return;
    let P = new CurvesTransformation;
    P.H  = fxScaleCurve( FX_CURVE2_H, kCurve );
-   P.Ht = CurvesTransformation.prototype.AkimaSubsplines;
+   P.Ht = CurvesTransformation.AkimaSubsplines;
    P.executeOn( view, swap );
 }
 
@@ -671,7 +722,7 @@ function fxApplySaturation( view, kSat, swap )
       return;
    let P = new ColorSaturation;
    P.HS  = fxScaleDeltaCurve( FX_SATURATION_HS, kSat );
-   P.HSt = ColorSaturation.prototype.AkimaSubsplines;
+   P.HSt = ColorSaturation.AkimaSubsplines;
    P.hueShift = 0.000;
    // The original applies the selective boost twice; keeping both passes means
    // a strength of 1 reproduces its output exactly.
@@ -726,7 +777,7 @@ function fxApplyExtraSaturation( view, amount, swap )
       [ 0.50000, amount ],
       [ 1.00000, amount ]
    ];
-   P.HSt = ColorSaturation.prototype.AkimaSubsplines;
+   P.HSt = ColorSaturation.AkimaSubsplines;
    P.hueShift = 0.000;
    P.executeOn( view, swap );
 }
@@ -763,7 +814,7 @@ function fxApplyHDRMT( view, layers, swap )
       // installation. Everything after it is the process refusing this image,
       // which is a different problem and a different place to go looking.
       Console.warningln( "HDRMultiscaleTransform is not available in this installation, "
-                       + "multiscale stage skipped: " + error.message );
+                       + "multiscale stage skipped: " + fxErrorText( error ) );
       return { ran: false, layers: 0, why: "unavailable" };
    }
 
@@ -789,7 +840,7 @@ function fxApplyHDRMT( view, layers, swap )
    catch ( error )
    {
       Console.warningln( "HDRMultiscaleTransform failed, multiscale stage skipped: "
-                       + error.message );
+                       + fxErrorText( error ) );
       return { ran: false, layers: 0, why: "failed" };
    }
    return { ran: true, layers: used, why: null };
@@ -812,7 +863,7 @@ function fxApplyLocalContrast( view, amount, swap )
    catch ( error )
    {
       Console.warningln( "UnsharpMask is not available in this installation, local contrast "
-                       + "skipped: " + error.message );
+                       + "skipped: " + fxErrorText( error ) );
       return { ran: false, amount: 0, why: "unavailable" };
    }
 
@@ -828,7 +879,7 @@ function fxApplyLocalContrast( view, amount, swap )
    }
    catch ( error )
    {
-      Console.warningln( "UnsharpMask failed, local contrast skipped: " + error.message );
+      Console.warningln( "UnsharpMask failed, local contrast skipped: " + fxErrorText( error ) );
       return { ran: false, amount: 0, why: "failed" };
    }
    return { ran: true, amount: used, why: null };
@@ -943,14 +994,14 @@ function fxApplyClassicSCNR( view, p, swap )
    // Average neutral, always. The per-pixel expression modes and the hue
    // selectivity that used to sit alongside this are gone: they were a second
    // way of doing the same job with more knobs and no better result.
-   let method = SCNR.prototype.AverageNeutral;
+   let method = SCNR.AverageNeutral;
 
    if ( !fxIsZero( p.scnrGreen ) )
    {
       let P = new SCNR;
       P.amount = fxClamp( p.scnrGreen, 0, 1 );
       P.protectionMethod = method;
-      P.colorToRemove = SCNR.prototype.Green;
+      P.colorToRemove = SCNR.Green;
       P.preserveLightness = p.scnrPreserveL;
       P.executeOn( view, swap );
    }
@@ -963,7 +1014,7 @@ function fxApplyClassicSCNR( view, p, swap )
       let P = new SCNR;
       P.amount = fxClamp( p.scnrMagenta, 0, 1 );
       P.protectionMethod = method;
-      P.colorToRemove = SCNR.prototype.Green;
+      P.colorToRemove = SCNR.Green;
       P.preserveLightness = p.scnrPreserveL;
       P.executeOn( view, swap );
 
@@ -1021,10 +1072,10 @@ function fxCreateLuminance( colourId, outId, show )
    // both spellings are tried and a missing enumerator is fatal rather than
    // silently defaulting to RGB - which would extract red and call it
    // luminance, and then substitute it into the colour image.
-   let space = ChannelExtraction.prototype.CIELab;
+   let space = ChannelExtraction.CIELab;
    if ( space == undefined )
       space = ChannelExtraction.CIELab;
-   let fmt = ChannelExtraction.prototype.SameAsSource;
+   let fmt = ChannelExtraction.SameAsSource;
    if ( fmt == undefined )
       fmt = ChannelExtraction.SameAsSource;
    if ( space == undefined )
