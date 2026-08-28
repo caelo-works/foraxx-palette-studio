@@ -20,10 +20,10 @@ jobs:
         # matching it - it is about catching a suite that depends on one
         # runtime's behaviour, which would mean it is testing Node and not the
         # script.
-        node: ['20', '22']
+        node: ['22', '24']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
       - name: Run test harness
@@ -33,7 +33,7 @@ jobs:
     name: Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build the update package
         run: bash scripts/build-update-package.sh 0.0.0-ci
@@ -87,7 +87,7 @@ jobs:
           print('update-package.json is consistent with the built zip')
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ForaxxPaletteStudio-ci
           path: dist/*
@@ -96,7 +96,7 @@ jobs:
     name: Repository hygiene
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Shell scripts are sound
         run: |
