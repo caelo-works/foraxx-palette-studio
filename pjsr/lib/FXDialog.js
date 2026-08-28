@@ -278,6 +278,7 @@ function fxKeepWindowSize( dialog )
          catch ( x )
          {
          }
+         dialog.updateLeftScroll();
       }
    };
 }
@@ -1746,7 +1747,9 @@ function ForaxxStudioDialog()
    {
       let w = Math.max( 400, Math.min( 1400, Math.round( logical ) ) );
       FX.sideBarWidth = w;
-      this.leftPanel.setFixedWidth( Math.round( w * this.uiScale ) );
+      let px = Math.round( w * this.uiScale );
+      this.leftScroll.setFixedWidth( px );
+      this.updateLeftScroll();
    };
 
    this.setHistogramHeight = function( logical )
@@ -1962,28 +1965,152 @@ function ForaxxStudioDialog()
 
    this.leftSizer = new VerticalSizer;
    this.leftSizer.spacing = 4;
-   this.leftSizer.add( this.generalBar );
-   this.leftSizer.add( this.generalControl );
-   this.leftSizer.add( this.linearBar );
-   this.leftSizer.add( this.linearControl );
-   this.leftSizer.add( this.normalizeBar );
-   this.leftSizer.add( this.normalizeControl );
-   this.leftSizer.add( this.paletteBar );
-   this.leftSizer.add( this.paletteControl );
-   this.leftSizer.add( this.starsBar );
-   this.leftSizer.add( this.starsControl );
-   this.leftSizer.add( this.scnrBar );
-   this.leftSizer.add( this.scnrControl );
-   this.leftSizer.add( this.hdrBar );
-   this.leftSizer.add( this.hdrControl );
-   this.leftSizer.add( this.lumBar );
-   this.leftSizer.add( this.lumControl );
-   this.leftSizer.add( this.outputBar );
-   this.leftSizer.add( this.outputControl );
+
+   // Everything the column holds, in order, so its height can be measured.
+   this.leftItems = [];
+   this.fxAddLeft = function( control )
+   {
+      this.leftItems.push( control );
+      this.leftSizer.add( control );
+   };
+   this.fxAddLeft( this.generalBar );
+   this.fxAddLeft( this.generalControl );
+   this.fxAddLeft( this.linearBar );
+   this.fxAddLeft( this.linearControl );
+   this.fxAddLeft( this.normalizeBar );
+   this.fxAddLeft( this.normalizeControl );
+   this.fxAddLeft( this.paletteBar );
+   this.fxAddLeft( this.paletteControl );
+   this.fxAddLeft( this.starsBar );
+   this.fxAddLeft( this.starsControl );
+   this.fxAddLeft( this.scnrBar );
+   this.fxAddLeft( this.scnrControl );
+   this.fxAddLeft( this.hdrBar );
+   this.fxAddLeft( this.hdrControl );
+   this.fxAddLeft( this.lumBar );
+   this.fxAddLeft( this.lumControl );
+   this.fxAddLeft( this.outputBar );
+   this.fxAddLeft( this.outputControl );
    this.leftSizer.addStretch();
 
-   this.leftPanel = new Control( this );
+   /*
+    * The settings column scrolls.
+    *
+    * The hard part is not the ScrollBox, it is measuring the column. A panel
+    * inside a viewport is squeezed to the room available, and a height measured
+    * from a squeezed panel measures the squeeze - two earlier attempts died
+    * there, the second reporting sections of 38 pixels that need 100 to 250,
+    * with minHeight coming back as 0 and no natural height to be had from PJSR.
+    *
+    * So the panel is made enormous first. With room to spare nothing is
+    * compressed, every control settles at its own size, and THAT is what gets
+    * measured. The panel is then set to the measured height and the viewport
+    * becomes a window onto something genuinely bigger than itself.
+    *
+    * The sliding is manual. A ScrollBox keeps a position and draws a bar, but
+    * it does not move its viewport's children - measured, not assumed: with the
+    * range at 0..974 and the position driven to 300, the panel stayed at y 0.
+    * So the bar and the wheel both end up in scrollLeftTo(), the one place the
+    * offset is applied.
+    */
+   this.leftScroll = new ScrollBox( this );
+   this.leftScroll.autoScroll = false;
+   this.leftScroll.tracking = true;
+   // Scroll bars are not automatic: a ScrollBox hides both until asked. Setting
+   // a range on a hidden bar changes nothing anyone can see, which is why the
+   // column scrolled to the wheel long before it grew a bar to drag.
+   this.leftScroll.showScrollBars( false/*horizontal*/, true/*vertical*/ );
+   // The panel belongs to no sizer: a sizer would put it straight back at the
+   // next layout pass, and move() has to hold.
+   this.leftPanel = new Control( this.leftScroll.viewport );
    this.leftPanel.sizer = this.leftSizer;
+
+   this.scrollLeftTo = function( pos )
+   {
+      let overflow = Math.max( 0, this.leftScroll.maxVerticalScrollPosition );
+      pos = Math.max( 0, Math.min( overflow, Math.round( pos ) ) );
+      this.__leftScrollPos = pos;
+      try
+      {
+         if ( this.leftScroll.verticalScrollPosition != pos )
+            this.leftScroll.verticalScrollPosition = pos;
+         this.leftPanel.move( 0, -pos );
+      }
+      catch ( x ) {}
+   };
+
+   // Far taller than any column of sections could be, and only ever in force
+   // for the instant it takes the layout to settle.
+   this.__roomToBreathe = 20000;
+   this.__leftScrollPos = 0;
+   this.__leftLineHeight = 24;
+
+   this.measureLeftColumn = function()
+   {
+      let content = 0;
+      for ( let i = 0; i < this.leftItems.length; ++i )
+      {
+         let it = this.leftItems[i];
+         if ( it != null && it.visible )
+            content += it.height + this.leftSizer.spacing;
+      }
+      return content;
+   };
+
+   this.updateLeftScroll = function()
+   {
+      if ( this.leftScroll == null || this.leftPanel == null )
+         return;
+      try
+      {
+         // Give it room, let the layout run, then measure what the controls
+         // chose for themselves rather than what they were forced into.
+         this.leftPanel.setFixedHeight( this.__roomToBreathe );
+         processEvents();
+         let content = this.measureLeftColumn();
+         if ( content < 1 )
+            return;
+
+         let visible = Math.max( 1, this.leftScroll.viewport.height );
+         let width = Math.max( 1, this.leftScroll.viewport.width );
+         let height = Math.max( content, visible );
+         // Nothing lays the panel out, so its size is set outright: as wide as
+         // the viewport, as tall as the column really needs.
+         this.leftPanel.setFixedSize( width, height );
+         processEvents();
+
+         let overflow = Math.max( 0, content - visible );
+         // Range first, page second. Setting the page before the range leaves
+         // it to be clamped by whatever range follows, and a page as large as
+         // its range gives a thumb that fills the track.
+         this.leftScroll.setHorizontalScrollRange( 0, 0 );
+         this.leftScroll.setVerticalScrollRange( 0, overflow );
+         this.leftScroll.pageHeight = visible;
+         // Isolated: a wheel/arrow step is a nicety, not worth aborting the
+         // range update for if this build spells the property differently.
+         this.__leftLineHeight = Math.max( 8, Math.round( visible/20 ) );
+         try { this.leftScroll.lineHeight = this.__leftLineHeight; } catch ( x ) {}
+         this.scrollLeftTo( this.__leftScrollPos );
+      }
+      catch ( x )
+      {
+      }
+   };
+
+   this.leftScroll.viewport.onResize = function()
+   {
+      dlg.updateLeftScroll();
+   };
+   this.leftScroll.onVerticalScrollPosUpdated = function( pos )
+   {
+      dlg.scrollLeftTo( pos );
+   };
+   // A wheel notch is 120 eighths of a degree; three lines per notch is the
+   // usual desktop feel.
+   this.leftScroll.viewport.onMouseWheel = function( x, y, delta )
+   {
+      dlg.scrollLeftTo( dlg.__leftScrollPos - delta/120 * 3 * dlg.__leftLineHeight );
+   };
 
    this.rightSizer = new VerticalSizer;
    this.rightSizer.spacing = 0;
@@ -1998,7 +2125,7 @@ function ForaxxStudioDialog()
 
    this.columnsSizer = new HorizontalSizer;
    this.columnsSizer.spacing = 0;
-   this.columnsSizer.add( this.leftPanel );
+   this.columnsSizer.add( this.leftScroll );
    this.columnsSizer.addSpacing( 2 );
    this.columnsSizer.add( this.sideSplitter );
    this.columnsSizer.addSpacing( 2 );
@@ -2202,6 +2329,13 @@ function ForaxxStudioDialog()
 
    this.adjustToContents();
    this.setScaledMinSize( 980, 640 );
+
+   // Nothing reports itself visible before the dialog is shown, so the column
+   // cannot be measured until then.
+   this.onShow = function()
+   {
+      this.updateLeftScroll();
+   };
 }
 
 ForaxxStudioDialog.prototype = new Dialog;
