@@ -32,6 +32,7 @@ MODULE="$BUILD/module.js"
 # decides how dark an image comes out - is plain arithmetic worth testing.
 LIBS=(
    "$ROOT/pjsr/lib/FXParameters.js"
+   "$ROOT/pjsr/lib/FXStrings.js"
    "$ROOT/pjsr/lib/FXExpressions.js"
    "$ROOT/pjsr/lib/FXProcessing.js"
 )
@@ -76,6 +77,8 @@ module.exports = {
 
    // The defensive layer over every settings file and process icon in the
    // field. It had no assertions at all, and needed nothing but this line.
+   FX_UI: FX_UI,
+   fxT: fxT,
    fxSanitize: fxSanitize,
    fxApplyStyle: fxApplyStyle,
    fxResetAllLevels: fxResetAllLevels,

@@ -20,6 +20,7 @@
 #include <pjsr/StdButton.jsh>
 #include <pjsr/StdCursor.jsh>
 
+#include "FXStrings.js"
 #include "FXPreview.js"
 #include "FXHistogram.js"
 #include "FXSplitter.js"

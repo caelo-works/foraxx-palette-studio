@@ -329,6 +329,11 @@ var FX =
 
    // ---- preview ------------------------------------------------------------
    autoPreview:    true,
+   // The interface language, "en" or "fr". Not the language of the console
+   // report or of the image identifiers: those are what you paste into a forum
+   // post, and translating them would make two users' logs incomparable.
+   lang:           "en",
+
    paletteSchema:  1,       // bumped when a stored value changes meaning. A file
                             // written before 2.5.0 has no such key, so it loads
                             // as 1 and the migration below runs exactly once.
@@ -512,6 +517,7 @@ var FXPersisted =
    [ "makeFactors",      "boolean" ],
    [ "autoPreview",      "boolean" ],
    [ "paletteSchema",    "int"     ],
+   [ "lang",             "string"  ],
    [ "previewFit",       "boolean" ],
    [ "previewScale",     "real"    ],
    [ "previewDetail",    "int"     ],
@@ -596,6 +602,11 @@ function fxSanitize()
    FX.previewDetail   = clampInt( FX.previewDetail,   0, 4, 0 );
    FX.previewTarget   = clampInt( FX.previewTarget,   0, 2, 0 );
    FX.normalizeRef    = clampInt( FX.normalizeRef,    0, 2, 1 );
+   // A settings file can hold any string at all. An unknown language would make
+   // every lookup fall through to English anyway, but storing it back would
+   // keep the bad value alive across sessions.
+   if ( FX.lang != "en" && FX.lang != "fr" )
+      FX.lang = "en";
    // The floors are the natural minimums of the two panels: below 400 the
    // sliders truncate, and below 200 the levels group clips its own buttons.
    FX.sideBarWidth    = clampInt( FX.sideBarWidth,    400, 1400, 560 );
