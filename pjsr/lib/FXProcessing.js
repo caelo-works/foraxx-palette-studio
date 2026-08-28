@@ -1561,6 +1561,23 @@ function fxCollectStretch( p, stars )
 
    let views = { sii: p.siiStarsView, ha: p.haStarsView, oiii: p.oiiiStarsView };
    let out = { sii: null, ha: null, oiii: null };
+
+   // One curve for all three star channels, and it is always the Ha one.
+   //
+   // Per channel is right for the nebula, where the whole point is to rebalance
+   // line emission of very different strengths. It is wrong for stars: they are
+   // broadband sources, so the relative flux between the frames IS the colour,
+   // and lifting each channel by a different amount destroys it. Measured on
+   // the reference masters in HOO, where red carries only Ha and so nothing
+   // balances the Oiii lift - mean R/G/B 0.0144 / 0.0215 / 0.0245, blue 70%
+   // above red, a blue star field. Sharing one curve puts it at 0.0320 / 0.0268
+   // / 0.0245, the mild warmth a real population has.
+   //
+   // Ha rather than the reference channel, for two reasons: the star colour
+   // then does not move when the Reference combo does, and Ha's curve is the
+   // gentler one, which matters because the transfer compresses highlights and
+   // a harder curve pulls the three channels together into a greyer field.
+   let sharedM = (map.ha != null) ? map.ha.m : null;
    for ( let key in out )
    {
       if ( map[key] == null )
@@ -1584,7 +1601,7 @@ function fxCollectStretch( p, stars )
          if ( c0 <= 1.0e-6 )
             c0 = 0;
       }
-      out[key] = { c0: c0, m: map[key].m };
+      out[key] = { c0: c0, m: (sharedM != null) ? sharedM : map[key].m };
    }
    return out;
 }

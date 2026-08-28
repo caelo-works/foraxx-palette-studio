@@ -578,6 +578,13 @@ The same on every palette. The palette decides how the nebula is coloured, not w
 given — an HOO palette still hands the stars your Sii frame if you selected one. Only 2-channel
 mode changes the formula, because then there is no Sii at all.
 
+When **Channel normalization** or **Linear input** is on, the star frames are conditioned with
+**one curve for all three channels** — the Ha one — while each keeps its own black point. Per
+channel is right for the nebula, where the job is to rebalance line emission of very different
+strengths; it is wrong for stars, whose relative flux between the frames *is* their colour. Sharing
+the curve is what keeps the star field neutral-to-warm instead of taking on the nebula's rebalancing
+as a colour cast.
+
 | Control | What it does |
 |---|---|
 | **Star brightness** | `((3^k)*$T)/((3^k-1)*$T+1)` — fixes 0 and 1 and is monotonic, so it lifts faint stars hard without ever clipping a bright core. **0 leaves the stars exactly as the combination produced them.** Above about 5 on stars that were already stretched, the multiplier is 243 and every core goes flat white. |

@@ -94,6 +94,24 @@ signature means, not because anything currently exercises it.
 - **Identity at the default.** `fxGain(x, 1)` returns `x`; `fxMix(a, b, 0)`
   returns `b`. A control at its neutral position must emit no arithmetic at all.
 
+## Conditioning and the star frames
+
+Two rules, and they are separate.
+
+**Where the curve comes from.** The nebula, never the star frame. A star frame's
+median is its empty background, so solving it its own stretch puts the void on
+the target and drives every star past 0.99; the screen combination then cannot
+go below that floor. Only the black point is measured per frame.
+
+**Which curve.** Ha's, for all three star channels. Per channel is right for the
+nebula and wrong for stars: they are broadband sources, so the relative flux
+between the frames is their colour, and lifting each channel by a different
+amount destroys it. Measured in HOO, where red carries only Ha and nothing
+balances the Oiii lift, the field came out with blue 70% above red. Ha rather
+than the reference channel so the star colour does not move when the Reference
+combo does, and because the gentler curve keeps more colour - the transfer
+compresses highlights, so a harder curve pulls the three channels together.
+
 ## Output
 
 Floating point, whatever the source is. The dynamic factors involve fractional

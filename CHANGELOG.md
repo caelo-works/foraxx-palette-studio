@@ -21,8 +21,21 @@ releases.
 
   Stars are broadband sources: the palette decides how the nebula is coloured,
   not how much data the star mix is allowed. Only the channel count removes the
-  Sii now. **This changes the stars image on every HOO palette**; every other
-  palette is unaffected.
+  Sii now.
+- **And the blue cast itself is gone.** With only Ha and Oiii there is no Sii to
+  restore, and the field was still blue: the star frames were conditioned with
+  the nebula's curve *per channel*, so Oiii - lifted hard to match Ha in the
+  nebula - carried that lift into the star mix while red, being Ha alone, kept
+  none of it. Measured on the reference masters: mean R/G/B 0.0144 / 0.0215 /
+  0.0245, blue 70% above red.
+
+  All three star channels now share one curve, the Ha one, and each keeps its
+  own black point. Same masters: 0.0144 / 0.0118 / 0.0107, the mild warmth a
+  real stellar population has. Ha rather than the reference channel so the star
+  colour does not move when the Reference combo does.
+
+  **This changes the stars image wherever normalization or linear input is on.**
+  The starless image is untouched.
 
 ## [3.1.1] - 2026-08-28
 

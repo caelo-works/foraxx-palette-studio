@@ -215,10 +215,19 @@ const applied = ( t, x ) => fx.fxMTFValue( t.m, ( x - t.c0 ) / ( 1 - t.c0 ) );
    } );
 }
 
-// The star frames. This is 2.6.1, and it is the failure that made the whole
-// feature look unsalvageable: a star frame's median IS its empty background, so
-// solving it its own stretch puts the void on the target and saturates every
-// star. The curve comes from the nebula; only the black point is per frame.
+// The star frames, and the two separate rules that govern them.
+//
+// Where the curve comes from: the nebula, not the star frame. This is 2.6.1,
+// the failure that made the whole feature look unsalvageable - a star frame's
+// median IS its empty background, so solving it its own stretch puts the void
+// on the target and saturates every star. Only the black point is per frame.
+//
+// Which curve: Ha's, for all three channels. Per channel is right for the
+// nebula, where the point is to rebalance line emission of very different
+// strengths, and wrong for stars, which are broadband sources whose relative
+// flux between the frames is their colour. Lifting each channel differently
+// destroyed it - measured in HOO, where red carries only Ha and nothing
+// balances the Oiii lift, the star field came out with blue 70% above red.
 {
    fx.fxClearStatsCache();
    const p = LINEAR( {
@@ -231,9 +240,18 @@ const applied = ( t, x ) => fx.fxMTFValue( t.m, ( x - t.c0 ) / ( 1 - t.c0 ) );
    const st  = fx.fxCollectStretch( p, true );
 
    ok( neb != null && st != null, 'both sets are collected' );
-   [ 'sii', 'ha', 'oiii' ].forEach( k =>
-      eq( st[k].m, neb[k].m, k + ' star frame shares the nebula midtones curve' ) );
-   ok( st.ha.c0 !== neb.ha.c0, 'but keeps its own black point' );
+   eq( st.ha.m, neb.ha.m, 'the star curve is the nebula\'s Ha curve, not the frame\'s own' );
+   [ 'sii', 'oiii' ].forEach( k =>
+      eq( st[k].m, neb.ha.m, k + ' star frame takes the Ha curve too, not its own' ) );
+   // The nebula keeps a curve per channel; only the stars share one.
+   ok( neb.oiii.m !== neb.ha.m, 'the nebula still conditions each channel separately' );
+   ok( st.oiii.m !== neb.oiii.m, 'which is exactly what the star frames no longer follow' );
+   ok( st.ha.c0 !== neb.ha.c0, 'and the black point is the star frame\'s, not the nebula\'s' );
+   // These frames are nearly empty - medians around 3e-6 - so their black
+   // points fall under the 1e-6 floor and are solved as zero. That is the rule,
+   // not a coincidence: below it the expression writer emits no clip at all.
+   eq( st.ha.c0, 0, 'an empty star frame gets no black point subtracted' );
+   eq( st.oiii.c0, 0, 'nor does the other one' );
 
    // The void stays a void.
    ok( applied( st.ha, MASTERS.haStars.median ) < 0.01,
