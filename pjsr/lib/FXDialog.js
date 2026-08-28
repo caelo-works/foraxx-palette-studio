@@ -153,6 +153,7 @@ function fxNumericRow( dialog, name, onUpdate )
                                    fxFmt( range[0], range[2] ), fxFmt( range[1], range[2] ) )
               + "</i></p>";
       nc.label.text = label;
+      nc.label.setFixedWidth( dialog.labelWidth );
       nc.toolTip = tip;
       nc.label.toolTip = tip;
       nc.slider.toolTip = tip;
@@ -216,6 +217,7 @@ function fxComboRow( dialog, key, items, current, onSelect )
    row.retranslate = function()
    {
       label.text = fxT( key );
+      label.setFixedWidth( dialog.labelWidth );
       label.toolTip = fxT( key + "Tip" );
       combo.toolTip = fxT( key + "Tip" );
    };
@@ -234,13 +236,40 @@ function fxComboRow( dialog, key, items, current, onSelect )
    return row;
 }
 
-function fxSection( dialog, title, control, collapsed )
+/*
+ * A section bar whose title comes from the string table.
+ *
+ * The title is passed at construction, which is the only assignment PixInsight
+ * is certain to honour: setting SectionBar.title afterwards leaves the drawn
+ * label untouched, so a language switch used to change everything inside a
+ * section while its heading stayed in the language the dialog opened in.
+ * fxRetitleSection below tries the ways there are to repaint it.
+ */
+function fxSection( dialog, key, control, collapsed )
 {
-   let bar = new SectionBar( dialog, title );
+   let bar = new SectionBar( dialog, fxT( key ) );
+   bar.__titleKey = key;
    bar.setSection( control );
    if ( collapsed )
       control.hide();
    return bar;
+}
+
+/*
+ * Re-title a section bar in the current language. SectionBar.title is assigned
+ * first because it is the documented property; the label is then reached
+ * directly, because on this engine the property alone does not redraw. Each
+ * step is guarded: a bar that cannot be re-titled keeps the language it opened
+ * with, which is wrong but survivable, where a thrown error is not.
+ */
+function fxRetitleSection( bar )
+{
+   if ( bar == null || bar.__titleKey == null )
+      return;
+   let title = fxT( bar.__titleKey );
+   try { bar.title = title; } catch ( x ) {}
+   try { if ( bar.label != null ) bar.label.text = title; } catch ( x ) {}
+   try { bar.repaint(); } catch ( x ) {}
 }
 
 function fxGroupControl( dialog )
@@ -272,7 +301,29 @@ function ForaxxStudioDialog()
    // about a physical-to-logical helper existing.
    this.uiScale = this.logicalPixelsToPhysical( 1000 ) / 1000;
 
-   this.labelWidth = this.font.width( "Highlight compression:" ) + this.logicalPixelsToPhysical( 8 );
+   /*
+    * Wide enough for the longest label the CURRENT language actually uses.
+    * It was measured on one hard-coded English string, and French runs longer:
+    * "Point des basses lumieres :" and "Niveaux de posterisation :" were both
+    * clipped from the left, which reads as a rendering fault rather than a
+    * layout one. Recomputed on every language change, before the rows re-read
+    * their own labels.
+    */
+   this.measureLabelWidth = function()
+   {
+      let w = 0;
+      for ( let name in FXRanges )
+      {
+         let t = fxT( name );
+         if ( t != name )
+            w = Math.max( w, this.font.width( t ) );
+      }
+      w = Math.max( w, this.font.width( fxT( "normalizeRef" ) ) );
+      w = Math.max( w, this.font.width( fxT( "palette" ) ) );
+      w = Math.max( w, this.font.width( fxT( "imageName" ) ) );
+      this.labelWidth = w + this.logicalPixelsToPhysical( 8 );
+   };
+   this.measureLabelWidth();
    this.viewLabelWidth = this.font.width( "Oiii stars:" ) + this.logicalPixelsToPhysical( 8 );
 
    this.engine = new FXPreviewEngine;
@@ -527,13 +578,14 @@ function ForaxxStudioDialog()
       this.bannerLabel.text = fxT( "bannerLinear" );
       this.langLabel.text = fxT( "language" );
 
-      this.generalBar.title = fxT( "secGeneral" );
-      this.paletteBar.title = fxT( "secWeighting" );
-      this.starsBar.title = fxT( "secStars" );
-      this.normalizeBar.title = fxT( "secNormalize" );
-      this.scnrBar.title = fxT( "secScnr" );
-      this.hdrBar.title = fxT( "secHdr" );
-      this.lumBar.title = fxT( "secLuminance" );
+      fxRetitleSection( this.generalBar );
+      fxRetitleSection( this.paletteBar );
+      fxRetitleSection( this.starsBar );
+      fxRetitleSection( this.normalizeBar );
+      fxRetitleSection( this.scnrBar );
+      fxRetitleSection( this.hdrBar );
+      fxRetitleSection( this.lumBar );
+      fxRetitleSection( this.outputBar );
       this.normalizeBar.toolTip = fxT( "normalizeBarTip" );
       this.scnrBar.toolTip = fxT( "scnrBarTip" );
       this.hdrBar.toolTip = fxT( "hdrBarTip" );
@@ -552,7 +604,6 @@ function ForaxxStudioDialog()
       // label-plus-body pair.
       this.styleLabel.text = fxT( "palette" );
       this.baseIdLabel.text = fxT( "imageName" );
-      this.outputBar.title = fxT( "secOutput" );
       this.previewGroup.title = fxT( "preview" );
       this.zoomFitButton.text = fxT( "fit" );
       this.zoomOneButton.text = fxT( "oneToOne" );
@@ -578,6 +629,7 @@ function ForaxxStudioDialog()
       this.previewDetailCombo.currentItem = keptDetail;
 
       this.styleCombo.toolTip = fxT( "styleNote" );
+      this.styleLabel.toolTip = fxT( "styleNote" );
       this.starsNote.text = fxT( "starsNote" );
       this.scnrNote.text = fxT( "scnrNote" );
       this.lumNote.text = fxT( "lumNote" );
@@ -622,6 +674,9 @@ function ForaxxStudioDialog()
       if ( keep >= 0 && keep < map.length )
          this.styleCombo.currentItem = keep;
 
+      this.measureLabelWidth();
+      this.styleLabel.setFixedWidth( this.labelWidth );
+      this.baseIdLabel.setFixedWidth( this.labelWidth );
       for ( let i = 0; i < this.translatableRows.length; ++i )
          this.translatableRows[i].retranslate();
    };
@@ -754,7 +809,6 @@ function ForaxxStudioDialog()
    this.styleCombo = new ComboBox( this );
    for ( let i = 0; i < FXStyles.length; ++i )
       this.styleCombo.addItem( this.styleName( FXStyles[i] ) );
-   this.styleLabel.toolTip = styleTip;
    this.styleCombo.onItemSelected = function( index )
    {
       if ( dlg.syncing )
@@ -994,7 +1048,7 @@ function ForaxxStudioDialog()
    reloadSizer.add( this.reloadButton );
    this.generalControl.sizer.add( reloadSizer );
 
-   this.generalBar = fxSection( this, "General", this.generalControl, false );
+   this.generalBar = fxSection( this, "secGeneral", this.generalControl, false );
 
    /* ==========================================================================
     * Channel normalization section
@@ -1028,7 +1082,8 @@ function ForaxxStudioDialog()
    this.normalizeControl.sizer.add( this.normOiiiRow );
    this.normalizeControl.sizer.add( this.normShadowRow );
 
-   this.normalizeBar = new SectionBar( this, "Channel normalization" );
+   this.normalizeBar = new SectionBar( this, fxT( "secNormalize" ) );
+   this.normalizeBar.__titleKey = "secNormalize";
    this.normalizeBar.setSection( this.normalizeControl );
    this.normalizeBar.enableCheckBox();
    this.normalizeBar.checkBox.checked = FX.normalizeEnabled;
@@ -1089,7 +1144,7 @@ function ForaxxStudioDialog()
    this.paletteControl.sizer.add( this.extraSatRow );
    this.paletteControl.sizer.add( this.posterRow );
 
-   this.paletteBar = fxSection( this, "Weighting, transition and colour", this.paletteControl, false );
+   this.paletteBar = fxSection( this, "secWeighting", this.paletteControl, false );
 
    /* ==========================================================================
     * Stars section
@@ -1116,7 +1171,7 @@ function ForaxxStudioDialog()
    this.starsControl.sizer.add( this.starStretchRow );
    this.starsControl.sizer.add( this.starSatRow );
 
-   this.starsBar = fxSection( this, "Stars", this.starsControl, false );
+   this.starsBar = fxSection( this, "secStars", this.starsControl, false );
 
    /* ==========================================================================
     * Green / magenta suppression section
@@ -1144,7 +1199,8 @@ function ForaxxStudioDialog()
    this.scnrControl.sizer.addSpacing( 2 );
    this.scnrControl.sizer.add( this.preserveLightnessCheck );
 
-   this.scnrBar = new SectionBar( this, "Green / magenta suppression" );
+   this.scnrBar = new SectionBar( this, fxT( "secScnr" ) );
+   this.scnrBar.__titleKey = "secScnr";
    this.scnrBar.setSection( this.scnrControl );
    this.scnrBar.enableCheckBox();
    this.scnrBar.checkBox.checked = FX.scnrEnabled;
@@ -1179,7 +1235,8 @@ function ForaxxStudioDialog()
    this.hdrControl.sizer.add( this.hdrLayersRow );
    this.hdrControl.sizer.add( this.localContrastRow );
 
-   this.hdrBar = new SectionBar( this, "HDR and local contrast" );
+   this.hdrBar = new SectionBar( this, fxT( "secHdr" ) );
+   this.hdrBar.__titleKey = "secHdr";
    this.hdrBar.setSection( this.hdrControl );
    this.hdrBar.enableCheckBox();
    this.hdrBar.checkBox.checked = FX.hdrEnabled;
@@ -1208,7 +1265,8 @@ function ForaxxStudioDialog()
    this.lumControl.sizer.addSpacing( 4 );
    this.lumControl.sizer.add( this.lumApplyRow );
 
-   this.lumBar = new SectionBar( this, "Artificial luminance" );
+   this.lumBar = new SectionBar( this, fxT( "secLuminance" ) );
+   this.lumBar.__titleKey = "secLuminance";
    this.lumBar.setSection( this.lumControl );
    this.lumBar.enableCheckBox();
    this.lumBar.checkBox.checked = FX.makeLuminance;
@@ -1255,7 +1313,7 @@ function ForaxxStudioDialog()
    this.outputControl.sizer.add( this.combinedCheck );
    this.outputControl.sizer.add( this.factorsCheck );
 
-   this.outputBar = fxSection( this, "Output", this.outputControl, false );
+   this.outputBar = fxSection( this, "secOutput", this.outputControl, false );
 
    /* ==========================================================================
     * Preview panel
