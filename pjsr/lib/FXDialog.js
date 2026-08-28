@@ -245,11 +245,49 @@ function fxComboRow( dialog, key, items, current, onSelect )
  * section while its heading stayed in the language the dialog opened in.
  * fxRetitleSection below tries the ways there are to repaint it.
  */
+/*
+ * Collapsing a section must not resize the window.
+ *
+ * PixInsight's own idiom does the opposite: its handler calls adjustToContents()
+ * so the dialog shrinks to fit whatever is still open. That is reasonable for a
+ * dialog you fill in once and dismiss, and wrong for one you work in - every
+ * fold and unfold moves the preview, the panel widths and the window edges out
+ * from under the cursor.
+ *
+ * So the height is pinned across the toggle and handed back afterwards. The
+ * column simply has more or less in it; the window stays where the user put it.
+ */
+function fxKeepWindowSize( dialog )
+{
+   return function( bar, beginToggle )
+   {
+      if ( beginToggle )
+      {
+         dialog.__lockedHeight = dialog.height;
+         dialog.__lockedWidth = dialog.width;
+      }
+      else
+      {
+         try
+         {
+            dialog.setFixedSize( dialog.__lockedWidth, dialog.__lockedHeight );
+            dialog.adjustToContents();
+            dialog.setVariableSize();
+            dialog.setScaledMinSize( 980, 640 );
+         }
+         catch ( x )
+         {
+         }
+      }
+   };
+}
+
 function fxSection( dialog, key, control, collapsed )
 {
    let bar = new SectionBar( dialog, fxT( key ) );
    bar.__titleKey = key;
    bar.setSection( control );
+   bar.onToggleSection = fxKeepWindowSize( dialog );
    if ( collapsed )
       control.hide();
    return bar;
@@ -1119,6 +1157,7 @@ function ForaxxStudioDialog()
 
    this.linearBar = new SectionBar( this, fxT( "secLinear" ) );
    this.linearBar.__titleKey = "secLinear";
+   this.linearBar.onToggleSection = fxKeepWindowSize( this );
    this.linearBar.setSection( this.linearControl );
    this.linearBar.enableCheckBox();
    this.linearBar.checkBox.checked = FX.linearInput;
@@ -1169,6 +1208,7 @@ function ForaxxStudioDialog()
 
    this.normalizeBar = new SectionBar( this, fxT( "secNormalize" ) );
    this.normalizeBar.__titleKey = "secNormalize";
+   this.normalizeBar.onToggleSection = fxKeepWindowSize( this );
    this.normalizeBar.setSection( this.normalizeControl );
    this.normalizeBar.enableCheckBox();
    this.normalizeBar.checkBox.checked = FX.normalizeEnabled;
@@ -1286,6 +1326,7 @@ function ForaxxStudioDialog()
 
    this.scnrBar = new SectionBar( this, fxT( "secScnr" ) );
    this.scnrBar.__titleKey = "secScnr";
+   this.scnrBar.onToggleSection = fxKeepWindowSize( this );
    this.scnrBar.setSection( this.scnrControl );
    this.scnrBar.enableCheckBox();
    this.scnrBar.checkBox.checked = FX.scnrEnabled;
@@ -1322,6 +1363,7 @@ function ForaxxStudioDialog()
 
    this.hdrBar = new SectionBar( this, fxT( "secHdr" ) );
    this.hdrBar.__titleKey = "secHdr";
+   this.hdrBar.onToggleSection = fxKeepWindowSize( this );
    this.hdrBar.setSection( this.hdrControl );
    this.hdrBar.enableCheckBox();
    this.hdrBar.checkBox.checked = FX.hdrEnabled;
@@ -1352,6 +1394,7 @@ function ForaxxStudioDialog()
 
    this.lumBar = new SectionBar( this, fxT( "secLuminance" ) );
    this.lumBar.__titleKey = "secLuminance";
+   this.lumBar.onToggleSection = fxKeepWindowSize( this );
    this.lumBar.setSection( this.lumControl );
    this.lumBar.enableCheckBox();
    this.lumBar.checkBox.checked = FX.makeLuminance;
