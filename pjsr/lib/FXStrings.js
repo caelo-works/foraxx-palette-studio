@@ -71,6 +71,30 @@ var FX_UI =
       noteAlreadyStretched: "the auto stretch is on but these channels already look stretched",
       linearMethodStf:  "Screen transfer (STF)",
       linearMethodStat: "Statistical stretch",
+      linearMethodGhs:  "GeneralizedHyperbolicStretch",
+      ghsD:           "Stretch factor (D):",
+      ghsDTip:        "<p>How hard the curve lifts. 0 leaves the channel alone; 1 is a moderate "
+                    + "stretch and a sensible place to start.</p>"
+                    + "<p>GHS concentrates its contrast around the symmetry point below, so this "
+                    + "raises the faint signal without flattening the bright cores the way a plain "
+                    + "midtones curve does at the same strength.</p>",
+      ghsB:           "Local intensity (b):",
+      ghsBTip:        "<p>Shapes the contrast around the symmetry point. 0 is the neutral, "
+                    + "hyperbolic form.</p>"
+                    + "<p>Negative values spread the stretch over a wider range of brightness, "
+                    + "positive ones concentrate it more tightly around the symmetry point. Leave "
+                    + "it at 0 until the stretch factor is where you want it.</p>",
+      ghsAutoSP:      "Place the symmetry point automatically",
+      ghsAutoSPTip:   "<p>Put the symmetry point on each channel's own median, which is where its "
+                    + "sky background sits and is the level the stretch should pivot around.</p>"
+                    + "<p>Untick to place it by hand. Automatic is per channel, so Sii, Ha and "
+                    + "Oiii each pivot around their own background rather than a shared guess.</p>",
+      ghsSP:          "Symmetry point (SP):",
+      ghsSPTip:       "<p>The brightness the stretch pivots around. Everything below it is "
+                    + "compressed, everything above expanded.</p>"
+                    + "<p>It belongs on the sky background. Placing it too high crushes the faint "
+                    + "signal; too low and the background is lifted into the midtones. Only "
+                    + "editable with the automatic placement off.</p>",
       linearMethod:   "Method:",
       linearMethodTip: "<p><b>Screen transfer</b> places the black point at the shadows clip below "
                     + "the median, exactly as PixInsight's own auto stretch does.</p>"
@@ -478,6 +502,32 @@ var FX_UI =
       noteAlreadyStretched: "l'auto-stretch est actif mais ces couches semblent d\u00e9j\u00e0 stretch\u00e9es",
       linearMethodStf:  "Transfert d'\u00e9cran (STF)",
       linearMethodStat: "Stretch statistique",
+      linearMethodGhs:  "GeneralizedHyperbolicStretch",
+      ghsD:           "Facteur de stretch (D) :",
+      ghsDTip:        "<p>Avec quelle force la courbe rel\u00e8ve. 0 laisse la couche intacte ; 1 est "
+                    + "un stretch mod\u00e9r\u00e9 et un bon point de d\u00e9part.</p>"
+                    + "<p>GHS concentre son contraste autour du point de sym\u00e9trie ci-dessous : "
+                    + "il rel\u00e8ve donc le signal faible sans aplatir les c\u0153urs brillants comme "
+                    + "le ferait une simple courbe de tons moyens \u00e0 force \u00e9gale.</p>",
+      ghsB:           "Intensit\u00e9 locale (b) :",
+      ghsBTip:        "<p>Fa\u00e7onne le contraste autour du point de sym\u00e9trie. 0 est la forme "
+                    + "hyperbolique neutre.</p>"
+                    + "<p>Les valeurs n\u00e9gatives \u00e9talent le stretch sur une plage de luminosit\u00e9 "
+                    + "plus large, les positives le resserrent autour du point de sym\u00e9trie. "
+                    + "Laissez-la \u00e0 0 tant que le facteur de stretch n'est pas r\u00e9gl\u00e9.</p>",
+      ghsAutoSP:      "Placer le point de sym\u00e9trie automatiquement",
+      ghsAutoSPTip:   "<p>Place le point de sym\u00e9trie sur la m\u00e9diane propre \u00e0 chaque couche, l\u00e0 "
+                    + "o\u00f9 se trouve son fond de ciel et le niveau autour duquel le stretch doit "
+                    + "pivoter.</p>"
+                    + "<p>D\u00e9cochez pour le placer \u00e0 la main. L'automatique est par couche : Sii, "
+                    + "Ha et Oiii pivotent chacun autour de leur propre fond plut\u00f4t que d'une "
+                    + "estimation commune.</p>",
+      ghsSP:          "Point de sym\u00e9trie (SP) :",
+      ghsSPTip:       "<p>La luminosit\u00e9 autour de laquelle le stretch pivote. Tout ce qui est en "
+                    + "dessous est compress\u00e9, tout ce qui est au-dessus est \u00e9tal\u00e9.</p>"
+                    + "<p>Sa place est sur le fond de ciel. Trop haut, il \u00e9crase le signal "
+                    + "faible ; trop bas, le fond monte dans les tons moyens. \u00c9ditable seulement "
+                    + "si le placement automatique est d\u00e9sactiv\u00e9.</p>",
       linearMethod:   "M\u00e9thode :",
       linearMethodTip: "<p>Le <b>transfert d'\u00e9cran</b> place le point noir \u00e0 l'\u00e9cr\u00eatage des "
                     + "basses lumi\u00e8res sous la m\u00e9diane, exactement comme l'auto-stretch de "

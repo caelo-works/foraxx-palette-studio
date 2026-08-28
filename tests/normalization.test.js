@@ -344,4 +344,60 @@ eq( fx.fxClamp( 5, 0, 1 ), 1, 'clamp high' );
 eq( fx.fxClamp( -5, 0, 1 ), 0, 'clamp low' );
 eq( fx.fxClamp( 0.5, 0, 1 ), 0.5, 'clamp passes what is already inside' );
 
+// ---------------------------------------------------------------------------
+// GeneralizedHyperbolicStretch, the third method.
+//
+// It is a process rather than an expression, so it cannot be folded into the
+// combination the way a black point and a midtones balance can. What is
+// asserted here is the consequence: with GHS selected the expression carries no
+// stretch of its own, because the channels are conditioned into copies before
+// it runs. Both together would stretch twice.
+// ---------------------------------------------------------------------------
+{
+   const GHS = over => P( Object.assign( { linearInput: true, linearMethod: 2 }, over ) );
+
+   fx.fxClearStatsCache();
+   eq( fx.fxConditionsChannels( GHS() ), false,
+       'GHS alone puts no transform in the expression - the process has already run' );
+   eq( fx.fxStretchMapFor( GHS(), master( 'g1', 'sii' ), master( 'g2', 'ha' ), master( 'g3', 'oiii' ) ),
+       null, 'and no map is produced' );
+
+   // Normalization still applies, and by then it is measuring what GHS
+   // produced: the caller points it at the conditioned copies.
+   ok( fx.fxConditionsChannels( GHS( { normalizeEnabled: true } ) ),
+       'normalization after GHS still conditions through the expression' );
+
+   // The two expression methods are unaffected.
+   ok( fx.fxConditionsChannels( P( { linearInput: true, linearMethod: 0 } ) ),
+       'the screen transfer method conditions through the expression' );
+   ok( fx.fxConditionsChannels( P( { linearInput: true, linearMethod: 1 } ) ),
+       'and so does the statistical stretch' );
+   eq( fx.fxConditionsChannels( P( {} ) ), false,
+       'and nothing conditions anything with the auto stretch off' );
+
+   // The absolute target belongs to the two expression methods only. Under GHS
+   // there is nothing for it to mean, and leaving it in force would stretch a
+   // second time on top of the process.
+   fx.fxClearStatsCache();
+   const both = GHS( { normalizeEnabled: true, normalizeRef: 1,
+                       normSii: 1, normHa: 1, normOiii: 1, normShadow: 0.25,
+                       linearTarget: 0.25 } );
+   const map = fx.fxStretchMapFor( both, master( 'g4', 'sii' ), master( 'g5', 'ha' ), master( 'g6', 'oiii' ) );
+   ok( map != null, 'GHS with normalization does produce a map' );
+   // Relative, not absolute: the reference channel is left where GHS put it.
+   near( map.ha.m, 0.5, 'the reference channel is untouched by the normalization step', 1e-9 );
+
+   // The symmetry point follows each channel's own background when automatic,
+   // and is a fixed value when it is not.
+   fx.fxClearStatsCache();
+   [ [ 'sii', 'sii' ], [ 'ha', 'ha' ], [ 'oiii', 'oiii' ] ].forEach( ( [ tag, k ] ) => {
+      const sp = fx.fxGhsSymmetryFor( master( 'sp_' + tag, k ), GHS( { ghsAutoSP: true } ) );
+      near( sp, MASTERS[k].median, tag + ' pivots on its own median', 1e-9 );
+   } );
+   eq( fx.fxGhsSymmetryFor( master( 'spm', 'ha' ), GHS( { ghsAutoSP: false, ghsSP: 0.1 } ) ), 0.1,
+       'a hand-placed symmetry point is used as given' );
+   eq( fx.fxGhsSymmetryFor( null, GHS( { ghsAutoSP: true, ghsSP: 0.1 } ) ), 0.1,
+       'and a missing view falls back to it rather than throwing' );
+}
+
 report( 'normalization' );

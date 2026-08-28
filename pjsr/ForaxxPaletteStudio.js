@@ -284,10 +284,18 @@ function fxReport( created, elapsedMs )
    // The auto stretch changes every pixel it touches, so it belongs in the
    // record that makes a run reproducible from the log alone.
    if ( FX.linearInput )
-      Console.writeln( format( "Auto stretch ........ %s, target %.3f, shadows clip %.2f sigma%s",
-                               FX.linearMethod == 1 ? "statistical stretch" : "screen transfer",
-                               FX.linearTarget, FX.linearClip,
-                               FX.linearNoClip ? ", black point never clipped" : "" ) );
+   {
+      if ( FX.linearMethod == 2 )
+         Console.writeln( format( "Auto stretch ........ GHS, D %.2f, b %.2f, SP %s",
+                                  FX.ghsD, FX.ghsB,
+                                  FX.ghsAutoSP ? "automatic (per channel median)"
+                                               : format( "%.4f", FX.ghsSP ) ) );
+      else
+         Console.writeln( format( "Auto stretch ........ %s, target %.3f, shadows clip %.2f sigma%s",
+                                  FX.linearMethod == 1 ? "statistical stretch" : "screen transfer",
+                                  FX.linearTarget, FX.linearClip,
+                                  FX.linearNoClip ? ", black point never clipped" : "" ) );
+   }
    if ( FX.normalizeEnabled )
       Console.writeln( format( "Normalization ....... reference %s, levels Sii %.2f Ha %.2f "
                              + "Oiii %.2f, shadow %.2f",

@@ -236,11 +236,25 @@ function fxChannelStats( view )
  */
 
 /*
+ * Whether anything conditions the channels through the EXPRESSION at all.
+ *
+ * GHS conditions them as a process instead, so with method 2 the expression
+ * carries a transform only when normalization asks for one - and by then it is
+ * measuring what GHS produced, not the linear source.
+ */
+function fxConditionsChannels( p )
+{
+   if ( p.normalizeEnabled )
+      return true;
+   return p.linearInput && p.linearMethod != 2;
+}
+
+/*
  * The black point for one channel, in source units.
  */
 function fxBlackPointFor( stats, p )
 {
-   if ( p.linearInput )
+   if ( p.linearInput && p.linearMethod != 2 )
    {
       // PixInsight's own screen transfer rule: the black point sits linearClip
       // MAD sigmas below the median. This is where the unused MAD finally goes.
@@ -308,7 +322,7 @@ function fxChannelTransform( view, p, key, referenceMedian )
 {
    if ( view == null || view.isNull )
       return null;
-   if ( !p.linearInput && !p.normalizeEnabled )
+   if ( !fxConditionsChannels( p ) )
       return null;
 
    let stats = fxChannelStats( view );
@@ -330,8 +344,12 @@ function fxChannelTransform( view, p, key, referenceMedian )
    // result came out 250x darker than either setting alone. The reference
    // channel drops out of the calculation entirely once there is an absolute
    // level to aim at.
-   let anchor = p.linearInput ? fxClamp( p.linearTarget, 0.001, 0.999 )
-                              : referenceMedian;
+   // Method 2 is GHS, which conditions the channels as a process before any of
+   // this runs. There is no absolute target to aim at here then - the anchor is
+   // the reference channel again, exactly as it is on already-stretched input.
+   let absolute = p.linearInput && p.linearMethod != 2;
+   let anchor = absolute ? fxClamp( p.linearTarget, 0.001, 0.999 )
+                         : referenceMedian;
    let target = fxClamp( anchor * fxNormalizationBoost( p, key ), 0.001, 0.999 );
 
    if ( !(xm > 0) )
@@ -360,13 +378,19 @@ function fxChannelTransform( view, p, key, referenceMedian )
  */
 function fxStretchMapFor( p, siiView, haView, oiiiView )
 {
-   if ( !p.linearInput && !p.normalizeEnabled )
+   if ( !fxConditionsChannels( p ) )
       return null;
 
    // The reference channel sets the median every other channel is moved onto -
-   // but only when there is no absolute target to aim at instead.
+   // but only when there is no absolute target to aim at instead. GHS is not
+   // such a target: it conditions the channels as a process beforehand, so the
+   // normalization that follows is relative again, exactly as it is on
+   // already-stretched input. Testing linearInput alone here left the reference
+   // median at zero under GHS, and every channel was then pushed down onto the
+   // 0.001 clamp instead of being left where the stretch had put it.
+   let absolute = p.linearInput && p.linearMethod != 2;
    let referenceMedian = 0;
-   if ( p.normalizeEnabled && !p.linearInput )
+   if ( p.normalizeEnabled && !absolute )
    {
       // A palette without Sii must not be normalised to a Sii image left
       // selected from an earlier session.
@@ -1160,6 +1184,14 @@ function fxValidate( p )
                       + "; all channels must share the same geometry." );
    }
 
+   // GeneralizedHyperbolicStretch ships with PixInsight 1.9, but an older or a
+   // stripped install may not have it. Say so here rather than throwing from
+   // inside the render - "validate, do not throw" is the rule this dialog
+   // follows everywhere else.
+   if ( p.linearInput && p.linearMethod == 2 && !fxGhsAvailable() )
+      problems.push( "The GeneralizedHyperbolicStretch process is not installed. "
+                   + "Choose another auto stretch method, or switch the auto stretch off." );
+
    if ( p.baseId.length == 0 )
       problems.push( "The output image name is empty." );
    else if ( !(/^[A-Za-z_][A-Za-z0-9_]*$/).test( p.baseId ) )
@@ -1233,6 +1265,108 @@ function fxRequireView( id )
  * histogram, so the triangles are always read against the image the levels
  * transform is about to be applied to, not against its own output.
  */
+
+/*
+ * -----------------------------------------------------------------------------
+ * GeneralizedHyperbolicStretch
+ * -----------------------------------------------------------------------------
+ *
+ * The third auto-stretch method, and the one that cannot be an expression.
+ *
+ * STF and the statistical stretch both reduce to a black point and a midtones
+ * balance, which fxStretch writes straight into the combination - one PixelMath
+ * pass does the conditioning, the weighting and the palette together. GHS is a
+ * process. So the channels are conditioned into copies first and the palette
+ * expressions then run against those copies, which costs one temporary image
+ * per channel and is the whole reason this lives inside fxRenderParts: the
+ * preview and Execute both go through that one function, and an invariant that
+ * depends on two callers remembering the same thing is not an invariant.
+ */
+
+/*
+ * Whether the module is installed. It ships with PixInsight 1.9, but a user on
+ * an older install or a stripped one should get a validation message rather
+ * than an exception from inside the render.
+ */
+function fxGhsAvailable()
+{
+   try
+   {
+      return typeof GeneralizedHyperbolicStretch != "undefined";
+   }
+   catch ( x )
+   {
+      return false;
+   }
+}
+
+/*
+ * The symmetry point for one channel.
+ *
+ * GHS asks you to place it on the histogram by hand, which is the difference
+ * between a good result and an average one - and is also why the process is
+ * unusable without one. Left on automatic it follows the channel's own median,
+ * which is where the sky background sits and is the level the stretch should
+ * pivot around.
+ */
+function fxGhsSymmetryFor( view, p )
+{
+   if ( !p.ghsAutoSP )
+      return fxClamp( p.ghsSP, 0, 1 );
+   if ( view == null || view.isNull )
+      return fxClamp( p.ghsSP, 0, 1 );
+   return fxClamp( fxChannelStats( view ).median, 0, 1 );
+}
+
+function fxApplyGHS( view, p, swap )
+{
+   try
+   {
+      let P = new GeneralizedHyperbolicStretch;
+      // Only the three the interface offers are set. Everything else keeps the
+      // process's own defaults rather than a guess at its enumerations, which
+      // would silently change meaning if the module ever renumbers them.
+      P.stretchFactor  = fxClamp( p.ghsD, 0, 10 );
+      P.localIntensity = fxClamp( p.ghsB, -5, 15 );
+      P.symmetryPoint  = fxGhsSymmetryFor( view, p );
+      P.executeOn( view, swap );
+      return true;
+   }
+   catch ( error )
+   {
+      Console.warningln( "GeneralizedHyperbolicStretch failed on " + view.id + ": "
+                       + error.message );
+      return false;
+   }
+}
+
+/*
+ * Copies each channel, stretches the copy, and returns the copies' identifiers.
+ * The copies are named under the temporary prefix so the ordinary sweep closes
+ * them even if the render throws.
+ */
+function fxConditionGHS( p, ids, show, swap, temps )
+{
+   if ( ids == null )
+      return null;
+   let out = { sii: null, ha: null, oiii: null };
+   for ( let key in out )
+   {
+      let id = ids[key];
+      if ( id == null )
+         continue;
+      let src = View.viewById( id );
+      if ( src == null || src.isNull )
+         continue;
+      let copy = fxPixelMathNew( src, FX_TEMP_PREFIX + "ghs_" + key, false, id, false, swap );
+      temps.push( copy );
+      let v = fxRequireView( copy );
+      fxApplyGHS( v, p, swap );
+      out[key] = copy;
+   }
+   return out;
+}
+
 function fxRenderParts( p, ids, starIds, outBase, opts )
 {
    let show = opts.show;
@@ -1263,6 +1397,8 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
       }
    };
 
+   let ghsTemps = [];
+
    try
    {
       let needStarless = opts.starless || opts.combined;
@@ -1270,6 +1406,47 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
 
       let base = fxUniqueBaseId( outBase );
       created.base = base;
+
+      // GHS conditions the channels in place of the expression's own stretch,
+      // so the map and the copies are mutually exclusive by construction.
+      if ( p.linearInput && p.linearMethod == 2 && fxGhsAvailable() )
+      {
+         ids = fxConditionGHS( p, ids, show, swap, ghsTemps );
+         if ( starIds != null )
+            starIds = fxConditionGHS( p, starIds, show, swap, ghsTemps );
+
+         // Channel normalization runs AFTER the stretch, on what the stretch
+         // produced. Measuring it on the linear source instead would put every
+         // channel back where GHS started - which is the 2.3.4(b) mistake in a
+         // different costume. So a copy of the parameters is pointed at the
+         // conditioned views with the auto stretch switched off, and the whole
+         // existing machinery is reused on them: the reference median, the
+         // per-channel boost, and the 2.6.1 shared-curve rule for the stars all
+         // come out right without a second implementation.
+         let pc = {};
+         for ( let k in p )
+            pc[k] = p[k];
+         pc.linearInput = false;
+         pc.siiView  = (ids.sii  != null) ? View.viewById( ids.sii )  : null;
+         pc.haView   = (ids.ha   != null) ? View.viewById( ids.ha )   : null;
+         pc.oiiiView = (ids.oiii != null) ? View.viewById( ids.oiii ) : null;
+         if ( starIds != null )
+         {
+            pc.siiStarsView  = (starIds.sii  != null) ? View.viewById( starIds.sii )  : null;
+            pc.haStarsView   = (starIds.ha   != null) ? View.viewById( starIds.ha )   : null;
+            pc.oiiiStarsView = (starIds.oiii != null) ? View.viewById( starIds.oiii ) : null;
+         }
+
+         // A shallow copy, written out rather than spread: this file targets
+         // whatever engine PixInsight gives it, and the entry script does not
+         // declare #engine v8.
+         let o = {};
+         for ( let k in opts )
+            o[k] = opts[k];
+         o.stretch = fxCollectStretch( pc, false );
+         o.starStretchMap = (starIds != null) ? fxCollectStretch( pc, true ) : null;
+         opts = o;
+      }
 
       let maskCtx = { sii: ids.sii, ha: ids.ha, oiii: ids.oiii,
                       stretch: opts.stretch || null };
@@ -1364,6 +1541,15 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
       // auto-preview on would otherwise leak one hidden image per keystroke.
       fxCloseCreated( created );
       throw error;
+   }
+   finally
+   {
+      // The conditioned copies have served their purpose the moment the
+      // expressions have run, and they are full-size - one per channel, and one
+      // per star channel again. On the error path they would otherwise be the
+      // largest thing left behind.
+      for ( let i = 0; i < ghsTemps.length; ++i )
+         fxCloseViewById( ghsTemps[i] );
    }
 }
 
@@ -1491,7 +1677,7 @@ function fxLooksLinear( p )
 
 function fxCollectStretch( p, stars )
 {
-   if ( !p.linearInput && !p.normalizeEnabled )
+   if ( !fxConditionsChannels( p ) )
       return null;
 
    let map = fxStretchMapFor( p, p.siiView, p.haView, p.oiiiView );

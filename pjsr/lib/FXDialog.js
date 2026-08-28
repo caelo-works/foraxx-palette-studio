@@ -600,6 +600,7 @@ function ForaxxStudioDialog()
       this.linearMethodRow.combo.clear();
       this.linearMethodRow.combo.addItem( fxT( "linearMethodStf" ) );
       this.linearMethodRow.combo.addItem( fxT( "linearMethodStat" ) );
+      this.linearMethodRow.combo.addItem( fxT( "linearMethodGhs" ) );
       this.linearMethodRow.combo.currentItem = FX.linearMethod;
       fxRetitleSection( this.linearBar );
       fxRetitleSection( this.generalBar );
@@ -1084,12 +1085,13 @@ function ForaxxStudioDialog()
     * ========================================================================== */
 
    this.linearMethodRow = fxComboRow( this, "linearMethod",
-      [ fxT( "linearMethodStf" ), fxT( "linearMethodStat" ) ],
+      [ fxT( "linearMethodStf" ), fxT( "linearMethodStat" ), fxT( "linearMethodGhs" ) ],
       FX.linearMethod,
       function( index )
       {
          if ( dlg.syncing ) return;
          FX.linearMethod = index;
+         dlg.updateControls();
          dlg.requestPreview();
       } );
 
@@ -1102,6 +1104,23 @@ function ForaxxStudioDialog()
    this.linearNoClipCheck = fxCheckBox( this, "linearNoClip", FX.linearNoClip,
       function( checked ) { FX.linearNoClip = checked; dlg.requestPreview(); }, this );
 
+   this.ghsDRow = fxNumericRow( this, "ghsD",
+      function( value ) { FX.ghsD = value; dlg.requestPreview(); } );
+
+   this.ghsBRow = fxNumericRow( this, "ghsB",
+      function( value ) { FX.ghsB = value; dlg.requestPreview(); } );
+
+   this.ghsAutoSPCheck = fxCheckBox( this, "ghsAutoSP", FX.ghsAutoSP,
+      function( checked )
+      {
+         FX.ghsAutoSP = checked;
+         dlg.updateControls();
+         dlg.requestPreview();
+      }, this );
+
+   this.ghsSPRow = fxNumericRow( this, "ghsSP",
+      function( value ) { FX.ghsSP = value; dlg.requestPreview(); } );
+
    this.linearNote = new Label( this );
    this.linearNote.useRichText = true;
    this.linearNote.wordWrapping = true;
@@ -1112,6 +1131,10 @@ function ForaxxStudioDialog()
    this.linearControl.sizer.add( this.linearTargetRow );
    this.linearControl.sizer.add( this.linearClipRow );
    this.linearControl.sizer.add( this.linearNoClipCheck );
+   this.linearControl.sizer.add( this.ghsDRow.sizer );
+   this.linearControl.sizer.add( this.ghsBRow.sizer );
+   this.linearControl.sizer.add( this.ghsAutoSPCheck );
+   this.linearControl.sizer.add( this.ghsSPRow.sizer );
 
    this.linearBar = new SectionBar( this, fxT( "secLinear" ) );
    this.linearBar.__titleKey = "secLinear";
@@ -2058,6 +2081,18 @@ function ForaxxStudioDialog()
     */
    this.updateControls = function()
    {
+      // The three methods do not share their controls. Showing all of them at
+      // once would be five sliders of which two are inert, and an inert slider
+      // is indistinguishable from a broken one.
+      let ghs = FX.linearMethod == 2;
+      this.linearTargetRow.enabled = !ghs;
+      this.linearClipRow.enabled = !ghs;
+      this.linearNoClipCheck.enabled = !ghs && FX.linearMethod == 0;
+      this.ghsDRow.enabled = ghs;
+      this.ghsBRow.enabled = ghs;
+      this.ghsAutoSPCheck.enabled = ghs;
+      this.ghsSPRow.enabled = ghs && !FX.ghsAutoSP;
+
       let style = fxStyle( FX );
       let needsSii = style.needsSii;
       let stars = FX.makeStars;

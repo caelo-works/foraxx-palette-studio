@@ -143,6 +143,7 @@ const GLOBALS = new Set( [
    'PixelMath','SCNR','Invert','CurvesTransformation','HistogramTransformation',
    'ChannelExtraction','ChannelCombination','ColorSaturation','UnsharpMask',
    'HDRMultiscaleTransform','LocalHistogramEqualization','IntegerResample','Resample',
+   'GeneralizedHyperbolicStretch','ArcsinhStretch','MultiscaleAdaptiveStretch',
    'ViewList','StdCursor_VerticalSplit','StdCursor_HorizontalSplit','__FILE__'
 ] );
 
