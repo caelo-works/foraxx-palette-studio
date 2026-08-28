@@ -23,7 +23,6 @@
 #include "FXStrings.js"
 #include "FXPreview.js"
 #include "FXHistogram.js"
-#include "FXSplitter.js"
 
 /*
  * -----------------------------------------------------------------------------
@@ -499,14 +498,15 @@ function ForaxxStudioDialog()
    this.notice = "";
 
    /*
-    * The banner says what the script will accept right now. With the auto
-    * stretch off it is the flat refusal 3.0.0 introduced; with it on, that
-    * refusal would be a lie - so it becomes what the stretch is for, and how
-    * to tell whether it worked.
+    * The banner only has something to say while the auto stretch is on, and
+    * then it says what the stretch is for and how to judge it. The flat refusal
+    * 3.0.0 put here in the other case is gone: linear input is supported again,
+    * so it was both false and the first thing anyone read.
     */
    this.updatePreviewStatusBanner = function()
    {
-      this.bannerLabel.text = FX.linearInput ? fxT( "bannerAuto" ) : fxT( "bannerLinear" );
+      this.bannerLabel.text = FX.linearInput ? fxT( "bannerAuto" ) : "";
+      this.bannerLabel.visible = FX.linearInput;
    };
 
    this.setNotice = function( text )
@@ -1740,7 +1740,14 @@ function ForaxxStudioDialog()
    this.levelsGroup.sizer.add( levelsButtonSizer );
 
    /* ==========================================================================
-    * Splitters
+    * Panel sizes
+    *
+    * Fixed, not draggable. The dividers were removed: the settings column
+    * scrolls now, so its width no longer decides what the user can reach, and
+    * two grips that looked like scroll bars sitting next to a scroll bar cost
+    * more in confusion than they bought in flexibility. The stored sizes are
+    * still read and still honoured - only the way to change them by hand is
+    * gone.
     * ========================================================================== */
 
    this.setSideBarWidth = function( logical )
@@ -1757,38 +1764,6 @@ function ForaxxStudioDialog()
       let h = Math.max( 200, Math.min( 600, Math.round( logical ) ) );
       FX.histogramHeight = h;
       this.levelsGroup.setFixedHeight( Math.round( h * this.uiScale ) );
-   };
-
-   this.sideBarStart = FX.sideBarWidth;
-   this.histogramStart = FX.histogramHeight;
-
-   this.sideSplitter = new FXSplitter( this, true );
-   this.sideSplitter.onDragBegin = function()
-   {
-      dlg.sideBarStart = FX.sideBarWidth;
-   };
-   this.sideSplitter.onDrag = function( delta )
-   {
-      dlg.setSideBarWidth( dlg.sideBarStart + delta / dlg.uiScale );
-   };
-   this.sideSplitter.onReset = function()
-   {
-      dlg.setSideBarWidth( FXDefaults.sideBarWidth );
-   };
-
-   this.histogramSplitter = new FXSplitter( this, false );
-   this.histogramSplitter.onDragBegin = function()
-   {
-      dlg.histogramStart = FX.histogramHeight;
-   };
-   this.histogramSplitter.onDrag = function( delta )
-   {
-      // The histogram sits below the preview, so dragging down shrinks it.
-      dlg.setHistogramHeight( dlg.histogramStart - delta / dlg.uiScale );
-   };
-   this.histogramSplitter.onReset = function()
-   {
-      dlg.setHistogramHeight( FXDefaults.histogramHeight );
    };
 
    /* ==========================================================================
@@ -2115,9 +2090,7 @@ function ForaxxStudioDialog()
    this.rightSizer = new VerticalSizer;
    this.rightSizer.spacing = 0;
    this.rightSizer.add( this.previewGroup, 100 );
-   this.rightSizer.addSpacing( 2 );
-   this.rightSizer.add( this.histogramSplitter );
-   this.rightSizer.addSpacing( 2 );
+   this.rightSizer.addSpacing( 4 );
    this.rightSizer.add( this.levelsGroup );
 
    this.rightPanel = new Control( this );
@@ -2126,9 +2099,7 @@ function ForaxxStudioDialog()
    this.columnsSizer = new HorizontalSizer;
    this.columnsSizer.spacing = 0;
    this.columnsSizer.add( this.leftScroll );
-   this.columnsSizer.addSpacing( 2 );
-   this.columnsSizer.add( this.sideSplitter );
-   this.columnsSizer.addSpacing( 2 );
+   this.columnsSizer.addSpacing( 6 );
    this.columnsSizer.add( this.rightPanel, 100 );
 
    // Every control exists by now, so the table can be read into all of them.
@@ -2311,6 +2282,9 @@ function ForaxxStudioDialog()
       this.initialised = true;
       this.updateControls();
       this.applyZoom();
+      // Nothing reports itself visible before the dialog is shown, so the
+      // settings column cannot be measured until here.
+      this.updateLeftScroll();
       this.requestPreview();
    };
 
@@ -2330,12 +2304,6 @@ function ForaxxStudioDialog()
    this.adjustToContents();
    this.setScaledMinSize( 980, 640 );
 
-   // Nothing reports itself visible before the dialog is shown, so the column
-   // cannot be measured until then.
-   this.onShow = function()
-   {
-      this.updateLeftScroll();
-   };
 }
 
 ForaxxStudioDialog.prototype = new Dialog;

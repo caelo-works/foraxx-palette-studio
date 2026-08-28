@@ -647,9 +647,10 @@ Entries that need Sii are hidden while you are in 2-channel mode.
 
 ## Layout
 
-The two dividers are draggable: one between the side bar and the preview, one between the preview
-and the histogram. Double click either to restore its default. Both sizes are remembered between
-sessions. Sections collapse from their title bars if you want more room.
+The settings column scrolls: drag its scroll bar, or use the mouse wheel over it. Sections collapse
+from their title bars, and collapsing one no longer resizes the window. The panel widths are fixed —
+the draggable dividers were removed once the column scrolled, because they sat next to the scroll
+bar and were routinely mistaken for it.
 
 ---
 

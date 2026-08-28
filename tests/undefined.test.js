@@ -112,7 +112,7 @@ function strip( src )
 const ROOT = path.join( __dirname, '..', 'pjsr' );
 const FILES = [ 'ForaxxPaletteStudio.js', 'lib/FXDialog.js', 'lib/FXExpressions.js',
                 'lib/FXHistogram.js', 'lib/FXParameters.js', 'lib/FXPreview.js',
-                'lib/FXProcessing.js', 'lib/FXSplitter.js', 'lib/FXStrings.js' ];
+                'lib/FXProcessing.js', 'lib/FXStrings.js' ];
 
 // PixInsight's own namespace, plus the JavaScript globals PJSR exposes. A name
 // missing from here shows up as a false positive, which is the safe direction:
@@ -262,6 +262,26 @@ ok( flagged === 0, 'every identifier the PJSR sources read is declared somewhere
       ok( dialog.indexOf( '.' + bad + ' =' ) < 0,
           'no handler is assigned to "' + bad + '"; PJSR fires "' + WRONG[bad] + '"' );
    } );
+
+   // A handler assigned twice on the same receiver, where the second silently
+   // replaces the first. This shipped: a second `this.onShow` added at the foot
+   // of the constructor to measure the settings column took the place of the
+   // one that set `initialised` and asked for the first preview, and the plugin
+   // stopped previewing altogether. Nothing else here would have seen it - both
+   // assignments are valid JavaScript and both names are real PJSR handlers.
+   for ( const f of FILES )
+   {
+      const src = strip( fs.readFileSync( path.join( ROOT, f ), 'utf8' ) );
+      const seen = {};
+      let h;
+      const hre = /(^|[^\w.])((?:this|dlg|dialog)(?:\.\w+)*\.on[A-Z]\w*)\s*=[^=]/g;
+      while ( ( h = hre.exec( src ) ) !== null )
+         seen[h[2]] = ( seen[h[2]] || 0 ) + 1;
+      Object.keys( seen ).forEach( name => {
+         ok( seen[name] === 1,
+             f + ': ' + name + ' is assigned once - a second assignment replaces the first' );
+      } );
+   }
 }
 
 report( 'undefined' );

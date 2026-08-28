@@ -16,14 +16,13 @@ rather than approximate.
 | `pjsr/lib/FXDialog.js` | The dialog and every control on it |
 | `pjsr/lib/FXPreview.js` | Downsampled render, caching, zoom and pan |
 | `pjsr/lib/FXHistogram.js` | The histogram widget and its levels markers |
-| `pjsr/lib/FXSplitter.js` | Draggable dividers |
 | `pjsr/assets/ForaxxPaletteStudio.svg` | Menu icon, installed to `rsc/icons/script/` |
 
 `FXParameters.js`, `FXExpressions.js` and `FXProcessing.js` load under the test
 shim, so the node harness bundles and drives all three — the expression writer,
 the parameter surface and the conditioning arithmetic. `FXDialog.js`,
-`FXPreview.js`, `FXHistogram.js` and `FXSplitter.js` build PixInsight controls at
-load time and are only parsed; they are verified by hand in PixInsight.
+`FXPreview.js` and `FXHistogram.js` build PixInsight controls at load time and
+are only parsed; they are verified by hand in PixInsight.
 
 ## The two invariants
 

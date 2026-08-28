@@ -45,8 +45,18 @@ cp "$REPO/pjsr/$NAME.js" "$DEST/"
 cp -R "$REPO/pjsr/lib/." "$DEST/lib/"
 cp -R "$REPO"/pjsr/assets/. "$DEST/assets/" 2>/dev/null || true
 
-# The build stamp is only substituted at packaging time; make it readable in dev.
-sed -i 's/__BUILD__/dev/g' "$DEST/$NAME.js"
+# The build stamp is only substituted at packaging time, so a dev staging has to
+# derive one. The tag is the version, so use it when there is one; before the
+# first tag, fall back to the newest released heading in the changelog. Either
+# way the dialog shows a real number rather than the word "dev", which read as a
+# bug in the footer.
+stamp="$( git -C "$REPO" describe --tags --abbrev=0 2>/dev/null || true )"
+if [ -z "$stamp" ]; then
+   stamp="$( grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "$REPO/CHANGELOG.md" \
+             | tr -d '#[] ' || true )"
+fi
+[ -n "$stamp" ] || stamp="0.0.0"
+sed -i "s/__BUILD__/${stamp}-dev/g" "$DEST/$NAME.js"
 
 # Report the Windows-style path when staged under /mnt/c.
 WINPATH="$DEST"

@@ -43,7 +43,6 @@ UNBUNDLED=(
    "$ROOT/pjsr/lib/FXDialog.js"
    "$ROOT/pjsr/lib/FXHistogram.js"
    "$ROOT/pjsr/lib/FXPreview.js"
-   "$ROOT/pjsr/lib/FXSplitter.js"
 )
 
 # Strip PI preprocessor directives, including backslash-continued ones, and CR

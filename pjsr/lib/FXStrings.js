@@ -40,10 +40,6 @@ var FX_UI =
                     + "<p>Image identifiers and console output are not translated: they are "
                     + "what you type and what you paste into a forum post.</p>",
 
-      // --- the banner ------------------------------------------------------
-      bannerLinear:   "<b>SUPPLY NON-LINEAR (STRETCHED) IMAGES.</b> Linear data is not supported: "
-                    + "stretch each channel before you run this.",
-
       // --- channels --------------------------------------------------------
       threeChannels:  "3 channels (Sii / Ha / Oiii)",
       twoChannels:    "2 channels (Ha / Oiii)",
@@ -451,11 +447,6 @@ var FX_UI =
                     + "<p>Les identifiants d'images et la sortie console ne sont pas traduits : "
                     + "c'est ce que vous tapez, et ce que vous collez dans un message de "
                     + "forum.</p>",
-
-      // --- le bandeau ------------------------------------------------------
-      bannerLinear:   "<b>FOURNISSEZ DES IMAGES NON LIN\u00c9AIRES (STRETCH\u00c9ES).</b> Les donn\u00e9es "
-                    + "lin\u00e9aires ne sont pas prises en charge : stretchez chaque couche avant "
-                    + "de lancer ce script.",
 
       // --- couches ---------------------------------------------------------
       threeChannels:  "3 couches (Sii / Ha / Oiii)",

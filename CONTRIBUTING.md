@@ -2,10 +2,15 @@
 
 ## Before anything else
 
-The script takes **non-linear (stretched) images only**. A black or washed-out
-result from linear data is the documented behaviour, not a bug — linear support
-was removed in 3.0.0 after four separate faults in the auto stretch failed to
-make it reliable. Please do not reopen it without new evidence.
+The script takes **non-linear (stretched) images** by default, and will also
+take linear ones with **Linear input (auto stretch)** switched on. That section
+was reinstated after 3.0.0 removed it: the four faults that made the earlier
+auto stretch unreliable each traced back to a target that was relative to the
+reference channel, so on linear data everything stayed on the floor and the
+image came out black. It now stretches to an absolute target instead.
+
+Linear support is validated against a reference set of linear masters. Please do
+not change the conditioning arithmetic without one.
 
 ## Getting set up
 
