@@ -4,7 +4,7 @@
 
 ### Narrowband palettes with a live preview that is the real thing, not an approximation
 
-[![Version](https://img.shields.io/badge/version-3.1.0-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
+[![Version](https://img.shields.io/badge/version-3.1.1-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
 [![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.9.0-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
 [![Status](https://img.shields.io/badge/status-stable-34d399?style=for-the-badge&labelColor=0f172a)](https://pixinsight-scripts.caelo.works/en/scripts/foraxx-palette-studio)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-94a3b8?style=for-the-badge&labelColor=0f172a)](LICENSE)
@@ -64,6 +64,14 @@ PixInsight 1.8.9 does not provide.
 <summary><b>Previous changelog</b></summary>
 
 <br>
+
+### What's new in 3.1.1
+
+- **Runs on PixInsight builds that ship no SpiderMonkey.** On macOS arm64 the
+  1.9.4 build has none, and the script failed on launch with *"The legacy 'sm'
+  JavaScript engine is not available in this PixInsight build."* It now declares
+  `#engine v8`, **which makes PixInsight 1.9.0 the minimum.** Nothing about the
+  images changes.
 
 ### What's new in 3.1.0
 

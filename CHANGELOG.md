@@ -11,6 +11,18 @@ releases.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-08-28
+
+**Minimum PixInsight is now 1.9.0.** The script runs on the V8 JavaScript
+engine, which 1.8.9 does not provide. Nothing about the images changes: the
+expressions, the defaults and the pipeline are untouched, and the harness pins
+them as before.
+
+**Validation.** Node harness green: 3923 assertions across nine suites. The
+whole pipeline was driven headless against the six reference masters
+(`PixInsight -n --automation-mode -r=probe.js --force-exit`): the dialog builds,
+the engine renders 1254x700, no error. The interface was then exercised by hand.
+
 ### Fixed
 - **The script runs on PixInsight builds without SpiderMonkey.** The macOS arm64
   build of 1.9.4 ships none, and the script died on launch with "The legacy 'sm'
