@@ -122,19 +122,19 @@ function fxSolveMTF( x, y )
    let den = x - 2 * x * y + y;
    if ( Math.abs( den ) < 1.0e-12 )
       return 0.5;
-   // The floor here has to match fxMTF's, or a balance solved for linear data
-   // is clamped away before the expression is even built. 0.001 - the old value
-   // - is roughly forty times larger than what a 3e-5 sky background needs, and
-   // clamping to it left the nebula at 0.008 instead of the requested 0.25.
+   // The floor here has to match fxMTF's, or a solved balance is clamped away
+   // before the expression is even built. 0.001 - the value this replaced - is
+   // roughly forty times larger than what a faint channel needs, and clamping to
+   // it left the result far below where it was asked to sit.
    let m = (x * (1 - y)) / den;
    if ( m < FX_MTF_MIN )
    {
       // Lowering the floor moved the failure rather than removing it: at
       // m = 1e-8 the curve is very nearly a step, so a channel that used to
       // come out black now comes out blown. Either way the user should hear it.
-      Console.warningln( format( "Auto stretch: the midtones balance needed (%.3e) is below "
-                               + "the %.0e floor. This channel has almost no signal above its "
-                               + "black point and will render blown out.", m, FX_MTF_MIN ) );
+      Console.warningln( format( "Channel normalization: the midtones balance needed (%.3e) is "
+                               + "below the %.0e floor. This channel has almost no signal above "
+                               + "its black point and will render blown out.", m, FX_MTF_MIN ) );
    }
    return fxClamp( m, FX_MTF_MIN, 0.999 );
 }
@@ -166,9 +166,9 @@ function fxChannelStats( view )
    {
       // fxClamp passes NaN straight through - NaN < lo and NaN > hi are both
       // false - so an unchecked NaN median would reach the expression writer.
-      Console.warningln( "Auto stretch: " + id + " has a non-finite median, most likely "
-                       + "NaN borders from registration. The channel will be left "
-                       + "unstretched." );
+      Console.warningln( "Channel normalization: " + id + " has a non-finite median, most "
+                       + "likely NaN borders from registration. The channel will be left "
+                       + "as it is." );
       median = 0;
    }
    let madn = 0;
@@ -215,18 +215,21 @@ function fxChannelStats( view )
  * Channel conditioning
  * -----------------------------------------------------------------------------
  *
- * One black point and one midtones transfer per channel covers both jobs:
+ * One black point and one midtones transfer per channel, and it runs only when
+ * Channel normalization is on - nothing here conditions a channel otherwise.
  *
- *   Linear input   - the black point comes from the median and MAD, and the
- *                    target is the requested stretch amount.
+ * It follows the published normalization method: the black point is
+ * interpolated between the channel's minimum and its median, and the target is
+ * the *reference channel's* median times a per-channel boost. Sii and Oiii are
+ * lifted to Ha's brightness by a curve stretch rather than a linear scale,
+ * which is what stops SHO being overwhelmingly green before a single pixel of
+ * colour correction is applied.
  *
- *   Normalization  - after the published normalization method: the black
- *                    point is interpolated between the channel's minimum and
- *                    its median, and the target is the *reference channel's*
- *                    median times a per-channel boost. Sii and Oiii are lifted
- *                    to Ha's brightness by a curve stretch rather than a linear
- *                    scale, which is what stops SHO being overwhelmingly green
- *                    before a single pixel of colour correction is applied.
+ * Note that the target is RELATIVE - it multiplies whatever the reference
+ * channel already sits at - so this cannot stand in for a stretch. On linear
+ * input the reference median is near zero and every channel stays near zero
+ * with it. That is why 3.0.0 withdrew linear support rather than leaning on
+ * this stage to cover it.
  *
  * The result is a { c0, m } pair per channel, which is all anything downstream
  * needs to know.
@@ -305,10 +308,11 @@ function fxChannelTransform( view, p, key, referenceMedian )
       // Every path out of here leaves the channel fully linear, which on linear
       // input means black. Saying nothing is what made the original report hard
       // to diagnose.
-      Console.warningln( format( "Auto stretch: %s has no signal above its black point "
-                               + "(median %.3e, black point %.3e). This channel is left "
-                               + "linear and will render black. Lower the shadows clip, or "
-                               + "tick \"Never clip the black point\".",
+      Console.warningln( format( "Channel normalization: %s has no signal above its black "
+                               + "point (median %.3e, black point %.3e). This channel is left "
+                               + "as it is. Lower \"Shadow point\" in the Channel normalization "
+                               + "section - or check the channel is stretched, because a linear "
+                               + "one lands here every time.",
                                  view.id, stats.median, c0 ) );
       return null;
    }

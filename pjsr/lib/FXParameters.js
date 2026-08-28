@@ -260,8 +260,6 @@ var FX =
    normOiii:       1.00,
    normShadow:     0.25,    // black point, interpolated from minimum to median
 
-   // ---- linear input -------------------------------------------------------
-
    // ---- channel weighting (soft gain, 1.0 = untouched) ---------------------
    gainSii:        1.00,
    gainHa:         1.00,
@@ -281,9 +279,8 @@ var FX =
    // ---- stars, independent of the starless image ---------------------------
    // The finishing chain below is shared by both combinations.
    starCleanGreen: true,    // the SCNR / mtf / SCNR / reverse-mtf pass
-   starStretch:    1.00,    // hyperbolic star brightening. 1.00 suits both
-                            // linear and already-stretched input, because
-                            // linear channels are conditioned first.
+   starStretch:    1.00,    // hyperbolic star brightening, on the stretched star
+                            // frames this script requires.
    starSaturation: 0.00,    // hue-weighted colour boost, 0 = leave the colour alone
 
 
