@@ -1,5 +1,8 @@
 dist/
 tests/build/
+# Reference frames for the release parity gate. Large, and not ours to
+# redistribute - they are somebody's actual sky. Never commit them.
+testset/
 *.xssk
 *.log
 .DS_Store
