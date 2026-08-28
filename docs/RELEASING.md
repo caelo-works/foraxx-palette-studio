@@ -11,11 +11,17 @@
    - `./scripts/stage-dev.sh`, then **Script → Feature Scripts → Add** the
      staged folder. The version label at the bottom of the dialog must read
      `vdev` — if it reads `v__BUILD__` the stamp substitution is broken.
-   - **The parity gate.** On a real Sii/Ha/Oiii set, *Foraxx — classic* at
+   - **The parity gate.** On the reference master set, *Foraxx — classic* at
      defaults, starless only. The result must be **pixel-identical** to the
      previous tag's output on the same data. This is the promise the README
      makes and the one thing a release may never quietly break. Compare with
      PixelMath `abs($T - previous)` and check the maximum is 0.
+
+     The reference set is a fixed, archived set of real Sii/Ha/Oiii masters —
+     the same frames every time, never a fresh stack. The gate compares two
+     builds, so any change in the input makes the comparison meaningless. Keep
+     it outside the repository (masters are large and not ours to redistribute)
+     and record here where it lives.
    - **Every palette builds.** Walk the whole style list in both 2- and
      3-channel mode. No exception dialog, no black output, the greyed controls
      grey out where 3.0.1 says they do.
@@ -69,6 +75,19 @@ in step by hand and no way for the zip name and the dialog to disagree.
 
 What makes a release major: anything that moves the pixels *Foraxx — classic*
 produces at defaults. That output is the compatibility surface.
+
+## Who validates what
+
+The node harness covers the expression strings. It cannot tell you whether an
+image looks right — no harness can, and the thing this script produces is
+judged by eye.
+
+That judgement came from the author, an astrophotographer working on his own
+narrowband masters, and it is the reason 3.0.1 is worth inheriting rather than
+rewriting: every default in it was settled against real data by someone who
+knew what the result should look like. It is also why the hand gates above are
+not optional ceremony. A release that passes CI and has not been looked at on
+real frames has not been validated at all.
 
 ## Code signing
 
