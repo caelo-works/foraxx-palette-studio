@@ -654,8 +654,10 @@ sessions. Sections collapse from their title bars if you want more room.
 ## Other notes
 
 - Settings persist between sessions, and the **New Instance** button (bottom left) saves the
-  current settings as a process icon. Only a run you accept with **Execute** becomes the new stored
-  default; closing with **Close** leaves your previous settings alone.
+  current settings as a process icon. Settings are stored **whenever the dialog closes**, whether
+  or not you ran anything — so a session spent tuning is not thrown away, but neither is one spent
+  inspecting a process icon you dropped in. Use **New Instance** to keep a configuration you care
+  about rather than relying on what is stored.
 - Output is always 32-bit floating point. The dynamic factors involve fractional powers, and
   rounding those into a 16-bit container produces visible banding in the transition zones.
 - Everything is validated before anything runs: missing channels, colour images where greyscale is

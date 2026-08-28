@@ -57,9 +57,12 @@ fixed palettes always were, and raising the amount on a fixed palette walks it
 to its Foraxx counterpart rather than somewhere else. Per channel rather than
 per slot would collapse green and blue to the same string in HOO.
 
-The masks always come from the **starless** context even when the values come
-from the star channels — `fxBuildExpressions( p, maskCtx, valueCtx )`. That is
-the original's behaviour and is deliberate.
+`fxBuildExpressions( p, maskCtx, valueCtx )` takes the masks from one context
+and the values from another, so the star channels could be combined through the
+nebula's masks — the original's behaviour. **The split is dormant today:** both
+call sites pass the same context twice, because since 2.4.0 the stars go through
+the broadband combination instead. The parameter is kept because it is what the
+signature means, not because anything currently exercises it.
 
 ### Numeric emission rules
 

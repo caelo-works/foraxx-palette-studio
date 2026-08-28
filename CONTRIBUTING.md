@@ -68,7 +68,10 @@ load time.
   forms literally. If a change moves one of those strings, that is a major
   version and the test is the place to argue it, not to update quietly.
 - **Settings migrate.** People have process icons. A renamed or re-meaning'd
-  stored key needs a migration path, as the 2.5.0 Foraxx-amount change did.
+  stored key needs a migration path, as the 2.5.0 Foraxx-amount change did — bump
+  `paletteSchema`, gate the migration on it, and give it a test in
+  `tests/settings.test.js` including whether running it twice moves the value
+  twice. Settings are written on every close, not only on Execute.
 - **No name in the interface.** The licence notice stays in the file header,
   where the licences that require it are satisfied, and nowhere on screen.
 

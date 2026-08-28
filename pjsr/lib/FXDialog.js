@@ -248,6 +248,11 @@ function ForaxxStudioDialog()
    {
       if ( !this.initialised || !FX.autoPreview )
          return;
+      // A notice survives the render it triggers, but not the next thing the
+      // user deliberately changes - otherwise "levels reset" would still be on
+      // screen ten adjustments later, describing something long since dealt
+      // with. setNotice is called after this, so the notice it sets stands.
+      this.notice = "";
       this.updateTimer.stop();
       this.updateTimer.start();
    };
@@ -269,7 +274,9 @@ function ForaxxStudioDialog()
 
       this.rendering = true;
       this.refreshButton.enabled = false;
-      this.previewStatus.text = "Rendering preview...";
+      this.previewStatus.text = (this.notice.length > 0)
+                              ? (this.notice + "  -  rendering preview...")
+                              : "Rendering preview...";
       this.cursor = new Cursor( StdCursor_Wait );
       processEvents();
 
@@ -327,6 +334,24 @@ function ForaxxStudioDialog()
    };
 
    /*
+    * A one-off message that has to outlive the render it triggers.
+    *
+    * "The levels have been reset", "Created ..." and the rest were written
+    * straight to the status label and then overwritten about half a second
+    * later by "Rendering preview..." from the refresh they themselves started.
+    * The behaviour was implemented, documented and imperceptible. A notice is
+    * held here instead and shown until the user does something else.
+    */
+   this.notice = "";
+
+   this.setNotice = function( text )
+   {
+      this.notice = text || "";
+      if ( this.notice.length > 0 )
+         this.previewStatus.text = this.notice;
+   };
+
+   /*
     * Everything the status line has to say about what is on screen.
     */
    this.updatePreviewStatus = function()
@@ -364,7 +389,9 @@ function ForaxxStudioDialog()
          note += "  -  star peaks are averaged at this sampling, so previewed stars are "
                + "dimmer than the final ones; use Detail 1:1 to judge them";
 
-      this.previewStatus.text = format( "%d x %d rendered at 1:%d, shown at %d%%",
+      let head = (this.notice.length > 0) ? (this.notice + "  -  ") : "";
+      this.previewStatus.text = head
+                             + format( "%d x %d rendered at 1:%d, shown at %d%%",
                                         image.width, image.height, this.engine.factor,
                                         Math.round( this.preview.effectiveZoom() * 100 ) )
                              + note;
@@ -595,10 +622,12 @@ function ForaxxStudioDialog()
    {
       let cleared = fxResetAllLevels();
       this.syncLevelsToTarget();
-      if ( cleared.length > 0 )
-         this.previewStatus.text = "Source image changed - levels reset ("
-                                 + cleared.join( ", " ) + ").";
+      // Ask for the render first: requestPreview clears any standing notice, so
+      // setting ours afterwards is what makes it outlive the render it starts.
       this.requestPreview();
+      if ( cleared.length > 0 )
+         this.setNotice( "Source image changed - levels reset ("
+                       + cleared.join( ", " ) + ")." );
    };
 
    this.siiRow = this.makeViewRow( "Sii:", "Sii stars:",
@@ -1405,7 +1434,7 @@ function ForaxxStudioDialog()
       let v = dlg.levels.autoValues();
       if ( v == null )
       {
-         dlg.previewStatus.text = "No histogram yet - render a preview first.";
+         dlg.setNotice( "No histogram yet - render a preview first." );
          return;
       }
       let k = dlg.levelKeys();
@@ -1635,12 +1664,6 @@ function ForaxxStudioDialog()
       fxReport( created, (new Date).getTime() - started );
       fxSaveSettings();
 
-      this.previewStatus.text = "Created " + created.starless
-                              + (created.stars ? (", " + created.stars) : "")
-                              + (created.combined ? (", " + created.combined) : "")
-                              + (created.luminance ? (", " + created.luminance) : "")
-                              + ".  Change palette and run again, or Close.";
-
       // Only now: fxReport and reloadViewLists both pump the event loop, and
       // the preview timer must not fire into half-released state.
       this.rendering = false;
@@ -1648,6 +1671,16 @@ function ForaxxStudioDialog()
       // The new outputs are not in the view lists; a rescan keeps them
       // selectable as sources for a later run.
       this.reloadViewLists();
+
+      // Last, because reloadViewLists ends in requestPreview, which clears any
+      // standing notice. The list of what was just created is the one thing the
+      // user needs off this screen, and it used to be wiped by the very refresh
+      // this function set in motion.
+      this.setNotice( "Created " + created.starless
+                    + (created.stars ? (", " + created.stars) : "")
+                    + (created.combined ? (", " + created.combined) : "")
+                    + (created.luminance ? (", " + created.luminance) : "")
+                    + ".  Change palette and run again, or Close." );
    };
 
    this.cancelButton = new PushButton( this );

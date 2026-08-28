@@ -844,10 +844,19 @@ function fxApplyStockSCNRGreen( view, amount, swap )
  * Green removal, then brightness, then colour - in that order, because a
  * saturation boost on unstretched stars finds very little to boost.
  *
- * Both sliders default to 0, which is deliberate. The brightness curve
- * multiplies by 3^k - 243 at k = 5 - which is right for a star image that is
- * still faint and ruinous for one already stretched, where it drives every core
- * to flat white. Having it on by default is what produced exactly that.
+ * Star colour boost defaults to 0. Star brightness defaults to 1.00, which 2.6.1
+ * chose deliberately: 3^1 = 3 is a gentle lift that suited the conditioned
+ * linear channels of the day and does no harm to an already-stretched star
+ * frame. It survives the withdrawal of linear input in 3.0.0 because changing
+ * it would move the stars and _combined outputs of every existing process icon.
+ *
+ * The curve is 3^k, so the slider is far more violent than its range suggests:
+ * 243 at k = 5, 6561 at k = 8. That is right for a star image still sitting
+ * faint and ruinous for one already stretched, where it drives every core to
+ * flat white - 2.4.0 shipped it applied unconditionally at 243 and that is
+ * exactly what happened. On non-linear input even the default 1.00 lifts a
+ * 0.05 star-frame background to 0.136, which the screen combination carries
+ * into _combined as a raised floor. Worth knowing before raising it.
  *
  * Deliberately absent: the per-channel background subtraction this function
  * carried in 2.3.1 to 2.3.5. It was reasoning about a residual pedestal that

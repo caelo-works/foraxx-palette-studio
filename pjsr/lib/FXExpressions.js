@@ -22,9 +22,15 @@
  *          t = max( 0, (x - c0) / (1 - c0) )
  *          y = MTF( m, t ) = (1-m)*t / (m - (2m-1)*t)
  *
- * c0 and m come from the channel's own median and MAD, exactly as PixInsight's
- * screen transfer function computes them, so an auto-stretched channel lands at
- * the requested target background.
+ * c0 and m come from Channel normalization, and from nothing else - there is no
+ * auto stretch in this version. c0 is interpolated between the channel's
+ * minimum and its median by the Shadow point control, and m is solved so the
+ * channel's median lands on the REFERENCE channel's median times a per-channel
+ * boost. That target is relative, which is why this cannot stand in for a
+ * stretch: on linear input the reference median is near zero and every channel
+ * follows it down. The header used to claim these came from the median and MAD
+ * "exactly as PixInsight's screen transfer function computes them"; they do
+ * not, and the MAD is measured but unused.
  *
  * Channel weighting is a *soft* gain rather than a plain multiplication:
  *

@@ -29,14 +29,50 @@ Nothing here changes what the script produces. The parity gate in
   of them no longer sends the user after two controls that no longer exist.
 
 ### Added
-- A node test harness: five suites, 1262 assertions, covering the PixelMath
+- A node test harness: six suites, 2295 assertions, covering the PixelMath
   expressions, numeric emission, the conditioning arithmetic, the parameter
-  surface and output naming.
+  surface, output naming, and the settings/process-icon defensive layer.
+- A full audit under `audit/2026-08-28/`: seven reports, each with its own
+  adversarial verification pass, and a consolidated backlog.
 - CI on every push: the harness on two Node versions, shellcheck, a package
   contract check mirroring the update site's ingest guards, and a build
   reproducibility check.
 - Distribution through the shared CaeloWorks update repository, alongside the
   zip on GitHub Releases.
+
+### Fixed
+- **A corrupt `styleIndex` no longer bricks the dialog.** `NaN` satisfies neither
+  bound of the range guard, so it passed through and `fxStyle` returned
+  `undefined`; the migrations dereference that before the sanitiser can clean it,
+  so one bad settings file threw out of `main()` and the dialog then failed to
+  open on every launch afterwards, with no recovery from inside the script.
+- **Schema-gated migrations run on the process-icon path again.** Settings are
+  loaded first, which advanced the schema, so an icon that predates it left it
+  advanced and every migration returned at its own first line.
+- **"Reset all" no longer rewinds the migration schema**, which re-armed one-shot
+  migrations — a Luminance preview target chosen afterwards came back as
+  Starless the next session.
+- **The preview no longer serves stale pixels.** Its downsampled copies are keyed
+  on image identifiers, so editing a channel in place left **Refresh** redrawing
+  the pre-edit data while its tooltip promised the opposite. Refresh now releases
+  them.
+- **The star channel cache survives a starless render.** It was being destroyed
+  on every one, making the documented independent caching half false.
+- **Hidden temporaries are no longer orphaned** when a channel copy throws
+  part-way through.
+- **The controls are locked during Execute.** Only three were disabled, while the
+  render reads the parameters incrementally — a slider nudged mid-run spliced two
+  parameter sets into one image, and the console report then described a run that
+  never happened.
+- **The linear-data warning is no longer discarded** whenever a multiscale stage
+  is on: one status message overwrote the line instead of appending to it.
+- **"Levels reset", "Created …" and "No histogram yet" stay on screen.** Each was
+  erased about half a second later by the preview refresh it had itself started.
+- **`fxValidate` validates the images the pipeline renders.** It re-resolved
+  stale view wrappers into a local and discarded them, so a window closed during
+  the session surfaced as a thrown error rather than the validation report.
+- **The HDR section is genuinely switched.** Its expression builder never read
+  the section's own switch.
 
 ### Removed
 - The empty "linear input" section headers left in the parameter object and the
