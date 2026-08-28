@@ -109,8 +109,11 @@ function fxResetButton( dialog, parent, toolTipText, onReset )
  * so hovering the label, the slider, the number box or the reset button all
  * explain the same thing.
  */
-function fxNumericRow( dialog, name, labelText, toolTipText, onUpdate )
+function fxNumericRow( dialog, name, onUpdate )
 {
+   // The label and the tooltip are read from the string table under this row's
+   // own name - "gainSii" and "gainSiiTip" - so a row translates itself and
+   // nothing has to remember it exists when the language changes.
    let range = FXRanges[name];
    // The style in force is the better reference for anything the style itself
    // sets: resetting the Foraxx amount on a fixed palette should put it back to
@@ -125,7 +128,6 @@ function fxNumericRow( dialog, name, labelText, toolTipText, onUpdate )
    let row = new Control( dialog );
 
    let nc = new NumericControl( row );
-   nc.label.text = labelText;
    nc.label.setFixedWidth( dialog.labelWidth );
    nc.setRange( range[0], range[1] );
    nc.slider.setRange( 0, 1000 );
@@ -135,25 +137,31 @@ function fxNumericRow( dialog, name, labelText, toolTipText, onUpdate )
    nc.setValue( FX[name] );
    nc.onValueUpdated = onUpdate;
 
-   let tip = toolTipText
-           + "<p><i>Range " + fxFmt( range[0], range[2] )
-           + " to " + fxFmt( range[1], range[2] )
-           + ". The button on the left puts it back to the palette's own starting "
-           + "value.</i></p>";
-
-   nc.toolTip = tip;
-   nc.label.toolTip = tip;
-   nc.slider.toolTip = tip;
-   nc.edit.toolTip = tip;
-   row.toolTip = tip;
-
-   let btn = fxResetButton( dialog, row, "Reset " + labelText + " to its default.", function()
+   let btn = fxResetButton( dialog, row, "", function()
    {
       let d = defaultOf();
       nc.setValue( d );
       onUpdate( d );
    } );
-   btn.toolTip = "Reset to the palette's starting value.<br/>" + toolTipText;
+
+   row.retranslate = function()
+   {
+      let label = fxT( name );
+      let body = fxT( name + "Tip" );
+      let tip = body
+              + "<p><i>" + format( fxT( "rangeNote" ),
+                                   fxFmt( range[0], range[2] ), fxFmt( range[1], range[2] ) )
+              + "</i></p>";
+      nc.label.text = label;
+      nc.toolTip = tip;
+      nc.label.toolTip = tip;
+      nc.slider.toolTip = tip;
+      nc.edit.toolTip = tip;
+      row.toolTip = tip;
+      btn.toolTip = fxT( "resetToPalette" ) + "<br/>" + body;
+   };
+   row.retranslate();
+   dialog.fxRegisterRow( row );
 
    row.sizer = new HorizontalSizer;
    row.sizer.spacing = 4;
@@ -373,6 +381,14 @@ function ForaxxStudioDialog()
     * The behaviour was implemented, documented and imperceptible. A notice is
     * held here instead and shown until the user does something else.
     */
+   // Every row that can retranslate itself registers here, so applyLanguage does
+   // not carry a list that has to be kept in step with the interface.
+   this.translatableRows = [];
+   this.fxRegisterRow = function( row )
+   {
+      this.translatableRows.push( row );
+   };
+
    this.notice = "";
 
    this.setNotice = function( text )
@@ -507,6 +523,9 @@ function ForaxxStudioDialog()
 
       this.threeChannelRadio.text = fxT( "threeChannels" );
       this.twoChannelRadio.text = fxT( "twoChannels" );
+
+      for ( let i = 0; i < this.translatableRows.length; ++i )
+         this.translatableRows[i].retranslate();
    };
 
    /* ==========================================================================
@@ -912,28 +931,16 @@ function ForaxxStudioDialog()
          dlg.requestPreview();
       } );
 
-   this.normSiiRow = fxNumericRow( this, "normSii", "Sii level:",
-      "<p>Where Sii's median lands, as a multiple of the reference channel's.</p>"
-      + "<p>1.00 matches it exactly. Below 1 leaves Sii darker than Ha, above 1 pushes it "
-      + "brighter.</p>",
+   this.normSiiRow = fxNumericRow( this, "normSii",
       function( value ) { FX.normSii = value; dlg.requestPreview(); } );
 
-   this.normHaRow = fxNumericRow( this, "normHa", "Ha level:",
-      "<p>Where Ha's median lands, as a multiple of the reference channel's. With Ha as the "
-      + "reference, 1.00 leaves it exactly as it was.</p>",
+   this.normHaRow = fxNumericRow( this, "normHa",
       function( value ) { FX.normHa = value; dlg.requestPreview(); } );
 
-   this.normOiiiRow = fxNumericRow( this, "normOiii", "Oiii level:",
-      "<p>Where Oiii's median lands, as a multiple of the reference channel's.</p>"
-      + "<p>Oiii is usually the weakest channel, and this is the slider that decides how much "
-      + "teal the palette ends up with.</p>",
+   this.normOiiiRow = fxNumericRow( this, "normOiii",
       function( value ) { FX.normOiii = value; dlg.requestPreview(); } );
 
-   this.normShadowRow = fxNumericRow( this, "normShadow", "Shadow point:",
-      "<p>Where the black point sits, interpolated from each channel's darkest pixel towards its "
-      + "median.</p>"
-      + "<p>0 puts it exactly on the minimum and discards nothing. Raising it deepens the "
-      + "background before the levels are matched.</p>",
+   this.normShadowRow = fxNumericRow( this, "normShadow",
       function( value ) { FX.normShadow = value; dlg.requestPreview(); } );
 
    this.normalizeControl = fxGroupControl( this );
@@ -969,71 +976,34 @@ function ForaxxStudioDialog()
     * Palette section
     * ========================================================================== */
 
-   this.gainSiiRow = fxNumericRow( this, "gainSii", "Sii weight:",
-      "<p>Weight applied to Sii before the combination.</p>"
-      + "<p>This is a soft gain, g&middot;x / (1 + (g-1)&middot;x). It keeps 0 at 0 and 1 at 1, so "
-      + "raising a channel brightens the faint signal without ever clipping the bright cores the "
-      + "way a plain multiplication would.</p>",
+   this.gainSiiRow = fxNumericRow( this, "gainSii",
       function( value ) { FX.gainSii = value; dlg.requestPreview(); } );
 
-   this.gainHaRow = fxNumericRow( this, "gainHa", "Ha weight:",
-      "<p>Weight applied to Ha before the combination. Soft gain, no highlight clipping.</p>"
-      + "<p>Ha drives the ho mask as well as the red and green channels, so raising it moves the "
-      + "gold / teal boundary outwards.</p>",
+   this.gainHaRow = fxNumericRow( this, "gainHa",
       function( value ) { FX.gainHa = value; dlg.requestPreview(); } );
 
-   this.gainOiiiRow = fxNumericRow( this, "gainOiii", "Oiii weight:",
-      "<p>Weight applied to Oiii before the combination. Soft gain, no highlight clipping.</p>"
-      + "<p>Oiii feeds both dynamic masks as well as the blue channel, so this slider has the "
-      + "strongest effect on where the palette switches between gold and teal.</p>",
+   this.gainOiiiRow = fxNumericRow( this, "gainOiii",
       function( value ) { FX.gainOiii = value; dlg.requestPreview(); } );
 
-   this.blendRow = fxNumericRow( this, "blend", "Foraxx amount:",
-      "<p>Interpolates between the plain fixed mapping and the full dynamic blend.</p>"
-      + "<p>0.00 gives the ordinary mapping, 1.00 the classic Foraxx result.</p>"
-      + "<p><b>Foraxx palettes only.</b> A fixed mapping such as SHO or HOO is a straight "
-      + "permutation of the channels, so there is nothing for this to interpolate; it and the two "
-      + "transition sliders grey out.</p>",
+   this.blendRow = fxNumericRow( this, "blend",
       function( value ) { FX.blend = value; dlg.requestPreview(); } );
 
-   this.hardORow = fxNumericRow( this, "hardO", "Sii/Ha transition:",
-      "<p>Hardness of the 'o' mask, o = Oiii^(k&middot;~Oiii), which decides where red comes from "
-      + "Sii and where it comes from Ha.</p>"
-      + "<p>1.00 is the original. Higher values delay and sharpen the switch; lower values bring "
-      + "it in earlier and soften it.</p>"
-      + "<p><b>Three-channel Foraxx only</b> - it needs Sii to transition from, and a fixed "
-      + "mapping has no transition.</p>",
+   this.hardORow = fxNumericRow( this, "hardO",
       function( value ) { FX.hardO = value; dlg.requestPreview(); } );
 
-   this.hardHORow = fxNumericRow( this, "hardHO", "Ha/Oiii transition:",
-      "<p>Hardness of the 'ho' mask, ho = (Ha&middot;Oiii)^(k&middot;~(Ha&middot;Oiii)), which "
-      + "drives the green channel and therefore the gold-to-teal boundary.</p>"
-      + "<p>Usually the most consequential slider here.</p>"
-      + "<p><b>Foraxx palettes only</b> - a fixed mapping has no transition to shape.</p>",
+   this.hardHORow = fxNumericRow( this, "hardHO",
       function( value ) { FX.hardHO = value; dlg.requestPreview(); } );
 
-   this.curveRow = fxNumericRow( this, "curveStrength", "Signature curves:",
-      "<p>Scales the two hue curves of the original script towards or away from the identity "
-      + "transform.</p>"
-      + "<p>These act on hue, not brightness: they rotate the reds towards gold and the blues "
-      + "towards teal, and are a large part of what makes a Foraxx image look the way it does.</p>",
+   this.curveRow = fxNumericRow( this, "curveStrength",
       function( value ) { FX.curveStrength = value; dlg.requestPreview(); } );
 
-   this.satRow = fxNumericRow( this, "satStrength", "Selective saturation:",
-      "<p>Scales the global saturation curve and both selective saturation passes, which boost a "
-      + "narrow band of golds and a narrow band of blues while leaving everything between them "
-      + "alone.</p>",
+   this.satRow = fxNumericRow( this, "satStrength",
       function( value ) { FX.satStrength = value; dlg.requestPreview(); } );
 
-   this.extraSatRow = fxNumericRow( this, "extraSaturation", "Overall saturation:",
-      "<p>A flat saturation boost across every hue, on top of the selective pass above.</p>"
-      + "<p>0 leaves it alone. This is what gives the Andy Warhol palette its poster colour.</p>",
+   this.extraSatRow = fxNumericRow( this, "extraSaturation",
       function( value ) { FX.extraSaturation = value; dlg.requestPreview(); } );
 
-   this.posterRow = fxNumericRow( this, "posterLevels", "Posterise levels:",
-      "<p>Quantises each channel to this many evenly spaced levels, so gradients become flat "
-      + "blocks of colour - the screen-print look.</p>"
-      + "<p>0 is off. 4 to 8 gives a recognisable poster; higher values are subtler.</p>",
+   this.posterRow = fxNumericRow( this, "posterLevels",
       function( value ) { FX.posterLevels = Math.round( value ); dlg.requestPreview(); } );
 
    this.paletteControl = fxGroupControl( this );
@@ -1077,23 +1047,10 @@ function ForaxxStudioDialog()
       FX.starCleanGreen,
       function( checked ) { FX.starCleanGreen = checked; dlg.requestPreview(); } );
 
-   this.starStretchRow = fxNumericRow( this, "starStretch", "Star brightness:",
-      "<p>A hyperbolic stretch, ((3^k)&middot;$T) / ((3^k-1)&middot;$T+1) - the midtones transfer "
-      + "function with m = 1/(1+3^k). It fixes 0 and 1 and is monotonic, so it lifts faint stars "
-      + "hard without ever clipping a bright core. 0 leaves them exactly as the combination "
-      + "produced them.</p>"
-      + "<p>1.00 is a gentle lift that suits stars which have already been stretched, which is "
-      + "what this script expects.</p>"
-      + "<p>At 5.00 the multiplier is 243, which on conditioned data lifts the empty background "
-      + "to 0.81 - a white sky. Raise it only if your stars really are still faint, and watch the "
-      + "preview.</p>",
+   this.starStretchRow = fxNumericRow( this, "starStretch",
       function( value ) { FX.starStretch = value; dlg.requestPreview(); } );
 
-   this.starSatRow = fxNumericRow( this, "starSaturation", "Star colour boost:",
-      "<p>A hue-weighted saturation boost, applied after the brightness stretch. This is what "
-      + "brings out the blue / white / amber spread of a star field.</p>"
-      + "<p>0 leaves the colour alone. 1.00 is a good starting point once the brightness is "
-      + "where you want it.</p>",
+   this.starSatRow = fxNumericRow( this, "starSaturation",
       function( value ) { FX.starSaturation = value; dlg.requestPreview(); } );
 
    this.starsControl = fxGroupControl( this );
@@ -1116,12 +1073,10 @@ function ForaxxStudioDialog()
       "<p>The stock <b>SCNR</b> process, average neutral, applied to the nebula only. Green is "
       + "removed directly; magenta is green in the inverse.</p>";
 
-   this.greenRow = fxNumericRow( this, "scnrGreen", "Green amount:",
-      "<p>The amount for the green pass. 0 is off, 1 removes all of the detected excess.</p>",
+   this.greenRow = fxNumericRow( this, "scnrGreen",
       function( value ) { FX.scnrGreen = value; dlg.requestPreview(); } );
 
-   this.magentaRow = fxNumericRow( this, "scnrMagenta", "Magenta amount:",
-      "<p>The amount for the magenta pass, run as invert, remove green, invert.</p>",
+   this.magentaRow = fxNumericRow( this, "scnrMagenta",
       function( value ) { FX.scnrMagenta = value; dlg.requestPreview(); } );
 
    this.preserveLightnessCheck = fxCheckBox( this, "Preserve lightness",
@@ -1160,31 +1115,16 @@ function ForaxxStudioDialog()
     * HDR and local contrast section
     * ========================================================================== */
 
-   this.hdrAmountRow = fxNumericRow( this, "hdrAmount", "Highlight compression:",
-      "<p>Pulls the tones above the knee back towards it. Nothing below the knee is touched at "
-      + "all.</p>"
-      + "<p>The correction is computed on luminance and applied as a single scale factor to all "
-      + "three channels, so hue and saturation survive intact. Entirely scale invariant, so the "
-      + "preview matches the final image exactly.</p>",
+   this.hdrAmountRow = fxNumericRow( this, "hdrAmount",
       function( value ) { FX.hdrAmount = value; dlg.requestPreview(); } );
 
-   this.hdrKneeRow = fxNumericRow( this, "hdrKnee", "Compression knee:",
-      "<p>The brightness above which compression starts. Everything darker is left completely "
-      + "alone.</p>"
-      + "<p>Lower it to reach further down into the midtones, raise it to affect only the very "
-      + "brightest cores.</p>",
+   this.hdrKneeRow = fxNumericRow( this, "hdrKnee",
       function( value ) { FX.hdrKnee = value; dlg.requestPreview(); } );
 
-   this.hdrLayersRow = fxNumericRow( this, "hdrLayers", "HDR multiscale layers:",
-      "<p>Runs a multiscale HDR transform with this many layers. 0 skips it.</p>"
-      + "<p>Far more effective than a curve on genuinely blown cores, but it works on spatial "
-      + "scales, so at a reduced preview sampling it can only be indicative. Check the result at "
-      + "1:1, or after Execute.</p>",
+   this.hdrLayersRow = fxNumericRow( this, "hdrLayers",
       function( value ) { FX.hdrLayers = Math.round( value ); dlg.requestPreview(); } );
 
-   this.localContrastRow = fxNumericRow( this, "localContrast", "Local contrast:",
-      "<p>A large scale unsharp mask on the luminance, to put back structure that highlight "
-      + "compression flattens. Also scale dependent, so the preview is indicative.</p>",
+   this.localContrastRow = fxNumericRow( this, "localContrast",
       function( value ) { FX.localContrast = value; dlg.requestPreview(); } );
 
    this.hdrControl = fxGroupControl( this );
@@ -1224,11 +1164,7 @@ function ForaxxStudioDialog()
       + "below the preview - it belongs to whichever image is on screen, and the layer keeps its "
       + "own three markers.</p>";
 
-   this.lumApplyRow = fxNumericRow( this, "lumApply", "Apply to the image:",
-      "<p>How much of the artificial luminance to substitute into the colour image.</p>"
-      + "<p>0 produces the layer and leaves the colour image untouched, so you can combine them "
-      + "yourself. 1 fully replaces the image's own lightness. The colour ratios are preserved "
-      + "either way, and the substitution stops where a channel would clip.</p>",
+   this.lumApplyRow = fxNumericRow( this, "lumApply",
       function( value ) { FX.lumApply = value; dlg.requestPreview(); } );
 
    this.lumControl = fxGroupControl( this );
