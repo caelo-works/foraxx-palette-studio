@@ -62,3 +62,49 @@ Three things would have to be true, and none of them was:
 The two remaining methods, screen transfer and statistical stretch, both reduce
 to a black point and a midtones balance the expression writer folds into the
 combination. That is why they cost nothing, and why they are still there.
+
+
+---
+
+# Appendix — a scrollable settings column, attempted twice and abandoned
+
+Same day, same shape of lesson, so it is recorded in the same place.
+
+The settings column is taller than most screens with every section open, and
+with the window no longer resizing itself on collapse the bottom of it is out of
+reach. A ScrollBox around the column is the obvious answer. It does not work,
+and the reason is worth writing down so it is not rediscovered.
+
+**Attempt 1** put the panel in `ScrollBox.viewport.sizer` with no height of its
+own. Every section compressed to a few pixels: a sizer given less room than its
+children need takes it from them anyway, so the panel never exceeded the
+viewport and there was nothing to scroll.
+
+**Attempt 2** set the panel's height explicitly, measured from its contents.
+Measured at construction it returned zero - no control reports itself visible
+before the dialog is shown, so the guard against a zero sum returned early and
+the height was never applied at all. Moved to `onShow`, the measurement came
+back like this, on a 1152-pixel screen:
+
+| item | height | minHeight |
+|---|---|---|
+| section bars (even) | 19 | 19 |
+| section controls (odd) | 38 | 0 |
+| total | 589 | viewport 585 |
+
+Two facts, each sufficient on its own. `minHeight` is 0 for the section
+controls, so PJSR does not expose the natural height. And by `onShow` they are
+already compressed to 38 pixels, where they need 100 to 250. The measurement
+therefore measures the compression it exists to correct, and no amount of
+re-measuring escapes that.
+
+**What would be needed.** An explicit fixed height per section, computed from
+what each one contains rather than measured from what it has been given - which
+is what the one script that makes this work does, with fixed row heights
+throughout. That is bookkeeping across eighteen controls that has to be kept in
+step with every future control added to any of them, to buy a scrollbar. The
+cost is not obviously worth it, and it was not paid.
+
+**What was kept instead.** Section toggles no longer resize the window, which
+was the larger complaint. The column being too tall only bites with every
+section open on a short screen.
