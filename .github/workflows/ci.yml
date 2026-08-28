@@ -109,10 +109,12 @@ jobs:
       - name: Every lib file is reachable from the entry point
         run: |
           # An orphan packages fine and then is not there at runtime.
+          # The entry point includes with a lib/ prefix, the libs include each
+          # other without one. Both forms count.
           fail=0
           for f in pjsr/lib/*.js; do
             base="$(basename "$f")"
-            grep -qh "#include \"$base\"" pjsr/ForaxxPaletteStudio.js pjsr/lib/*.js \
+            grep -qhE "#include \"(lib/)?$base\"" pjsr/ForaxxPaletteStudio.js pjsr/lib/*.js \
               || { echo "::error::$base is in lib/ but nothing includes it"; fail=1; }
           done
           exit $fail
