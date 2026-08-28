@@ -250,11 +250,11 @@
 #feature-id    ForaxxPaletteStudio : CaeloWorks > Foraxx Palette Studio
 #feature-icon  @script_icons_dir/ForaxxPaletteStudio.svg
 
-#feature-info  REQUIRES NON-LINEAR (STRETCHED) IMAGES - linear data is not \
-supported.<br/>\
-Narrowband palette construction with a live preview, per-channel weighting, \
-independent star and luminance controls, a draggable histogram, and green and \
-magenta suppression.
+#feature-info  Narrowband palette construction with a live preview: the Foraxx \
+dynamic palette and the fixed permutations, channel normalization, per-channel \
+weighting, a broadband star combination, an artificial luminance layer, a \
+draggable histogram, and green and magenta suppression.<br/>\
+Takes stretched channels, or linear ones with the auto stretch switched on.
 
 #define TITLE   "Foraxx Palette Studio"
 
