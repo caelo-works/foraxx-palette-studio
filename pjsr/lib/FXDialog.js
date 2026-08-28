@@ -1524,8 +1524,15 @@ function ForaxxStudioDialog()
                                + "Your channel selection is kept.</p>";
    this.resetAllButton.onClick = function()
    {
+      // paletteSchema is bookkeeping, not a setting: it records which migrations
+      // this object has already been through. Restoring its factory value
+      // rewound it to 1 and re-armed every one-shot migration, and
+      // fxMigratePreviewTarget is not idempotent - a Luminance preview target
+      // chosen after a Reset all came back as Starless the next session.
+      let schema = FX.paletteSchema;
       for ( let key in FXDefaults )
          FX[key] = FXDefaults[key];
+      FX.paletteSchema = schema;
       fxSyncStyle();
       dlg.pullFromParameters();
       dlg.updateControls();

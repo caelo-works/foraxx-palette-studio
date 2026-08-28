@@ -779,6 +779,14 @@ function fxExportParameters()
 
 function fxImportParameters()
 {
+   // The icon carries its own schema, or predates the concept. Either way it
+   // must be the one the migrations below judge, not the one fxLoadSettings
+   // just advanced while reading a modern settings file: main() loads settings
+   // first, so every schema-gated migration returned at its own first line and
+   // the whole mechanism was dead on this path. A pre-2.5.0 icon is schema 1.
+   FX.paletteSchema = Parameters.has( "paletteSchema" )
+                    ? Parameters.getInteger( "paletteSchema" ) : 1;
+
    for ( let i = 0; i < FXPersisted.length; ++i )
    {
       let name = FXPersisted[i][0];

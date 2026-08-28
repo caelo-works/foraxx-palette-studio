@@ -74,6 +74,15 @@ module.exports = {
    fxFirstStyleFor: fxFirstStyleFor,
    fxLevelsAreIdentity: fxLevelsAreIdentity,
 
+   // The defensive layer over every settings file and process icon in the
+   // field. It had no assertions at all, and needed nothing but this line.
+   fxSanitize: fxSanitize,
+   fxApplyStyle: fxApplyStyle,
+   fxResetAllLevels: fxResetAllLevels,
+   fxMigrateHdrEnabled: fxMigrateHdrEnabled,
+   fxMigratePaletteBlend: fxMigratePaletteBlend,
+   fxMigratePreviewTarget: fxMigratePreviewTarget,
+
    // --- expressions ------------------------------------------------------
    fxNum: fxNum,
    fxMTF: fxMTF,

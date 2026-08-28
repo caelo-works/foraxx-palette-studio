@@ -376,7 +376,12 @@ function fxBuildPosteriseExpressions( levels )
  */
 function fxBuildHDRCompression( p )
 {
-   if ( fxIsZero( p.hdrAmount ) )
+   // The section switch, not just the amount. A switched-off section that still
+   // emits an expression when its amount happens to be non-zero is a section
+   // that is not switched off - the invariant rested entirely on one caller
+   // remembering to check, and the test that claimed to guard it passed only
+   // because the amount defaults to 0.
+   if ( !p.hdrEnabled || fxIsZero( p.hdrAmount ) )
       return null;
 
    let a = fxNum( fxClamp01( p.hdrAmount ) );

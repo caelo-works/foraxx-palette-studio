@@ -222,8 +222,14 @@ eq( fx.fxBuildCombineExpression( 'SL', 'ST' ), '~(~SL * ~ST)', 'screen combinati
 // nothing in it runs unless it is asked for.
 // ---------------------------------------------------------------------------
 {
-   eq( fx.fxBuildHDRCompression( P( { hdrEnabled: false } ) ), null,
-       'the HDR section off emits no expression' );
+   // Both halves, and the non-vacuous one first: this used to pass with a
+   // default amount of 0 and would have kept passing if the flag were deleted.
+   eq( fx.fxBuildHDRCompression( P( { hdrEnabled: false, hdrAmount: 0.5 } ) ), null,
+       'the section switched off emits nothing even with an amount set' );
+   eq( fx.fxBuildHDRCompression( P( { hdrEnabled: false, hdrAmount: 0 } ) ), null,
+       'and nothing when the amount is zero as well' );
+   eq( fx.fxBuildHDRCompression( P( { hdrEnabled: true, hdrAmount: 0 } ) ), null,
+       'switched on with nothing asked for is still nothing' );
 
    const e = fx.fxBuildHDRCompression( P( { hdrEnabled: true, hdrAmount: 0.5, hdrKnee: 0.6 } ) );
    ok( e != null && typeof e.expression === 'string', 'switched on it emits an expression' );
