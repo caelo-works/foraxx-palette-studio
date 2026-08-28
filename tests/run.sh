@@ -127,11 +127,22 @@ module.exports = {
    fxScaleCurve: fxScaleCurve,
    fxScaleDeltaCurve: fxScaleDeltaCurve,
 
+   // --- processing: the process wrappers ----------------------------------
+   fxSampleFormat32: fxSampleFormat32,
+   fxPixelMathNew: fxPixelMathNew,
+   fxApplyHDRMT: fxApplyHDRMT,
+   fxApplyLocalContrast: fxApplyLocalContrast,
+
    // --- shim handles, for driving the above ------------------------------
    fxTestView: fxTestView,
    fxTestSetViews: fxTestSetViews,
    fxTestConsole: fxTestConsole,
-   fxTestConsoleReset: fxTestConsoleReset
+   fxTestConsoleReset: fxTestConsoleReset,
+   fxTestProcessReset: fxTestProcessReset,
+   fxTestProcessLog: fxTestProcessLog,
+   fxTestProcessFail: fxTestProcessFail,
+   fxTestLastProcess: fxTestLastProcess,
+   fxTestSampleFormats: fxTestSampleFormats
 };
 EOF
 } > "$MODULE"

@@ -530,6 +530,10 @@ var FX_SATURATION_HS =
  * -----------------------------------------------------------------------------
  */
 
+// Said once a run, not once a call: the preview alone builds several images
+// per keystroke, and a warning per PixelMath would bury the console.
+var __fxSampleFormatWarned = false;
+
 function fxSampleFormat32()
 {
    // Always produce 32-bit floating point output. The dynamic factors involve
@@ -537,6 +541,21 @@ function fxSampleFormat32()
    // introduces visible banding in the low-signal transition zones.
    if ( typeof PixelMath.prototype.f32 != "undefined" )
       return PixelMath.prototype.f32;
+   // Wider than asked for still honours the invariant, which is "not an integer
+   // container" rather than "exactly 32 bits".
+   if ( typeof PixelMath.prototype.f64 != "undefined" )
+      return PixelMath.prototype.f64;
+   // Last resort, and worth saying out loud. On a 16-bit source this makes
+   // every image the run produces a 16-bit integer - the starless, the stars,
+   // the dynamic factors, the preview channels - and the transition zones the
+   // palette is built around are exactly where that shows.
+   if ( !__fxSampleFormatWarned )
+   {
+      __fxSampleFormatWarned = true;
+      Console.warningln( "Floating point output is unavailable in this installation. Images "
+                       + "will follow the source format, and 16-bit sources will band in the "
+                       + "transition zones." );
+   }
    return PixelMath.prototype.SameAsTarget;
 }
 
@@ -731,10 +750,26 @@ function fxApplyPosterise( view, levels, swap )
 function fxApplyHDRMT( view, layers, swap )
 {
    if ( layers < 1 )
-      return;
+      return { ran: false, layers: 0, why: null };
+
+   let P;
    try
    {
-      let P = new HDRMultiscaleTransform;
+      P = new HDRMultiscaleTransform;
+   }
+   catch ( error )
+   {
+      // The constructor is what tells us the process is not in this
+      // installation. Everything after it is the process refusing this image,
+      // which is a different problem and a different place to go looking.
+      Console.warningln( "HDRMultiscaleTransform is not available in this installation, "
+                       + "multiscale stage skipped: " + error.message );
+      return { ran: false, layers: 0, why: "unavailable" };
+   }
+
+   let used = 0;
+   try
+   {
       // A dyadic multiscale transform needs roughly 2^n pixels in each
       // dimension. A "Fit" preview of a large frame is often only a few
       // hundred pixels across, and asking for more layers than that throws -
@@ -742,7 +777,8 @@ function fxApplyHDRMT( view, layers, swap )
       let requested = Math.round( fxClamp( layers, 1, 8 ) );
       let shortSide = Math.min( view.image.width, view.image.height );
       let affordable = Math.max( 1, Math.floor( Math.log( shortSide ) / Math.LN2 ) - 1 );
-      P.numberOfLayers = Math.min( requested, affordable );
+      used = Math.min( requested, affordable );
+      P.numberOfLayers = used;
       P.numberOfIterations = 1;
       P.medianTransform = true;
       P.toLightness = true;
@@ -752,8 +788,11 @@ function fxApplyHDRMT( view, layers, swap )
    }
    catch ( error )
    {
-      Console.warningln( "HDRMultiscaleTransform unavailable, stage skipped: " + error.message );
+      Console.warningln( "HDRMultiscaleTransform failed, multiscale stage skipped: "
+                       + error.message );
+      return { ran: false, layers: 0, why: "failed" };
    }
+   return { ran: true, layers: used, why: null };
 }
 
 /*
@@ -763,20 +802,36 @@ function fxApplyHDRMT( view, layers, swap )
 function fxApplyLocalContrast( view, amount, swap )
 {
    if ( amount <= 0 )
-      return;
+      return { ran: false, amount: 0, why: null };
+
+   let P;
    try
    {
-      let P = new UnsharpMask;
+      P = new UnsharpMask;
+   }
+   catch ( error )
+   {
+      Console.warningln( "UnsharpMask is not available in this installation, local contrast "
+                       + "skipped: " + error.message );
+      return { ran: false, amount: 0, why: "unavailable" };
+   }
+
+   // UnsharpMask will not accept an amount below 0.10, so what the slider asks
+   // for and what the process receives are not the same number.
+   let used = fxClamp( amount * 0.8, 0.10, 1.00 );
+   try
+   {
       P.sigma = 12.00;
-      // UnsharpMask will not accept an amount below 0.10.
-      P.amount = fxClamp( amount * 0.8, 0.10, 1.00 );
+      P.amount = used;
       P.useLuminance = true;
       P.executeOn( view, swap );
    }
    catch ( error )
    {
-      Console.warningln( "UnsharpMask unavailable, local contrast skipped: " + error.message );
+      Console.warningln( "UnsharpMask failed, local contrast skipped: " + error.message );
+      return { ran: false, amount: 0, why: "failed" };
    }
+   return { ran: true, amount: used, why: null };
 }
 
 /*
@@ -1250,6 +1305,11 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
    let refView = opts.refView;
    let created = { starless: null, stars: null, combined: null,
                    o: null, ho: null, luminance: null, base: null,
+                   // What the optional stages actually did, for the console
+                   // report. A stage that was skipped or that failed must not
+                   // be printed as though it had run: the report is the record
+                   // a run is reproduced from.
+                   ranHdrLayers: 0, ranLocalContrast: 0,
                    // A detached copy of whichever image the histogram is meant
                    // to describe, taken before that image's own levels. Only
                    // the preview asks for it, and only the preview frees it.
@@ -1304,7 +1364,7 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
          if ( p.hdrEnabled )
          {
             fxApplyHDRCompression( v, p, swap );
-            fxApplyHDRMT( v, p.hdrLayers, swap );
+            created.ranHdrLayers = fxApplyHDRMT( v, p.hdrLayers, swap ).layers;
          }
          fxApplyCurves1( v, p.curveStrength, p.satStrength, swap );
          fxApplyCurves2( v, p.curveStrength, swap );
@@ -1326,7 +1386,7 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
          }
 
          if ( p.hdrEnabled )
-            fxApplyLocalContrast( v, p.localContrast, swap );
+            created.ranLocalContrast = fxApplyLocalContrast( v, p.localContrast, swap ).amount;
          fxApplyPosterise( v, p.posterLevels, swap );
          capture( "starless", created.starless );
       }

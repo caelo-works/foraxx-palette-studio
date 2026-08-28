@@ -105,3 +105,71 @@ function fxTestView( id, stats )
       }
    };
 }
+
+// ---- Process stand-ins ----
+//
+// Enough of PixelMath, HDRMultiscaleTransform and UnsharpMask to drive the
+// wrappers that decide sample format and report what ran. Each instance records
+// what was set on it, and each constructor can be made to throw, which is the
+// only way to reach the "not in this installation" branches from here.
+
+var __fxProcessLog = [];
+var __fxProcessFail = {};   // name -> "construct" | "execute"
+
+function fxTestProcessReset()
+{
+   __fxProcessLog = [];
+   __fxProcessFail = {};
+}
+function fxTestProcessLog() { return __fxProcessLog; }
+function fxTestProcessFail( name, when ) { __fxProcessFail[name] = when; }
+function fxTestLastProcess( name )
+{
+   for ( var i = __fxProcessLog.length - 1; i >= 0; --i )
+      if ( __fxProcessLog[i].name === name )
+         return __fxProcessLog[i];
+   return null;
+}
+
+function __fxMakeProcess( name )
+{
+   function P()
+   {
+      if ( __fxProcessFail[name] === 'construct' )
+         throw new Error( name + ' is not installed' );
+      this.name = name;
+      this.executed = false;
+      __fxProcessLog.push( this );
+   }
+   P.prototype.executeOn = function ()
+   {
+      if ( __fxProcessFail[name] === 'execute' )
+         throw new Error( name + ' refused this image' );
+      this.executed = true;
+      return true;
+   };
+   return P;
+}
+
+var PixelMath = __fxMakeProcess( 'PixelMath' );
+// The sample format enumerators, as distinguishable values rather than the
+// integers PixInsight uses: a test that asserts on them should fail loudly if
+// the wrapper ever picks the wrong one.
+PixelMath.prototype.f32 = 'f32';
+PixelMath.prototype.f64 = 'f64';
+PixelMath.prototype.SameAsTarget = 'SameAsTarget';
+PixelMath.prototype.RGB = 'RGB';
+PixelMath.prototype.Gray = 'Gray';
+
+var HDRMultiscaleTransform = __fxMakeProcess( 'HDRMultiscaleTransform' );
+var UnsharpMask = __fxMakeProcess( 'UnsharpMask' );
+
+// Lets a test take the 32-bit enumerator away without touching the wrapper.
+function fxTestSampleFormats( formats )
+{
+   delete PixelMath.prototype.f32;
+   delete PixelMath.prototype.f64;
+   if ( formats.f32 ) PixelMath.prototype.f32 = 'f32';
+   if ( formats.f64 ) PixelMath.prototype.f64 = 'f64';
+   __fxSampleFormatWarned = false;
+}

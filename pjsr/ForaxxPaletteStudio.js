@@ -316,9 +316,26 @@ function fxReport( created, elapsedMs )
                              + "applied %.2f",
                                FX.lumLow, FX.lumMid, FX.lumHigh, FX.lumApply ) );
    if ( FX.hdrEnabled && (FX.hdrAmount > 0 || FX.hdrLayers > 0 || FX.localContrast > 0) )
+   {
+      // What ran, not what was asked for. Both stages can be skipped without
+      // stopping the render - the process missing from the installation, or
+      // refusing this particular image - and a record that claims them anyway
+      // cannot be used to reproduce the result. The layer count is the one the
+      // transform received after the size cap, which on a small preview is
+      // routinely lower than the slider.
+      let layersRan = (created != null && created.ranHdrLayers > 0) ? created.ranHdrLayers : 0;
+      let localRan = (created != null && created.ranLocalContrast > 0) ? FX.localContrast : 0;
       Console.writeln( format( "HDR / contrast ...... compression %.2f above %.2f, %d layers, "
                              + "local %.2f",
-                               FX.hdrAmount, FX.hdrKnee, FX.hdrLayers, FX.localContrast ) );
+                               FX.hdrAmount, FX.hdrKnee, layersRan, localRan ) );
+
+      let layersAsked = Math.round( fxClamp( FX.hdrLayers, 0, 8 ) );
+      if ( layersAsked >= 1 && layersRan != layersAsked )
+         Console.warningln( format( "                      %d multiscale layers requested, %d ran.",
+                                    layersAsked, layersRan ) );
+      if ( FX.localContrast > 0 && localRan <= 0 )
+         Console.warningln( "                      Local contrast requested, did not run." );
+   }
    Console.writeln( format( "Levels, starless .... %.4f / %.4f / %.4f",
                             FX.levelsLow, FX.levelsMid, FX.levelsHigh ) );
    if ( FX.makeStars )
