@@ -19,7 +19,7 @@ set -euo pipefail
 NAME="ForaxxPaletteStudio"                   # class-case: entry file, package dir, icon
 SLUG="foraxx-palette-studio"                 # kebab-case: site slug
 TITLE="Foraxx Palette Studio"                # human name
-DESCRIPTION_HTML="<p><b>Requires non-linear (stretched) images.</b> Narrowband palette construction for PixInsight, dynamic Foraxx and every classic fixed mapping, with a live preview that runs the real pipeline rather than an approximation. Per-channel weighting and normalization, adjustable transition behaviour, independent star handling, a draggable per-image histogram driving a levels transform, HDR compression, an artificial CIE lightness layer, and hue-selective green and magenta suppression. Presets, settings persistence and process icons included.</p>"
+DESCRIPTION_HTML="<p>Narrowband palette construction for PixInsight, dynamic Foraxx and every classic fixed mapping, with a live preview that runs the real pipeline rather than an approximation. Per-channel weighting and normalization, adjustable transition behaviour, independent star handling, a draggable per-image histogram driving a levels transform, HDR compression, an artificial CIE lightness layer, and hue-selective green and magenta suppression. Presets, settings persistence and process icons included. Interface in English and French.</p><p>Takes stretched channels, or linear ones with the auto stretch switched on.</p>"
 PI_VERSION_RANGE="1.8.9:1.9.99"
 # -----------------------------------------------------------------------------
 
