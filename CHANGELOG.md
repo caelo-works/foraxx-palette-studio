@@ -11,8 +11,10 @@ releases.
 
 ## [Unreleased]
 
-Nothing here changes what the script produces. The parity gate in
-`docs/RELEASING.md` is expected to show a maximum difference of 0 against 3.0.1.
+The starless image at the default settings is unchanged: the parity gate in
+`docs/RELEASING.md` still shows a maximum difference of 0 against 3.0.1 for
+*Foraxx - classic*. The **stars** image does change, and deliberately - see
+Removed.
 
 ### Changed
 - Project taken over by Caelo Works for long-term maintenance and distribution,
@@ -27,11 +29,32 @@ Nothing here changes what the script produces. The parity gate in
 - Three console warnings announced themselves as "Auto stretch", a stage removed
   in 3.0.0. They are named for what emits them — channel normalization — and one
   of them no longer sends the user after two controls that no longer exist.
+- **The settings column scrolls** instead of the window resizing itself to fit
+  it. Collapsing a section no longer changes the window size either. The two
+  draggable dividers were removed along the way: they sat beside the new scroll
+  bar and were routinely dragged in mistake for it.
+- **The interface is available in French**, chosen from the header. Image
+  identifiers and console output stay in English: they are what you type and
+  what you paste into a forum post.
+- **The star treatment is the broadband combination and the brightness stretch,
+  and nothing else.** See Removed.
+- The console report for the HDR stage prints what ran rather than what was
+  asked for, including the multiscale layer count after the frame-size cap, and
+  says so when the two differ.
+- `styleNote` no longer claims that choosing a palette sets every tuning slider;
+  it sets fourteen values and leaves normalization, linear input, stars, HDR and
+  luminance alone. `normalizeBarTip` describes the target the code actually
+  aims at - the reference median times that channel's own level, or an absolute
+  target on linear input.
+- The *Foraxx - with colour clean-up* entry no longer labels itself
+  "(recommended)" while the factory default is *classic*.
 
 ### Added
-- A node test harness: six suites, 2295 assertions, covering the PixelMath
+- A node test harness: nine suites, covering the PixelMath
   expressions, numeric emission, the conditioning arithmetic, the parameter
-  surface, output naming, and the settings/process-icon defensive layer.
+  surface, output naming, the settings/process-icon defensive layer, the string
+  tables in both languages, the process wrappers, and a scan for identifiers and
+  event-handler names nothing declares.
 - A full audit under `audit/2026-08-28/`: seven reports, each with its own
   adversarial verification pass, and a consolidated backlog.
 - CI on every push: the harness on two Node versions, shellcheck, a package
@@ -39,6 +62,15 @@ Nothing here changes what the script produces. The parity gate in
   reproducibility check.
 - Distribution through the shared CaeloWorks update repository, alongside the
   zip on GitHub Releases.
+- **Linear input is supported again**, under its own switched section, with a
+  choice of screen transfer or statistical stretch. It was withdrawn in 3.0.0
+  after four failed attempts; all four traced back to a target defined relative
+  to the reference channel, which on linear data leaves everything on the floor.
+  The target is absolute now. Validated against a reference set of linear
+  masters.
+- **A Complete preview target**: the screen combination of the starless image and
+  the stars, which is what Execute writes when the combination is ticked.
+- An icon on **Reset all**.
 
 ### Fixed
 - **A corrupt `styleIndex` no longer bricks the dialog.** `NaN` satisfies neither
@@ -73,10 +105,31 @@ Nothing here changes what the script produces. The parity gate in
   the session surfaced as a thrown error rather than the validation report.
 - **The HDR section is genuinely switched.** Its expression builder never read
   the section's own switch.
+- **The preview runs again.** A second `onShow` handler added while making the
+  settings column scroll replaced the one that marked the dialog initialised and
+  asked for the first render.
+- **A missing 32-bit float enumerator no longer degrades the output silently.**
+  `PixelMath` is asked for `f64` before falling back to the source format, and
+  the fallback warns once a run: on a 16-bit source it makes every image the run
+  produces a 16-bit integer, which bands in exactly the transition zones the
+  palette is built around.
+- **`HDRMultiscaleTransform` and `UnsharpMask` failures are no longer reported as
+  the process being absent.** A missing process and a process that refused the
+  image are distinguished, and neither is recorded by the console report as
+  having run.
 
 ### Removed
+- **The two-pass green removal and the hue-weighted colour boost on the star
+  image.** A star field's green is real broadband colour; the combination and
+  the brightness stretch are the whole treatment now, and nothing corrects the
+  colour afterwards. `starCleanGreen` and `starSaturation` are gone from the
+  parameters, the dialog and the persisted settings.
+- **The "supply non-linear images" banner**, which had been false since linear
+  input was reinstated and was the first line anyone read. The auto-stretch
+  notice that replaced it in the other state is gone too.
+- The two draggable panel dividers, and `FXSplitter.js` with them.
 - The empty "linear input" section headers left in the parameter object and the
-  dialog when 3.0.0 withdrew linear support. Linear input remains unsupported.
+  dialog when 3.0.0 withdrew linear support.
 
 ## [3.0.1] — 2026-08-27
 

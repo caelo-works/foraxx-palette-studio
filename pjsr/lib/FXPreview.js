@@ -583,7 +583,11 @@ FXPreviewEngine.prototype.render = function( p, detail, panelWidth, panelHeight 
       return null;
    }
 
-   let wantStars = (p.previewTarget == 1);
+   // Complete is the screen combination, so it needs both halves - which is
+   // what separates it from the stars target, and why it asks for the starless
+   // image as well.
+   let wantComplete = (p.previewTarget == 3);
+   let wantStars = (p.previewTarget == 1) || wantComplete;
    let wantLum = (p.previewTarget == 2);
    if ( wantStars && !p.makeStars )
    {
@@ -616,12 +620,15 @@ FXPreviewEngine.prototype.render = function( p, detail, panelWidth, panelHeight 
          // The histogram now follows the target, so a stars preview has no use
          // for the starless image. The luminance target still does - the layer
          // is extracted from it.
-         starless:    !wantStars,
+         starless:    !wantStars || wantComplete,
          stars:       wantStars,
-         combined:    false,   // the combined view was removed from the preview
+         combined:    wantComplete,
          luminance:   wantLum,
          // The histogram describes whatever is on screen, so the render takes
          // the copy at the point that image exists but has not been levelled.
+         // The combination has no such point - it is built from two images that
+         // are already levelled - so Complete takes the starless histogram,
+         // which is the set its levels panel edits.
          histogramOf: (p.previewTarget == 1) ? "stars"
                     : ((p.previewTarget == 2) ? "luminance" : "starless"),
          factors:     false,
@@ -645,6 +652,7 @@ FXPreviewEngine.prototype.render = function( p, detail, panelWidth, panelHeight 
       {
       case 1:  id = outIds.stars; break;
       case 2:  id = outIds.luminance; break;
+      case 3:  id = outIds.combined; break;
       default: id = outIds.starless; break;
       }
 
@@ -652,7 +660,9 @@ FXPreviewEngine.prototype.render = function( p, detail, panelWidth, panelHeight 
       if ( v == null || v.isNull )
          this.lastError = wantLum
             ? "The luminance extraction did not produce an image."
-            : "The preview did not produce an image.";
+            : (wantComplete
+               ? "The screen combination did not produce an image."
+               : "The preview did not produce an image.");
       else
          image = new Image( v.image );
    }

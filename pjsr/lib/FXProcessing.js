@@ -872,6 +872,7 @@ function fxApplyLuminanceLevels( view, p, swap )
    fxHistogramTransform( view, p.lumLow, p.lumHigh, p.lumMid, swap );
 }
 
+
 /*
  * Each previewable image carries its own levels, and gets only its own. The
  * histogram under the preview edits whichever set belongs to the image on
@@ -886,54 +887,6 @@ function fxApplyLevels( view, p, swap )
 function fxApplyStarLevels( view, p, swap )
 {
    fxHistogramTransform( view, p.starLevelsLow, p.starLevelsHigh, p.starLevelsMid, swap );
-}
-
-/*
- * -----------------------------------------------------------------------------
- * Star finishing
- * -----------------------------------------------------------------------------
- *
- * How a star field is *coloured* and how it is *brightened* are independent
- * choices, so the combination decides the first and this decides the second.
- *
- * The chain, in order:
- *
- *   1. Green is removed, the image is pushed hard into the highlights with a
- *      midtones transfer, green is removed again on the stretched data, and the
- *      transfer is undone. Working on the stretched version is what lets the
- *      second pass reach the faint green fringing that survives the first.
- *   2. The hyperbolic brightness stretch.
- *   3. A hue-weighted colour boost.
- *
- * Steps 2 and 3 start at 0 and do nothing until asked. Step 1 is on by default.
- */
-function fxApplyMTFExpression( view, m, swap )
-{
-   let P = new PixelMath;
-   P.expression = "mtf(" + m + ", $T)";
-   P.expression1 = "";
-   P.expression2 = "";
-   P.expression3 = "";
-   P.useSingleExpression = true;
-   P.symbols = "";
-   P.createNewImage = false;
-   P.generateOutput = true;
-   P.rescale = false;
-   P.truncate = true;
-   P.truncateLower = 0;
-   P.truncateUpper = 1;
-   P.optimization = true;
-   P.executeOn( view, swap );
-}
-
-function fxApplyStockSCNRGreen( view, amount, swap )
-{
-   let P = new SCNR;
-   P.amount = fxClamp( amount, 0, 1 );
-   P.protectionMethod = SCNR.prototype.AverageNeutral;
-   P.colorToRemove = SCNR.prototype.Green;
-   P.preserveLightness = true;
-   P.executeOn( view, swap );
 }
 
 /*
@@ -961,51 +914,29 @@ function fxApplyStockSCNRGreen( view, amount, swap )
  */
 function fxApplyStarFinishing( view, p, swap )
 {
-   if ( p.starCleanGreen )
-   {
-      // Remove green, push hard into the highlights, remove green again on the
-      // stretched data, undo the push. Working on the stretched version is what
-      // lets the second pass reach the faint fringing the first one misses.
-      fxApplyStockSCNRGreen( view, 1.00, swap );
-      fxApplyMTFExpression( view, "0.01", swap );
-      fxApplyStockSCNRGreen( view, 1.00, swap );
-      fxApplyMTFExpression( view, "~0.01", swap );
-   }
-
+   // The stretch, and nothing else. The two-pass green removal and the
+   // hue-weighted saturation boost that used to run here were dropped: a star
+   // field's green is real broadband colour, and both stages were correcting a
+   // combination that no longer needs correcting.
    let stretch = fxBuildStarStretchExpression( p.starStretch );
-   if ( stretch != null )
-   {
-      let P = new PixelMath;
-      P.expression = stretch;
-      P.expression1 = "";
-      P.expression2 = "";
-      P.expression3 = "";
-      P.useSingleExpression = true;
-      P.symbols = "";
-      P.createNewImage = false;
-      P.generateOutput = true;
-      P.rescale = false;
-      P.truncate = true;
-      P.truncateLower = 0;
-      P.truncateUpper = 1;
-      P.optimization = true;
-      P.executeOn( view, swap );
-   }
+   if ( stretch == null )
+      return;
 
-   let boost = fxClamp( p.starSaturation,
-                        FXRanges.starSaturation[0], FXRanges.starSaturation[1] );
-   if ( !fxIsZero( boost ) )
-   {
-      let C = new ColorSaturation;
-      C.HS = [
-         [ 0.00000, boost * 0.40000 ],
-         [ 0.50000, boost * 0.70000 ],
-         [ 1.00000, boost * 0.40000 ]
-      ];
-      C.HSt = ColorSaturation.prototype.AkimaSubsplines;
-      C.hueShift = 0.000;
-      C.executeOn( view, swap );
-   }
+   let P = new PixelMath;
+   P.expression = stretch;
+   P.expression1 = "";
+   P.expression2 = "";
+   P.expression3 = "";
+   P.useSingleExpression = true;
+   P.symbols = "";
+   P.createNewImage = false;
+   P.generateOutput = true;
+   P.rescale = false;
+   P.truncate = true;
+   P.truncateLower = 0;
+   P.truncateUpper = 1;
+   P.optimization = true;
+   P.executeOn( view, swap );
 }
 function fxApplyClassicSCNR( view, p, swap )
 {
@@ -1416,12 +1347,12 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
          // PixelMath moments ago and has no earlier state to undo back to, so
          // writing a full-frame swap record for each step would cost well over
          // a gigabyte on a large frame and buy nothing.
-         // Green / magenta suppression is deliberately *not* run here. That
-         // stage is tuned for the nebula, where green is an artefact of the
-         // channel imbalance; a star field's green is real broadband colour and
-         // the same correction desaturates it into grey. The stars have their
-         // own two-pass green removal inside the finishing chain, under
-         // "Remove green from the stars".
+         // Green / magenta suppression is deliberately *not* run here, and
+         // neither is anything else. That stage is tuned for the nebula, where
+         // green is an artefact of the channel imbalance; a star field's green
+         // is real broadband colour and the same correction desaturates it into
+         // grey. The combination above and the brightness stretch below are the
+         // whole of the star treatment.
          fxApplyStarFinishing( vs, p, false );
          capture( "stars", created.stars );
       }

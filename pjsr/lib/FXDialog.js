@@ -497,18 +497,6 @@ function ForaxxStudioDialog()
 
    this.notice = "";
 
-   /*
-    * The banner only has something to say while the auto stretch is on, and
-    * then it says what the stretch is for and how to judge it. The flat refusal
-    * 3.0.0 put here in the other case is gone: linear input is supported again,
-    * so it was both false and the first thing anyone read.
-    */
-   this.updatePreviewStatusBanner = function()
-   {
-      this.bannerLabel.text = FX.linearInput ? fxT( "bannerAuto" ) : "";
-      this.bannerLabel.visible = FX.linearInput;
-   };
-
    this.setNotice = function( text )
    {
       this.notice = text || "";
@@ -530,7 +518,10 @@ function ForaxxStudioDialog()
       // the same, and nothing else on screen would say so. This is what made a
       // stale black point on the starless image look like the palette itself
       // was broken.
-      let elsewhere = fxLevelsInForceElsewhere( FX.previewTarget );
+      // The complete image shows the starless and the stars at once, so neither
+      // of their sets is off screen.
+      let elsewhere = fxLevelsInForceElsewhere(
+         (FX.previewTarget == 3) ? [ 0, 1 ] : [ FX.previewTarget ] );
       if ( elsewhere.length > 0 )
          note += "  -  " + fxT( "noteLevelsElsewhere" )
                + elsewhere.map( fxT ).join( ", " );
@@ -558,7 +549,7 @@ function ForaxxStudioDialog()
       // A star's peak is a handful of pixels. If the resampling averaged them
       // away, the brightness stretch has nothing left to lift and the previewed
       // stars come out far dimmer than the ones Execute produces.
-      if ( FX.previewTarget == 1 && FX.makeStars
+      if ( (FX.previewTarget == 1 || FX.previewTarget == 3) && FX.makeStars
         && this.engine.factor > 1
         && this.engine.starPeaksPreserved === false )
          note += "  -  " + fxT( "notePeaks" );
@@ -631,7 +622,6 @@ function ForaxxStudioDialog()
                         + fxT( "byLine" ) + "</span>";
       this.byLabel.toolTip = fxT( "byLineTip" ) + " \u2014 build " + VERSION;
       this.taglineLabel.text = "<i>" + fxT( "tagline" ) + "</i>";
-      this.updatePreviewStatusBanner();
       this.langLabel.text = fxT( "language" );
 
       this.linearNote.text = fxT( "linearNote" );
@@ -680,6 +670,7 @@ function ForaxxStudioDialog()
       this.previewTargetCombo.addItem( fxT( "targetStarless" ) );
       this.previewTargetCombo.addItem( fxT( "targetStars" ) );
       this.previewTargetCombo.addItem( fxT( "targetLum" ) );
+      this.previewTargetCombo.addItem( fxT( "targetComplete" ) );
       this.previewTargetCombo.currentItem = keptTarget;
 
       let keptDetail = this.previewDetailCombo.currentItem;
@@ -805,9 +796,6 @@ function ForaxxStudioDialog()
 
    // The non-linear requirement keeps its own line, below the identity block.
    // It is the one thing on this dialog a user must read before running.
-   this.bannerLabel = new Label( this );
-   this.bannerLabel.useRichText = true;
-   this.bannerLabel.wordWrapping = true;
 
    // The three rows go straight into the dialog's own sizer. Wrapping them in an
    // intermediate Control laid out everything before the stretch and dropped
@@ -1089,8 +1077,8 @@ function ForaxxStudioDialog()
     *
     * The three choices that decide what everything below means: how many
     * channels you have, whether a stars image is built, and which palette. They
-    * used to sit loose above the first section bar, which made them look like
-    * part of the banner rather than the first thing to set.
+    * used to sit loose above the first section bar, where they read as preamble
+    * rather than as the first thing to set.
     * ========================================================================== */
 
    // One section, not two. How many channels you have and which images they are
@@ -1168,7 +1156,6 @@ function ForaxxStudioDialog()
    this.linearBar.onCheckSection = function( bar )
    {
       FX.linearInput = bar.checkBox.checked;
-      dlg.updatePreviewStatusBanner();
       dlg.updateControls();
       dlg.requestPreview();
    };
@@ -1280,22 +1267,13 @@ function ForaxxStudioDialog()
    this.starsNote.useRichText = true;
    this.starsNote.wordWrapping = true;
 
-   this.starCleanGreenCheck = fxCheckBox( this, "starCleanGreen",
-      FX.starCleanGreen,
-      function( checked ) { FX.starCleanGreen = checked; dlg.requestPreview(); } , this );
-
    this.starStretchRow = fxNumericRow( this, "starStretch",
       function( value ) { FX.starStretch = value; dlg.requestPreview(); } );
-
-   this.starSatRow = fxNumericRow( this, "starSaturation",
-      function( value ) { FX.starSaturation = value; dlg.requestPreview(); } );
 
    this.starsControl = fxGroupControl( this );
    this.starsControl.sizer.add( this.starsNote );
    this.starsControl.sizer.addSpacing( 4 );
-   this.starsControl.sizer.add( this.starCleanGreenCheck );
    this.starsControl.sizer.add( this.starStretchRow );
-   this.starsControl.sizer.add( this.starSatRow );
 
    this.starsBar = fxSection( this, "secStars", this.starsControl, false );
 
@@ -1629,7 +1607,13 @@ function ForaxxStudioDialog()
       { titleKey: "levelsStars",          low: "starLevelsLow",
         mid: "starLevelsMid", high: "starLevelsHigh" },
       { titleKey: "levelsLum",            low: "lumLow",
-        mid: "lumMid",        high: "lumHigh" }
+        mid: "lumMid",        high: "lumHigh" },
+      // Complete has no levels of its own - it is the screen combination of two
+      // images that each carry theirs. The panel edits the starless set, which
+      // is the half the markers visibly shape, and the title says as much so
+      // nobody adjusts it thinking they are touching the combination.
+      { titleKey: "levelsComplete",       low: "levelsLow",
+        mid: "levelsMid",     high: "levelsHigh" }
    ];
 
    this.levelKeys = function()
@@ -1787,6 +1771,10 @@ function ForaxxStudioDialog()
 
    this.resetAllButton = new PushButton( this );
    this.resetAllButton.text = "Reset all";
+   // The stock process-interface reset, the same family as the new-instance
+   // icon beside it. No fallback text: the button already has a label, and a
+   // glyph appended to it would read as part of the wording.
+   fxSetIcon( this, this.resetAllButton, ":/process-interface/reset.png", null );
    this.resetAllButton.onClick = function()
    {
       // paletteSchema is bookkeeping, not a setting: it records which migrations
@@ -2110,7 +2098,6 @@ function ForaxxStudioDialog()
    this.sizer.spacing = 6;
    this.sizer.add( this.headerSizer );
    this.sizer.add( this.taglineLabel );
-   this.sizer.add( this.bannerLabel );
    this.sizer.addSpacing( 2 );
    this.sizer.add( this.columnsSizer, 100 );
    this.sizer.add( bottomSizer );
@@ -2154,9 +2141,7 @@ function ForaxxStudioDialog()
 
          this.normRefRow.combo.currentItem = FX.normalizeRef;
 
-         this.starCleanGreenCheck.checked = FX.starCleanGreen;
          this.starStretchRow.setValue( FX.starStretch );
-         this.starSatRow.setValue( FX.starSaturation );
 
          this.preserveLightnessCheck.checked = FX.scnrPreserveL;
          // A switched section has to follow its own switch. Reset all and a
@@ -2259,8 +2244,9 @@ function ForaxxStudioDialog()
 
       // Only the star targets need the star images. Starless and Luminance do
       // not, and forcing those back to 0 made Luminance unreachable for anyone
-      // working starless-only.
-      if ( !stars && FX.previewTarget == 1 )
+      // working starless-only. Complete is a star target: it is the two images
+      // combined, and without the stars there is nothing to combine.
+      if ( !stars && (FX.previewTarget == 1 || FX.previewTarget == 3) )
       {
          // Through the funnel, so the levels panel follows. Setting the target
          // here and suppressing the combo's handler is what used to leave the

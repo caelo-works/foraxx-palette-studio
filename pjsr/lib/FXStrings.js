@@ -61,9 +61,6 @@ var FX_UI =
                     + "share the nebula's curve and keep their own black point - solving them "
                     + "separately lifts their empty background into a grey floor the screen "
                     + "combination then cannot go below.</p>",
-      bannerAuto:     "<b>AUTO STRETCH IS ON.</b> The channels are stretched for you, and the "
-                    + "result is a screen transfer, not a considered final stretch - judge it in "
-                    + "the preview.",
       noteAlreadyStretched: "the auto stretch is on but these channels already look stretched",
       linearMethodStf:  "Screen transfer (STF)",
       linearMethodStat: "Statistical stretch",
@@ -108,6 +105,7 @@ var FX_UI =
       targetStarless: "Starless",
       targetStars:    "Stars",
       targetLum:      "Luminance",
+      targetComplete: "Complete",
       fit:            "Fit",
       oneToOne:       "1:1",
       detailAuto:     "Detail: auto",
@@ -144,6 +142,7 @@ var FX_UI =
       levelsStarless: "Levels - starless image",
       levelsStars:    "Levels - stars image",
       levelsLum:      "Levels - luminance layer",
+      levelsComplete: "Levels - starless image, seen in the combination",
       levelsReadout:  "black %.4f mid %.4f white %.4f",
       zoomNote:       "<p>How large the rendered preview is drawn. This is a display scale only "
                       + "- it repaints the image already in hand and never runs the pipeline "
@@ -171,9 +170,12 @@ var FX_UI =
       starsNote:      "<p>The star field is a fixed broadband-style "
                       + "combination:<br/>&nbsp;&nbsp;R = 0.5&middot;Ha + "
                       + "0.5&middot;Sii&nbsp;&nbsp;&nbsp;G = 0.3&middot;Ha + "
-                      + "0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>Stars are broadband "
-                      + "sources, not line emitters, so mixing them this way gives more "
-                      + "believable colour than running the nebula's palette over them.</p>",
+                      + "0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>In 2 channel mode there "
+                      + "is no Sii, so red falls back to Ha.</p><p>Stars are broadband sources, "
+                      + "not line emitters, so mixing them this way gives more believable colour "
+                      + "than running the nebula's palette over them. That combination and the "
+                      + "brightness below are the whole treatment: the stars are not saturated, "
+                      + "desaturated or colour corrected afterwards.</p>",
       styleNote:      "<p>One list for the palette and its starting point: choosing an entry "
                       + "sets the channel mapping, the palette's own tuning sliders and the "
                       + "output image name at once. Normalization, linear input, stars, HDR and "
@@ -287,15 +289,6 @@ var FX_UI =
       starlessOnlyTip: "<p>Tick this if your images still contain stars, or if you do not want a "
                       + "separate colour stars image. The star columns and the whole Stars "
                       + "section are disabled.</p>",
-      starCleanGreen: "Remove green from the stars",
-      starCleanGreenTip: "<p>A two-pass green removal: remove green, push hard into the highlights "
-                      + "with a midtones transfer, remove green again on the stretched data, then "
-                      + "undo the push. Working on the stretched version is what lets the second "
-                      + "pass reach the faint fringing the first one misses.</p><p>The <b>Green / "
-                      + "magenta suppression</b> section below does not touch the stars at all: "
-                      + "that correction is tuned for green coming from the channel imbalance, "
-                      + "and over a star field it flattens real broadband star colour into "
-                      + "grey.</p>",
       scnrPreserveL:  "Preserve lightness",
       scnrPreserveLTip: "<p>Keeps the pixel's brightness where it was after the cast is removed, "
                       + "which is what stops the result going flat and dim.</p>",
@@ -393,11 +386,6 @@ var FX_UI =
                       + "star frame whose background already sits at 0.02 that lifts it to 0.83, "
                       + "and at 0.05 to 0.93 - a white sky either way. Raise it only if your stars "
                       + "really are still faint, and watch the preview.</p>",
-      starSaturation: "Star colour boost:",
-      starSaturationTip: "<p>A hue-weighted saturation boost, applied after the brightness stretch. "
-                      + "This is what brings out the blue / white / amber spread of a star "
-                      + "field.</p><p>0 leaves the colour alone. 1.00 is a good starting point once "
-                      + "the brightness is where you want it.</p>",
       scnrGreen:      "Green amount:",
       scnrGreenTip:   "<p>The amount for the green pass. 0 is off, 1 removes all of the detected "
                       + "excess.</p>",
@@ -471,9 +459,6 @@ var FX_UI =
                     + "gardent leur propre point noir : les r\u00e9soudre s\u00e9par\u00e9ment rel\u00e8verait leur "
                     + "fond vide en un plancher gris sous lequel la combinaison en mode \u00e9cran ne "
                     + "peut plus descendre.</p>",
-      bannerAuto:     "<b>L'AUTO-STRETCH EST ACTIF.</b> Les couches sont stretch\u00e9es pour vous, et "
-                    + "le r\u00e9sultat est un transfert d'\u00e9cran, pas un stretch final r\u00e9fl\u00e9chi : "
-                    + "jugez-le dans l'aper\u00e7u.",
       noteAlreadyStretched: "l'auto-stretch est actif mais ces couches semblent d\u00e9j\u00e0 stretch\u00e9es",
       linearMethodStf:  "Transfert d'\u00e9cran (STF)",
       linearMethodStat: "Stretch statistique",
@@ -521,6 +506,7 @@ var FX_UI =
       targetStarless: "Starless",
       targetStars:    "\u00c9toiles",
       targetLum:      "Luminance",
+      targetComplete: "Compl\u00e8te",
       fit:            "Ajuster",
       oneToOne:       "1:1",
       detailAuto:     "D\u00e9tail : auto",
@@ -558,6 +544,7 @@ var FX_UI =
       levelsStarless: "Niveaux - image starless",
       levelsStars:    "Niveaux - image d'\u00e9toiles",
       levelsLum:      "Niveaux - couche de luminance",
+      levelsComplete: "Niveaux - image starless, telle qu'elle appara\u00eet dans la combinaison",
       levelsReadout:  "noir %.4f moyen %.4f blanc %.4f",
       zoomNote:       "<p>La taille \u00e0 laquelle l'aper\u00e7u calcul\u00e9 est dessin\u00e9. Ce n'est qu'une "
                       + "\u00e9chelle d'affichage : elle redessine l'image d\u00e9j\u00e0 en main et ne relance "
@@ -588,10 +575,13 @@ var FX_UI =
                       + "vert dans l'inverse.</p>",
       starsNote:      "<p>Le champ d'\u00e9toiles est une combinaison fixe de type large bande "
                       + ":<br/>&nbsp;&nbsp;R = 0.5&middot;Ha + 0.5&middot;Sii&nbsp;&nbsp;&nbsp;G "
-                      + "= 0.3&middot;Ha + 0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>Les "
+                      + "= 0.3&middot;Ha + 0.7&middot;Oiii&nbsp;&nbsp;&nbsp;B = Oiii</p><p>En "
+                      + "mode 2 couches il n'y a pas de Sii : le rouge retombe sur Ha.</p><p>Les "
                       + "\u00e9toiles sont des sources large bande, pas des \u00e9metteurs de raies : les "
                       + "m\u00e9langer ainsi donne une couleur plus cr\u00e9dible que de passer la palette "
-                      + "de la n\u00e9buleuse par-dessus.</p>",
+                      + "de la n\u00e9buleuse par-dessus. Cette combinaison et la luminosit\u00e9 "
+                      + "ci-dessous constituent tout le traitement : les \u00e9toiles ne sont ensuite "
+                      + "ni satur\u00e9es, ni d\u00e9satur\u00e9es, ni corrig\u00e9es en couleur.</p>",
       styleNote:      "<p>Une seule liste pour la palette et son point de d\u00e9part : choisir une "
                       + "entr\u00e9e fixe d'un coup le mappage des couches, les curseurs de "
                       + "r\u00e9glage propres \u00e0 la palette et le nom de l'image de sortie. La "
@@ -713,17 +703,6 @@ var FX_UI =
       starlessOnlyTip: "<p>Cochez ceci si vos images contiennent encore les \u00e9toiles, ou si vous ne "
                       + "voulez pas d'image d'\u00e9toiles couleur s\u00e9par\u00e9e. Les colonnes d'\u00e9toiles et "
                       + "toute la section \u00c9toiles sont d\u00e9sactiv\u00e9es.</p>",
-      starCleanGreen: "Retirer le vert des \u00e9toiles",
-      starCleanGreenTip: "<p>Une suppression du vert en deux passes : retirer le vert, pousser "
-                      + "fortement vers les hautes lumi\u00e8res avec un transfert des tons moyens, "
-                      + "retirer \u00e0 nouveau le vert sur les donn\u00e9es stretch\u00e9es, puis annuler la "
-                      + "pouss\u00e9e. C'est de travailler sur la version stretch\u00e9e qui permet \u00e0 la "
-                      + "seconde passe d'atteindre les franges t\u00e9nues que la premi\u00e8re laisse "
-                      + "passer.</p><p>La section <b>Suppression du vert et du magenta</b> "
-                      + "ci-dessous ne touche pas du tout aux \u00e9toiles : cette correction est "
-                      + "r\u00e9gl\u00e9e pour le vert issu du d\u00e9s\u00e9quilibre des couches, et sur un champ "
-                      + "d'\u00e9toiles elle aplatit en gris la vraie couleur large bande des "
-                      + "\u00e9toiles.</p>",
       scnrPreserveL:  "Pr\u00e9server la luminosit\u00e9",
       scnrPreserveLTip: "<p>Conserve la luminosit\u00e9 du pixel l\u00e0 o\u00f9 elle \u00e9tait une fois la dominante "
                       + "retir\u00e9e, ce qui emp\u00eache le r\u00e9sultat de devenir plat et terne.</p>",
@@ -833,12 +812,6 @@ var FX_UI =
                       + "d\u00e9j\u00e0 \u00e0 0.02, cela le porte \u00e0 0.83, et \u00e0 0.05 il monte \u00e0 0.93 - un "
                       + "ciel blanc dans les deux cas. Ne l'augmentez que si vos \u00e9toiles sont "
                       + "vraiment encore faibles, et surveillez l'aper\u00e7u.</p>",
-      starSaturation: "Couleur des \u00e9toiles :",
-      starSaturationTip: "<p>Un renfort de saturation pond\u00e9r\u00e9 par la teinte, appliqu\u00e9 apr\u00e8s le "
-                      + "stretch de luminosit\u00e9. C'est lui qui fait ressortir l'\u00e9talement bleu / "
-                      + "blanc / ambre d'un champ d'\u00e9toiles.</p><p>0 ne touche pas \u00e0 la couleur. "
-                      + "1.00 est un bon point de d\u00e9part une fois la luminosit\u00e9 l\u00e0 o\u00f9 vous la "
-                      + "voulez.</p>",
       scnrGreen:      "Quantit\u00e9 de vert :",
       scnrGreenTip:   "<p>La quantit\u00e9 pour la passe verte. 0 d\u00e9sactive, 1 retire tout l'exc\u00e8s "
                       + "d\u00e9tect\u00e9.</p>",

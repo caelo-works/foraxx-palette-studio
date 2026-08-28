@@ -302,9 +302,8 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
   what it produced before rather than silently losing the stage.
 - **Green / magenta suppression no longer touches the star image.** It is tuned for green that comes
   from the channel imbalance in a nebula; a star field's green is real broadband colour, and running
-  the same correction over it flattened white and yellow stars towards grey. The stars keep their
-  own two-pass green removal under **Remove green from the stars**, which is now the only green
-  removal they get.
+  the same correction over it flattened white and yellow stars towards grey. The stars get no green
+  removal at all.
 - Switched sections now expand and collapse to follow their own tick box after **Reset all** or a
   process-icon import, instead of leaving the tick and the section disagreeing.
 
@@ -515,12 +514,11 @@ B = Oiii
 
 | Control | What it does |
 |---|---|
-| **Remove green from the stars** | A two-pass green removal: remove green, push hard into the highlights with a midtones transfer, remove green again on the stretched data, then undo the push. Working on the stretched version is what lets the second pass reach the faint fringing the first one misses. On by default. |
 | **Star brightness** | `((3^k)*$T)/((3^k-1)*$T+1)` — fixes 0 and 1 and is monotonic, so it lifts faint stars hard without ever clipping a bright core. **0 leaves the stars exactly as the combination produced them.** Above about 5 on stars that were already stretched, the multiplier is 243 and every core goes flat white. |
-| **Star colour boost** | A hue-weighted saturation boost after the brightness stretch — the blue / white / amber spread of a star field. 0 leaves the colour alone. |
-
 There is no combination choice and no Ha/Oiii ratio. Those were removed in 2.5.0: tuning them was
-what kept producing star fields that didn't match.
+what kept producing star fields that didn't match. The green removal and the colour boost went the
+same way: the broadband combination and the brightness stretch are the whole of the star treatment,
+and nothing corrects the colour it produces afterwards.
 
 Green / magenta suppression does **not** touch the stars. That stage is tuned for the nebula, where
 green is an artefact of the channel imbalance; a star field's green is real broadband colour and the
@@ -572,6 +570,12 @@ image's set to an identity and leaves the others alone.
 Switching the preview target brings that image's markers back. Changing a source image resets all
 three sets, because levels are tuning for one particular pair of images. If a set is in force on an
 image you are not currently looking at, the status line says so.
+
+**Complete** is the fourth target: the screen combination of the starless image and the stars, which
+is what Execute produces when **Also create a screen combination** is ticked. It has no levels of
+its own — it is built from two images that already carry theirs — so the panel below it edits the
+starless set, and its title says so. Both the starless and the stars levels are visible in it, so
+neither is reported as being in force elsewhere while it is on screen.
 
 ### Artificial luminance (collapsed by default)
 

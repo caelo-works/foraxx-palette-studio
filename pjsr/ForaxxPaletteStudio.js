@@ -307,10 +307,8 @@ function fxReport( created, elapsedMs )
       Console.writeln( format( "Colour .............. overall saturation %.2f, %d poster levels",
                                FX.extraSaturation, FX.posterLevels ) );
    if ( FX.makeStars )
-      Console.writeln( format( "Stars ............... broadband mix%s, brightness %.2f, "
-                             + "colour %.2f",
-                               FX.starCleanGreen ? ", green removed" : "",
-                               FX.starStretch, FX.starSaturation ) );
+      Console.writeln( format( "Stars ............... broadband mix, brightness %.2f",
+                               FX.starStretch ) );
    if ( FX.makeLuminance )
       Console.writeln( format( "Luminance ........... CIE L*, levels %.4f / %.4f / %.4f, "
                              + "applied %.2f",

@@ -40,7 +40,6 @@ var FXStyles =
          blend: 1.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: false, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -53,7 +52,6 @@ var FXStyles =
          blend: 1.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -66,7 +64,6 @@ var FXStyles =
          blend: 0.75, hardO: 0.65, hardHO: 0.65,
          curveStrength: 0.80, satStrength: 0.80,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.45, scnrMagenta: 0.60
       }
    },
@@ -79,7 +76,6 @@ var FXStyles =
          blend: 1.00, hardO: 1.40, hardHO: 1.30,
          curveStrength: 1.00, satStrength: 1.15,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.55, scnrMagenta: 0.70
       }
    },
@@ -92,7 +88,6 @@ var FXStyles =
          blend: 1.00, hardO: 0.75, hardHO: 0.70,
          curveStrength: 1.00, satStrength: 1.10,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -105,7 +100,6 @@ var FXStyles =
          blend: 1.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -118,7 +112,6 @@ var FXStyles =
          blend: 1.00, hardO: 1.80, hardHO: 1.80,
          curveStrength: 1.30, satStrength: 2.00,
          extraSaturation: 2.20, posterLevels: 6,
-         starCleanGreen: false,
          scnrEnabled: false, scnrGreen: 0.00, scnrMagenta: 0.00
       }
    },
@@ -131,7 +124,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -144,7 +136,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -157,7 +148,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -170,7 +160,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -183,7 +172,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -196,7 +184,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -209,7 +196,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    },
@@ -222,7 +208,6 @@ var FXStyles =
          blend: 0.00, hardO: 1.00, hardHO: 1.00,
          curveStrength: 1.00, satStrength: 1.00,
          extraSaturation: 0.00, posterLevels: 0,
-         starCleanGreen: true,
          scnrEnabled: true, scnrGreen: 0.50, scnrMagenta: 0.70
       }
    }
@@ -313,11 +298,9 @@ var FX =
    posterLevels:   0,       // 0 = off, otherwise quantise to this many levels
 
    // ---- stars, independent of the starless image ---------------------------
-   // The finishing chain below is shared by both combinations.
-   starCleanGreen: true,    // the SCNR / mtf / SCNR / reverse-mtf pass
+   // The finishing chain below is shared by both combinations.    // the SCNR / mtf / SCNR / reverse-mtf pass
    starStretch:    1.00,    // hyperbolic star brightening, on the stretched star
                             // frames this script requires.
-   starSaturation: 0.00,    // hue-weighted colour boost, 0 = leave the colour alone
 
 
    // ---- green / magenta suppression ---------------------------------------
@@ -374,7 +357,7 @@ var FX =
                             // apart from the old previewZoom step index so a
                             // settings file from 2.3.1 cannot be misread as one.
    previewDetail:  0,       // render sampling: 0 = auto, 1 = 1:1, 2 = 1:2, 3 = 1:4, 4 = 1:8
-   previewTarget:  0,       // 0 = starless, 1 = stars, 2 = artificial luminance
+   previewTarget:  0,       // 0 = starless, 1 = stars, 2 = luminance, 3 = complete
 
    // ---- layout -------------------------------------------------------------
    sideBarWidth:   560,     // logical pixels; dragged with the vertical splitter
@@ -435,11 +418,16 @@ function fxResetAllLevels()
  * else would tell the user that a black point they cannot see is still in force
  * on the image they are about to build.
  */
-function fxLevelsInForceElsewhere( shownIndex )
+function fxLevelsInForceElsewhere( shown )
 {
+   // An array, because one preview can show more than one set at once: the
+   // complete image is the starless and the stars combined, and both their
+   // levels are visible in it. Passing a bare index there would have reported
+   // levels the user is looking straight at as being off screen.
+   let seen = (shown instanceof Array) ? shown : [ shown ];
    let names = [];
    for ( let i = 0; i < FX_LEVEL_SETS.length; ++i )
-      if ( i != shownIndex && !fxLevelsAreIdentity( FX_LEVEL_SETS[i] ) )
+      if ( seen.indexOf( i ) < 0 && !fxLevelsAreIdentity( FX_LEVEL_SETS[i] ) )
          names.push( FX_LEVEL_SETS[i].nameKey );
    return names;
 }
@@ -527,9 +515,7 @@ var FXPersisted =
    [ "satStrength",      "real"    ],
    [ "extraSaturation",  "real"    ],
    [ "posterLevels",     "int"     ],
-   [ "starCleanGreen",   "boolean" ],
    [ "starStretch",      "real"    ],
-   [ "starSaturation",   "real"    ],
    [ "scnrEnabled",      "boolean" ],
    [ "scnrGreen",        "real"    ],
    [ "scnrMagenta",      "real"    ],
@@ -586,7 +572,6 @@ var FXRanges =
    gainOiii:        [ 0.20, 3.00, 2 ],
    blend:           [ 0.00, 1.00, 2 ],
    starStretch:     [ 0.00, 8.00, 2 ],
-   starSaturation:  [ 0.00, 3.00, 2 ],
    lumLow:          [ 0.00, 1.00, 4 ],
    lumMid:          [ 0.001, 0.999, 4 ],
    lumHigh:         [ 0.00, 1.00, 4 ],
@@ -645,7 +630,7 @@ function fxSanitize()
       FX.previewScale = 1;
    FX.previewScale = Math.min( 10, Math.max( 0.1, FX.previewScale ) );
    FX.previewDetail   = clampInt( FX.previewDetail,   0, 4, 0 );
-   FX.previewTarget   = clampInt( FX.previewTarget,   0, 2, 0 );
+   FX.previewTarget   = clampInt( FX.previewTarget,   0, 3, 0 );
    FX.normalizeRef    = clampInt( FX.normalizeRef,    0, 2, 1 );
    FX.linearMethod    = clampInt( FX.linearMethod,    0, 1, 1 );
    // A settings file can hold any string at all. An unknown language would make
