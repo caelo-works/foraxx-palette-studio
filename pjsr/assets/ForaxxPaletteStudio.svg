@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Foraxx Palette Studio">
+  <!-- Foraxx Palette Studio: the tile IS the palette. Silhouette = one disc
+       carrying the gold-to-teal transition the dynamic palette is known for.
+       The three bars on the left are Sii, Ha and Oiii feeding into it. -->
+  <defs>
+    <linearGradient id="fxTile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#111c33"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <!-- The signature ramp: gold where Ha leads, teal where Oiii does, with the
+         transition zone in between - the thing every control in the script shapes. -->
+    <linearGradient id="fxRamp" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"    stop-color="#b45309"/>
+      <stop offset="0.32" stop-color="#f59e0b"/>
+      <stop offset="0.58" stop-color="#22d3ee"/>
+      <stop offset="1"    stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#fxTile)"/>
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="13.25" fill="none" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- the three narrowband channels, in the order the palette maps them -->
+  <g stroke-linecap="round" stroke-width="3.4">
+    <line x1="12" y1="20" x2="12" y2="20.01" stroke="#f87171"/>
+    <line x1="12" y1="20" x2="20" y2="24"    stroke="#f87171"/>
+    <line x1="12" y1="32" x2="20" y2="32"    stroke="#4ade80"/>
+    <line x1="12" y1="44" x2="20" y2="40"    stroke="#60a5fa"/>
+  </g>
+
+  <!-- the combined result -->
+  <circle cx="39" cy="32" r="17.5" fill="url(#fxRamp)"/>
+  <circle cx="39" cy="32" r="17.5" fill="none" stroke="#0f172a" stroke-width="1.2" opacity="0.55"/>
+
+  <!-- the transition boundary itself, the line the sliders move -->
+  <path d="M 27.5 43.5 Q 39 32 50.5 20.5" fill="none" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+</svg>

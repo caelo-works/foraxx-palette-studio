@@ -1,0 +1,44 @@
+name: Bug report
+description: Something the script does that it should not
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: the script takes **non-linear (stretched)** images only.
+        A black or washed-out result from linear data is not a bug.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you got, what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Script version
+      description: The line the console prints when the script starts, e.g. 3.0.1.
+    validations:
+      required: true
+  - type: input
+    id: pixinsight
+    attributes:
+      label: PixInsight version and platform
+      placeholder: 1.9.3 — Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings
+      description: |
+        The console log block the script writes on Execute records every setting
+        that produced the run. Paste it here — it makes the result reproducible.
+      render: text
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Any error or warning PixInsight printed.
+      render: text
