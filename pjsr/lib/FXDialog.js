@@ -1118,10 +1118,14 @@ function ForaxxStudioDialog()
    this.linearBar.setSection( this.linearControl );
    this.linearBar.enableCheckBox();
    this.linearBar.checkBox.checked = FX.linearInput;
-   this.linearBar.onCheck = function( bar )
+   // onCheckSection, not onCheck: SectionBar fires the former for its own
+   // checkbox. Wired to the latter, the handler never ran at all - the switch
+   // moved on screen and nothing behind it changed.
+   this.linearBar.onCheckSection = function( bar )
    {
       FX.linearInput = bar.checkBox.checked;
       dlg.updatePreviewStatusBanner();
+      dlg.updateControls();
       dlg.requestPreview();
    };
    if ( !FX.linearInput )

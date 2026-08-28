@@ -220,4 +220,48 @@ for ( const f of FILES )
 }
 ok( flagged === 0, 'every identifier the PJSR sources read is declared somewhere' );
 
+// ---------------------------------------------------------------------------
+// Event handlers wired to a name nothing fires.
+//
+// A SectionBar with a checkbox reports it through onCheckSection. Assigning
+// onCheck instead is silent in every direction: the property takes the
+// function, no error is raised, the switch moves on screen, and nothing behind
+// it ever runs. The linear input section shipped that way and looked, from the
+// outside, exactly like a feature that did nothing.
+//
+// The same shape catches the other names that are easy to almost-remember.
+// ---------------------------------------------------------------------------
+{
+   const dialog = strip( fs.readFileSync( path.join( ROOT, 'lib/FXDialog.js' ), 'utf8' ) );
+
+   // Every bar given a checkbox has to handle onCheckSection.
+   const bars = [];
+   let m;
+   const re = /this\.(\w+)\.enableCheckBox\(\s*\)/g;
+   while ( ( m = re.exec( dialog ) ) !== null )
+      bars.push( m[1] );
+   ok( bars.length > 0, 'the dialog has section bars with checkboxes' );
+   bars.forEach( bar => {
+      ok( dialog.indexOf( 'this.' + bar + '.onCheckSection' ) >= 0,
+          bar + ' handles onCheckSection - a checkbox bar wired to onCheck is silent' );
+      ok( dialog.indexOf( 'this.' + bar + '.onCheck =' ) < 0,
+          bar + ' does not use onCheck, which SectionBar never fires' );
+   } );
+
+   // The handler names PJSR actually calls, against the ones that read alike.
+   const WRONG = { 'onValueChanged': 'onValueUpdated', 'onSelected': 'onItemSelected',
+                   'onChecked': 'onCheck', 'onPressed': 'onMousePress',
+                   'onClicked': 'onClick', 'onTextChanged': 'onTextUpdated' };
+   // A name the project defines and calls itself is its own callback, not a
+   // misremembered PJSR one - FXLevelsControl declares onValueChanged and
+   // invokes it, which is exactly the shape being hunted and entirely correct.
+   const ours = strip( FILES.map( f =>
+      fs.readFileSync( path.join( ROOT, f ), 'utf8' ) ).join( '\n' ) );
+   Object.keys( WRONG ).forEach( bad => {
+      if ( new RegExp( 'this\\.' + bad + '\\s*\\(' ).test( ours ) ) return;
+      ok( dialog.indexOf( '.' + bad + ' =' ) < 0,
+          'no handler is assigned to "' + bad + '"; PJSR fires "' + WRONG[bad] + '"' );
+   } );
+}
+
 report( 'undefined' );
