@@ -122,6 +122,8 @@ const GLOBALS = new Set( [
    'Array','Boolean','Date','Error','Function','JSON','Math','Number','Object','RegExp',
    'String','isFinite','isNaN','parseFloat','parseInt','undefined','NaN','Infinity',
    'console','module','require','process','this','arguments','TypeError','RangeError',
+   // A class body's own keyword, which reads like an identifier.
+   'constructor','super',
    // PJSR core
    'Console','Settings','Parameters','File','Dialog','Control','Frame','Label','PushButton',
    'ToolButton','RadioButton','CheckBox','ComboBox','Edit','NumericControl','NumericEdit',
@@ -172,6 +174,10 @@ for ( const f of FILES )
 
    for ( const re of [ /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)/g,
                        /\bfunction\s+([A-Za-z_$][\w$]*)/g,
+                       // Since the move to #engine v8 the three PJSR subclasses
+                       // are ES classes, and a class declaration declares a name
+                       // exactly as a function declaration does.
+                       /\bclass\s+([A-Za-z_$][\w$]*)/g,
                        /\bcatch\s*\(\s*([A-Za-z_$][\w$]*)/g,
                        /\bfor\s*\(\s*(?:var|let|const)\s+([A-Za-z_$][\w$]*)/g ] )
    {

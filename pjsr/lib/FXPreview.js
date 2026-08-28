@@ -27,344 +27,344 @@
  * -----------------------------------------------------------------------------
  */
 
-function FXPreviewControl( parent )
+class FXPreviewControl extends ScrollBox
 {
-   this.__base__ = ScrollBox;
-   this.__base__( parent );
-
-   let ctrl = this;
-
-   this.autoScroll = true;
-   this.tracking = true;
-   this.displayImage = null;
-   this.cachedBitmap = null;  // the 1:1 render, scaled by the Graphics transform
-   this.displayZoom = 1;      // pure display scale; never triggers a render
-   this.fitToPanel = true;
-   this.dragging = false;
-   this.dragOrigin = new Point( 0, 0 );
-
-   // Continuous zoom: a
-   // fixed multiplier per wheel notch rather than a list of fixed steps, and
-   // 1.25 * 0.8 = 1 exactly, so a notch in and a notch back out returns to where
-   // it started instead of drifting.
-   this.minZoom      = 0.10;
-   this.maxZoom      = 10.00;
-   this.zoomInStep   = 1.25;
-   this.zoomOutStep  = 0.80;
-
-   this.viewport.cursor = new Cursor( StdCursor_OpenHand );
-
-   this.setImage = function( image )
+   constructor( parent )
    {
-      // A 1:1 preview of a large frame is hundreds of megabytes. Release the
-      // previous copy explicitly rather than waiting for the garbage
-      // collector to notice.
-      if ( this.displayImage != null && this.displayImage != image )
+      super( parent );
+
+      let ctrl = this;
+
+      this.autoScroll = true;
+      this.tracking = true;
+      this.displayImage = null;
+      this.cachedBitmap = null;  // the 1:1 render, scaled by the Graphics transform
+      this.displayZoom = 1;      // pure display scale; never triggers a render
+      this.fitToPanel = true;
+      this.dragging = false;
+      this.dragOrigin = new Point( 0, 0 );
+
+      // Continuous zoom: a
+      // fixed multiplier per wheel notch rather than a list of fixed steps, and
+      // 1.25 * 0.8 = 1 exactly, so a notch in and a notch back out returns to where
+      // it started instead of drifting.
+      this.minZoom      = 0.10;
+      this.maxZoom      = 10.00;
+      this.zoomInStep   = 1.25;
+      this.zoomOutStep  = 0.80;
+
+      this.viewport.cursor = new Cursor( StdCursor_OpenHand );
+
+      this.setImage = function( image )
       {
-         try
+         // A 1:1 preview of a large frame is hundreds of megabytes. Release the
+         // previous copy explicitly rather than waiting for the garbage
+         // collector to notice.
+         if ( this.displayImage != null && this.displayImage != image )
          {
-            this.displayImage.free();
+            try
+            {
+               this.displayImage.free();
+            }
+            catch ( x )
+            {
+            }
          }
-         catch ( x )
+         this.displayImage = image;
+         this.cachedBitmap = null;
+         this.initScrollBars();
+         this.viewport.update();
+      };
+
+      /*
+       * The zoom is applied when the image is painted, not when it is produced.
+       * Changing it scales the bitmap already in hand, so it costs a repaint
+       * rather than a full run of the pipeline.
+       */
+      this.effectiveZoom = function()
+      {
+         let image = this.displayImage;
+         if ( image == null || image.width <= 0 || image.height <= 0 )
+            return 1;
+         if ( !this.fitToPanel )
+            return this.displayZoom;
+         let zx = this.viewport.width / image.width;
+         let zy = this.viewport.height / image.height;
+         let z = Math.min( zx, zy );
+         return (z > 0 && isFinite( z )) ? z : 1;
+      };
+
+      this.setZoom = function( zoom, fit )
+      {
+         this.fitToPanel = !!fit;
+         if ( !this.fitToPanel && zoom > 0 )
+            this.displayZoom = fxClamp( zoom, this.minZoom, this.maxZoom );
+         this.initScrollBars();
+      };
+
+      this.scaledSize = function()
+      {
+         return this.sizeAtZoom( this.effectiveZoom() );
+      };
+
+      this.sizeAtZoom = function( z )
+      {
+         let image = this.displayImage;
+         if ( image == null || image.width <= 0 || image.height <= 0 )
+            return { w: 0, h: 0, z: 1 };
+         return { w: Math.max( 1, Math.round( image.width * z ) ),
+                  h: Math.max( 1, Math.round( image.height * z ) ),
+                  z: z };
+      };
+
+      /*
+       * Where the top-left image pixel is drawn, before scrolling. An image
+       * smaller than the panel is centred, so the anchor maths has to know about
+       * that offset - without it, zooming into a fitted image drifts sideways.
+       */
+      this.originAtZoom = function( z )
+      {
+         let size = this.sizeAtZoom( z );
+         return new Point( Math.floor( Math.max( 0, (this.viewport.width  - size.w) / 2 ) ),
+                           Math.floor( Math.max( 0, (this.viewport.height - size.h) / 2 ) ) );
+      };
+
+      this.scrollLimitsAtZoom = function( z )
+      {
+         let size = this.sizeAtZoom( z );
+         return new Point( Math.max( 0, size.w - this.viewport.width  ),
+                           Math.max( 0, size.h - this.viewport.height ) );
+      };
+
+      this.initScrollBars = function()
+      {
+         let size = this.scaledSize();
+         if ( size.w <= 0 || size.h <= 0 )
          {
+            this.setHorizontalScrollRange( 0, 0 );
+            this.setVerticalScrollRange( 0, 0 );
+            this.scrollPosition = new Point( 0, 0 );
          }
-      }
-      this.displayImage = image;
-      this.cachedBitmap = null;
-      this.initScrollBars();
-      this.viewport.update();
-   };
+         else
+         {
+            let mx = Math.max( 0, size.w - this.viewport.width  );
+            let my = Math.max( 0, size.h - this.viewport.height );
+            this.setHorizontalScrollRange( 0, mx );
+            this.setVerticalScrollRange(   0, my );
+            // A smaller view must not keep a scroll offset from a larger one.
+            let sp = this.scrollPosition;
+            this.scrollPosition = new Point( Math.min( sp.x, mx ), Math.min( sp.y, my ) );
+         }
+         this.viewport.update();
+      };
 
-   /*
-    * The zoom is applied when the image is painted, not when it is produced.
-    * Changing it scales the bitmap already in hand, so it costs a repaint
-    * rather than a full run of the pipeline.
-    */
-   this.effectiveZoom = function()
-   {
-      let image = this.displayImage;
-      if ( image == null || image.width <= 0 || image.height <= 0 )
-         return 1;
-      if ( !this.fitToPanel )
-         return this.displayZoom;
-      let zx = this.viewport.width / image.width;
-      let zy = this.viewport.height / image.height;
-      let z = Math.min( zx, zy );
-      return (z > 0 && isFinite( z )) ? z : 1;
-   };
-
-   this.setZoom = function( zoom, fit )
-   {
-      this.fitToPanel = !!fit;
-      if ( !this.fitToPanel && zoom > 0 )
-         this.displayZoom = fxClamp( zoom, this.minZoom, this.maxZoom );
-      this.initScrollBars();
-   };
-
-   this.scaledSize = function()
-   {
-      return this.sizeAtZoom( this.effectiveZoom() );
-   };
-
-   this.sizeAtZoom = function( z )
-   {
-      let image = this.displayImage;
-      if ( image == null || image.width <= 0 || image.height <= 0 )
-         return { w: 0, h: 0, z: 1 };
-      return { w: Math.max( 1, Math.round( image.width * z ) ),
-               h: Math.max( 1, Math.round( image.height * z ) ),
-               z: z };
-   };
-
-   /*
-    * Where the top-left image pixel is drawn, before scrolling. An image
-    * smaller than the panel is centred, so the anchor maths has to know about
-    * that offset - without it, zooming into a fitted image drifts sideways.
-    */
-   this.originAtZoom = function( z )
-   {
-      let size = this.sizeAtZoom( z );
-      return new Point( Math.floor( Math.max( 0, (this.viewport.width  - size.w) / 2 ) ),
-                        Math.floor( Math.max( 0, (this.viewport.height - size.h) / 2 ) ) );
-   };
-
-   this.scrollLimitsAtZoom = function( z )
-   {
-      let size = this.sizeAtZoom( z );
-      return new Point( Math.max( 0, size.w - this.viewport.width  ),
-                        Math.max( 0, size.h - this.viewport.height ) );
-   };
-
-   this.initScrollBars = function()
-   {
-      let size = this.scaledSize();
-      if ( size.w <= 0 || size.h <= 0 )
+      /*
+       * Multiplies the zoom about a point in the panel, keeping whatever image
+       * pixel is under that point exactly where it is. Pass the cursor position
+       * for the wheel, or the centre of the panel for a button.
+       *
+       * Returns true if the zoom actually changed, so the caller only writes back
+       * to the parameter store and repaints the status line when something moved.
+       */
+      this.zoomAbout = function( x, y, factor )
       {
-         this.setHorizontalScrollRange( 0, 0 );
-         this.setVerticalScrollRange( 0, 0 );
-         this.scrollPosition = new Point( 0, 0 );
-      }
-      else
-      {
+         let image = this.displayImage;
+         if ( image == null || image.width <= 0 || image.height <= 0 )
+            return false;
+
+         let z0 = this.effectiveZoom();
+         // In Fit the scale is whatever the panel dictates, and on a large frame
+         // at 1:1 detail that can be below minZoom - a 9576 px frame in a 900 px
+         // panel fits at 0.094. Clamping the notch into the fixed range regardless
+         // would move the zoom the *opposite* way to the wheel and then dead-end,
+         // so the current scale is allowed to widen the window it is clamped into.
+         let lo = Math.min( this.minZoom, z0 );
+         let hi = Math.max( this.maxZoom, z0 );
+         let z1 = fxClamp( z0 * factor, lo, hi );
+         // At a limit the notch does nothing - which is the right answer when the
+         // whole frame is already in the panel - and Fit must survive that, or a
+         // wheel-out at the fit limit would silently drop the panel out of Fit at
+         // the same scale and stop tracking the panel size.
+         if ( Math.abs( z1 - z0 ) < 1.0e-9 )
+            return false;
+
+         // Which image pixel is under the pointer right now.
+         let o0 = this.originAtZoom( z0 );
+         let sp = this.scrollPosition;
+         let ix = (x - o0.x + sp.x) / z0;
+         let iy = (y - o0.y + sp.y) / z0;
+
+         // Leaving Fit has to happen before the ranges are recomputed, or they are
+         // still the fitted ones.
+         this.fitToPanel = false;
+         this.displayZoom = z1;
+
+         let size = this.sizeAtZoom( z1 );
          let mx = Math.max( 0, size.w - this.viewport.width  );
          let my = Math.max( 0, size.h - this.viewport.height );
          this.setHorizontalScrollRange( 0, mx );
          this.setVerticalScrollRange(   0, my );
-         // A smaller view must not keep a scroll offset from a larger one.
-         let sp = this.scrollPosition;
-         this.scrollPosition = new Point( Math.min( sp.x, mx ), Math.min( sp.y, my ) );
-      }
-      this.viewport.update();
-   };
 
-   /*
-    * Multiplies the zoom about a point in the panel, keeping whatever image
-    * pixel is under that point exactly where it is. Pass the cursor position
-    * for the wheel, or the centre of the panel for a button.
-    *
-    * Returns true if the zoom actually changed, so the caller only writes back
-    * to the parameter store and repaints the status line when something moved.
-    */
-   this.zoomAbout = function( x, y, factor )
-   {
-      let image = this.displayImage;
-      if ( image == null || image.width <= 0 || image.height <= 0 )
-         return false;
+         // Put that same image pixel back under the pointer. Where the image no
+         // longer fills the panel the limits collapse to zero and it is centred
+         // instead, which is the only sensible answer there.
+         let o1 = this.originAtZoom( z1 );
+         this.scrollPosition = new Point(
+            Math.round( fxClamp( o1.x + ix*z1 - x, 0, mx ) ),
+            Math.round( fxClamp( o1.y + iy*z1 - y, 0, my ) ) );
 
-      let z0 = this.effectiveZoom();
-      // In Fit the scale is whatever the panel dictates, and on a large frame
-      // at 1:1 detail that can be below minZoom - a 9576 px frame in a 900 px
-      // panel fits at 0.094. Clamping the notch into the fixed range regardless
-      // would move the zoom the *opposite* way to the wheel and then dead-end,
-      // so the current scale is allowed to widen the window it is clamped into.
-      let lo = Math.min( this.minZoom, z0 );
-      let hi = Math.max( this.maxZoom, z0 );
-      let z1 = fxClamp( z0 * factor, lo, hi );
-      // At a limit the notch does nothing - which is the right answer when the
-      // whole frame is already in the panel - and Fit must survive that, or a
-      // wheel-out at the fit limit would silently drop the panel out of Fit at
-      // the same scale and stop tracking the panel size.
-      if ( Math.abs( z1 - z0 ) < 1.0e-9 )
-         return false;
+         this.viewport.update();
+         return true;
+      };
 
-      // Which image pixel is under the pointer right now.
-      let o0 = this.originAtZoom( z0 );
-      let sp = this.scrollPosition;
-      let ix = (x - o0.x + sp.x) / z0;
-      let iy = (y - o0.y + sp.y) / z0;
-
-      // Leaving Fit has to happen before the ranges are recomputed, or they are
-      // still the fitted ones.
-      this.fitToPanel = false;
-      this.displayZoom = z1;
-
-      let size = this.sizeAtZoom( z1 );
-      let mx = Math.max( 0, size.w - this.viewport.width  );
-      let my = Math.max( 0, size.h - this.viewport.height );
-      this.setHorizontalScrollRange( 0, mx );
-      this.setVerticalScrollRange(   0, my );
-
-      // Put that same image pixel back under the pointer. Where the image no
-      // longer fills the panel the limits collapse to zero and it is centred
-      // instead, which is the only sensible answer there.
-      let o1 = this.originAtZoom( z1 );
-      this.scrollPosition = new Point(
-         Math.round( fxClamp( o1.x + ix*z1 - x, 0, mx ) ),
-         Math.round( fxClamp( o1.y + iy*z1 - y, 0, my ) ) );
-
-      this.viewport.update();
-      return true;
-   };
-
-   /*
-    * Zooms about the middle of the panel. What the buttons use.
-    */
-   this.zoomAboutCentre = function( factor )
-   {
-      return this.zoomAbout( this.viewport.width/2, this.viewport.height/2, factor );
-   };
-
-   // The dialog replaces this handler, because a resize also changes the Auto
-   // render sampling and the Fit readout, neither of which the control knows
-   // about. It is kept so the control is still correct on its own.
-   this.viewport.onResize = function()
-   {
-      ctrl.initScrollBars();
-   };
-
-   this.onHorizontalScrollPosUpdated = function( x )
-   {
-      ctrl.viewport.update();
-   };
-
-   this.onVerticalScrollPosUpdated = function( y )
-   {
-      ctrl.viewport.update();
-   };
-
-   this.viewport.onMousePress = function( x, y, button, buttons, modifiers )
-   {
-      ctrl.viewport.cursor = new Cursor( StdCursor_ClosedHand );
-      ctrl.dragOrigin.x = x;
-      ctrl.dragOrigin.y = y;
-      ctrl.dragging = true;
-   };
-
-   this.viewport.onMouseMove = function( x, y, buttons, modifiers )
-   {
-      if ( ctrl.dragging )
+      /*
+       * Zooms about the middle of the panel. What the buttons use.
+       */
+      this.zoomAboutCentre = function( factor )
       {
-         let lim = ctrl.scrollLimitsAtZoom( ctrl.effectiveZoom() );
-         let sp = new Point( ctrl.scrollPosition )
-                     .translatedBy( ctrl.dragOrigin.x - x, ctrl.dragOrigin.y - y );
-         // Panning must not be able to push the image out of the panel.
-         ctrl.scrollPosition = new Point( fxClamp( sp.x, 0, lim.x ),
-                                          fxClamp( sp.y, 0, lim.y ) );
+         return this.zoomAbout( this.viewport.width/2, this.viewport.height/2, factor );
+      };
+
+      // The dialog replaces this handler, because a resize also changes the Auto
+      // render sampling and the Fit readout, neither of which the control knows
+      // about. It is kept so the control is still correct on its own.
+      this.viewport.onResize = function()
+      {
+         ctrl.initScrollBars();
+      };
+
+      this.onHorizontalScrollPosUpdated = function( x )
+      {
+         ctrl.viewport.update();
+      };
+
+      this.onVerticalScrollPosUpdated = function( y )
+      {
+         ctrl.viewport.update();
+      };
+
+      this.viewport.onMousePress = function( x, y, button, buttons, modifiers )
+      {
+         ctrl.viewport.cursor = new Cursor( StdCursor_ClosedHand );
          ctrl.dragOrigin.x = x;
          ctrl.dragOrigin.y = y;
-         ctrl.viewport.update();
-      }
-   };
+         ctrl.dragging = true;
+      };
 
-   this.viewport.onMouseRelease = function( x, y, button, buttons, modifiers )
-   {
-      ctrl.viewport.cursor = new Cursor( StdCursor_OpenHand );
-      ctrl.dragging = false;
-   };
-
-   /*
-    * Called after the wheel or a double click has moved the zoom, so the dialog
-    * can write the new value back to the parameter store and update its
-    * readout. The control owns the zoom; the dialog only mirrors it.
-    */
-   this.onZoomChanged = null;   // function()
-
-   this.notifyZoom = function()
-   {
-      if ( this.onZoomChanged instanceof Function )
-         this.onZoomChanged();
-   };
-
-   /*
-    * One notch multiplies the zoom by 1.25 or 0.8 about the cursor. Continuous,
-    * not a jump between named steps, and the pixel under the pointer stays
-    * under the pointer.
-    */
-   this.viewport.onMouseWheel = function( x, y, delta )
-   {
-      if ( delta == 0 )
-         return;
-      // One detent is 120 units. A wheel that reports several at once should
-      // move several steps rather than one; anything smaller than a detent
-      // still counts as one, so a device that reports in smaller units is not
-      // left with a dead wheel.
-      let steps = Math.max( 1, Math.min( 8, Math.round( Math.abs( delta ) / 120 ) ) );
-      let step = (delta > 0) ? ctrl.zoomInStep : ctrl.zoomOutStep;
-      if ( ctrl.zoomAbout( x, y, Math.pow( step, steps ) ) )
-         ctrl.notifyZoom();
-   };
-
-   /*
-    * Double click anywhere in the panel goes back to Fit - the same gesture the
-    * histogram markers use to return to their default.
-    */
-   this.viewport.onMouseDoubleClick = function( x, y, button, buttons, modifiers )
-   {
-      ctrl.dragging = false;
-      ctrl.viewport.cursor = new Cursor( StdCursor_OpenHand );
-      if ( ctrl.fitToPanel )
-         return;
-      ctrl.setZoom( 1, true );
-      ctrl.notifyZoom();
-   };
-
-   this.viewport.onPaint = function( x0, y0, x1, y1 )
-   {
-      // Constructed inside the try: if Graphics itself throws, g is undefined
-      // and the g.end() below would throw a second time out of a paint handler,
-      // which is precisely what the catch is here to prevent.
-      let g = null;
-      try
+      this.viewport.onMouseMove = function( x, y, buttons, modifiers )
       {
-         g = new Graphics( this );
-         g.fillRect( x0, y0, x1, y1, new Brush( 0xff1b1b1b ) );
-
-         let image = ctrl.displayImage;
-         let size = ctrl.scaledSize();
-         if ( image != null && size.w > 0 && size.h > 0 )
+         if ( ctrl.dragging )
          {
-            // Render once at 1:1 and let the Graphics transform do the zoom.
-            // Scaling each update region separately would resample boundary
-            // pixels from a different neighbourhood every time and leave seams
-            // wherever a partial repaint met a previous one.
-            if ( ctrl.cachedBitmap == null )
-               ctrl.cachedBitmap = image.render();
-
-            let z = size.z;
-            let dx = Math.floor( Math.max( 0, (this.width  - size.w) / 2 ) );
-            let dy = Math.floor( Math.max( 0, (this.height - size.h) / 2 ) );
-            let sp = ctrl.scrollPosition;
-
-            // The translation is applied in the scaled coordinate system, so
-            // the screen offset has to be divided by the zoom to come back out
-            // as screen pixels.
-            g.scaleTransformation( z );
-            g.translateTransformation( (dx - sp.x) / z, (dy - sp.y) / z );
-            g.drawBitmap( 0, 0, ctrl.cachedBitmap );
+            let lim = ctrl.scrollLimitsAtZoom( ctrl.effectiveZoom() );
+            let sp = new Point( ctrl.scrollPosition )
+                        .translatedBy( ctrl.dragOrigin.x - x, ctrl.dragOrigin.y - y );
+            // Panning must not be able to push the image out of the panel.
+            ctrl.scrollPosition = new Point( fxClamp( sp.x, 0, lim.x ),
+                                             fxClamp( sp.y, 0, lim.y ) );
+            ctrl.dragOrigin.x = x;
+            ctrl.dragOrigin.y = y;
+            ctrl.viewport.update();
          }
-      }
-      catch ( x )
+      };
+
+      this.viewport.onMouseRelease = function( x, y, button, buttons, modifiers )
       {
-         // Never let a paint failure take down the dialog.
-      }
-      if ( g != null )
-         g.end();
-   };
+         ctrl.viewport.cursor = new Cursor( StdCursor_OpenHand );
+         ctrl.dragging = false;
+      };
 
-   this.initScrollBars();
+      /*
+       * Called after the wheel or a double click has moved the zoom, so the dialog
+       * can write the new value back to the parameter store and update its
+       * readout. The control owns the zoom; the dialog only mirrors it.
+       */
+      this.onZoomChanged = null;   // function()
+
+      this.notifyZoom = function()
+      {
+         if ( this.onZoomChanged instanceof Function )
+            this.onZoomChanged();
+      };
+
+      /*
+       * One notch multiplies the zoom by 1.25 or 0.8 about the cursor. Continuous,
+       * not a jump between named steps, and the pixel under the pointer stays
+       * under the pointer.
+       */
+      this.viewport.onMouseWheel = function( x, y, delta )
+      {
+         if ( delta == 0 )
+            return;
+         // One detent is 120 units. A wheel that reports several at once should
+         // move several steps rather than one; anything smaller than a detent
+         // still counts as one, so a device that reports in smaller units is not
+         // left with a dead wheel.
+         let steps = Math.max( 1, Math.min( 8, Math.round( Math.abs( delta ) / 120 ) ) );
+         let step = (delta > 0) ? ctrl.zoomInStep : ctrl.zoomOutStep;
+         if ( ctrl.zoomAbout( x, y, Math.pow( step, steps ) ) )
+            ctrl.notifyZoom();
+      };
+
+      /*
+       * Double click anywhere in the panel goes back to Fit - the same gesture the
+       * histogram markers use to return to their default.
+       */
+      this.viewport.onMouseDoubleClick = function( x, y, button, buttons, modifiers )
+      {
+         ctrl.dragging = false;
+         ctrl.viewport.cursor = new Cursor( StdCursor_OpenHand );
+         if ( ctrl.fitToPanel )
+            return;
+         ctrl.setZoom( 1, true );
+         ctrl.notifyZoom();
+      };
+
+      this.viewport.onPaint = function( x0, y0, x1, y1 )
+      {
+         // Constructed inside the try: if Graphics itself throws, g is undefined
+         // and the g.end() below would throw a second time out of a paint handler,
+         // which is precisely what the catch is here to prevent.
+         let g = null;
+         try
+         {
+            g = new Graphics( this );
+            g.fillRect( x0, y0, x1, y1, new Brush( 0xff1b1b1b ) );
+
+            let image = ctrl.displayImage;
+            let size = ctrl.scaledSize();
+            if ( image != null && size.w > 0 && size.h > 0 )
+            {
+               // Render once at 1:1 and let the Graphics transform do the zoom.
+               // Scaling each update region separately would resample boundary
+               // pixels from a different neighbourhood every time and leave seams
+               // wherever a partial repaint met a previous one.
+               if ( ctrl.cachedBitmap == null )
+                  ctrl.cachedBitmap = image.render();
+
+               let z = size.z;
+               let dx = Math.floor( Math.max( 0, (this.width  - size.w) / 2 ) );
+               let dy = Math.floor( Math.max( 0, (this.height - size.h) / 2 ) );
+               let sp = ctrl.scrollPosition;
+
+               // The translation is applied in the scaled coordinate system, so
+               // the screen offset has to be divided by the zoom to come back out
+               // as screen pixels.
+               g.scaleTransformation( z );
+               g.translateTransformation( (dx - sp.x) / z, (dy - sp.y) / z );
+               g.drawBitmap( 0, 0, ctrl.cachedBitmap );
+            }
+         }
+         catch ( x )
+         {
+            // Never let a paint failure take down the dialog.
+         }
+         if ( g != null )
+            g.end();
+      };
+
+      this.initScrollBars();
+   }
 }
-
-FXPreviewControl.prototype = new ScrollBox;
 
 /*
  * -----------------------------------------------------------------------------

@@ -247,6 +247,12 @@
 
 /* beautify ignore:start */
 
+// Not optional. The macOS arm64 build of 1.9.4 ships no SpiderMonkey at all, so
+// without this the script does not start: "The legacy 'sm' JavaScript engine is
+// not available in this PixInsight build." The node harness has always run this
+// code on V8, which is why the expression layer needed no changes to follow.
+#engine v8
+
 #feature-id    ForaxxPaletteStudio : CaeloWorks > Foraxx Palette Studio
 #feature-icon  @script_icons_dir/ForaxxPaletteStudio.svg
 

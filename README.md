@@ -5,7 +5,7 @@
 ### Narrowband palettes with a live preview that is the real thing, not an approximation
 
 [![Version](https://img.shields.io/badge/version-3.1.0-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
-[![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.8.9-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
+[![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.9.0-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
 [![Status](https://img.shields.io/badge/status-stable-34d399?style=for-the-badge&labelColor=0f172a)](https://pixinsight-scripts.caelo.works/en/scripts/foraxx-palette-studio)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-94a3b8?style=for-the-badge&labelColor=0f172a)](LICENSE)
 [![Website](https://img.shields.io/badge/%E2%86%92%20see%20all%20scripts-pixinsight--scripts.caelo.works-0f172a?style=for-the-badge&labelColor=22d3ee)](https://pixinsight-scripts.caelo.works/en)
@@ -55,7 +55,8 @@ warns that it is unsigned. That is expected.
 
 Either way it appears under **Script → CaeloWorks → Foraxx Palette Studio**.
 
-Requires PixInsight 1.8.9 or later; developed and checked against the 1.9.x API.
+Requires PixInsight 1.9.0 or later. The script runs on the V8 JavaScript engine, which
+PixInsight 1.8.9 does not provide.
 
 ---
 

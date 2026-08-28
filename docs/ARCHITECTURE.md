@@ -107,11 +107,31 @@ Existing identifiers are never overwritten: a numeric suffix is added to the
 whole group at once, so `Warhol01`, `Warhol01_stars`, `Warhol01_combined` and
 `Warhol01_L` always match.
 
+## The JavaScript engine
+
+`#engine v8`, and it is not optional: the macOS arm64 build of 1.9.4 ships no
+SpiderMonkey at all, so without the directive the script refuses to start. That
+sets the floor at PixInsight 1.9.0.
+
+Two things follow from it, both measured with a probe run headless
+(`PixInsight -n --automation-mode -r=probe.js --force-exit`, writing its findings
+to a file) rather than assumed:
+
+- **The core classes are built-in globals.** `Sizer.jsh`, `NumericControl.jsh`
+  and `SectionBar.jsh` declare `HorizontalSizer`, `NumericControl` and
+  `SectionBar` as plain functions, and V8 refuses the redeclaration outright.
+  Those three headers must not be included. The constant headers must:
+  `StdCursor_*`, `TextAlign_*`, `FrameStyle_*`, `StdIcon_*`, `StdButton_*`,
+  `StdDialogCode_*` and `DataType_*` are *not* built in.
+- **Subclassing is ES classes.** The `this.__base__ = Dialog; this.__base__();`
+  pattern calls a class constructor as a function, which V8 rejects.
+  `ForaxxStudioDialog`, `FXPreviewControl` and `FXLevelsControl` are
+  `class X extends Y` with a `super()` call.
+
+A class body is strict mode, so everything inside those three constructors now
+is too. `tests/undefined.test.js` is what guards the accidental global that
+would previously have been silent.
+
 ## Known deviations from the CaeloWorks house standard
 
-- **No `#engine v8`.** The other scripts declare it. This one does not, because
-  it is a working script inherited at 3.0.1 that has never run under that engine
-  and the README supports PixInsight back to 1.8.9. Adding the directive is a
-  behavioural change that needs a full pass of the PixInsight hand gates in
-  `docs/RELEASING.md` before it goes in, not a drive-by alignment.
 - **CC BY-NC 4.0, not GPL-3.0.** Not a choice — see `LICENSE` and `NOTICE.md`.

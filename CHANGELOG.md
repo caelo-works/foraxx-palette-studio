@@ -11,6 +11,20 @@ releases.
 
 ## [Unreleased]
 
+### Fixed
+- **The script runs on PixInsight builds without SpiderMonkey.** The macOS arm64
+  build of 1.9.4 ships none, and the script died on launch with "The legacy 'sm'
+  JavaScript engine is not available in this PixInsight build." It now declares
+  `#engine v8`, which raises the minimum to PixInsight 1.9.0.
+
+  Two changes follow from the engine, both measured against a headless probe
+  rather than assumed. `Sizer.jsh`, `NumericControl.jsh` and `SectionBar.jsh`
+  are no longer included: V8 provides those classes as built-in globals and
+  refuses the headers' redeclaration of them. And `ForaxxStudioDialog`,
+  `FXPreviewControl` and `FXLevelsControl` are ES classes with `super()`, since
+  the old `this.__base__ = Dialog; this.__base__();` pattern calls a class
+  constructor as a function.
+
 ## [3.1.0] - 2026-08-28
 
 No change reaches the starless image at the default settings. The **stars**
