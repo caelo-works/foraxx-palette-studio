@@ -1323,6 +1323,18 @@ function fxGhsAvailable()
  * which is where the sky background sits and is the level the stretch should
  * pivot around.
  */
+/*
+ * The automatic value, whatever the switch says. The dialog uses it to seed the
+ * manual control, so unticking the box starts from where the data actually is
+ * rather than from a number that suits nothing.
+ */
+function fxGhsAutoSymmetry( view )
+{
+   if ( view == null || view.isNull )
+      return 0.1;
+   return fxClamp( fxChannelStats( view ).median, 0, 1 );
+}
+
 function fxGhsSymmetryFor( view, p )
 {
    if ( !p.ghsAutoSP )
@@ -1382,17 +1394,17 @@ function fxGhsSolveD( view, p, sp, target )
          R.executeOn( pv, false );
       }
 
-      let lo = 0, hi = HI;
-      for ( let i = 0; i < STEPS; ++i )
+      // One measurement: stretch a throwaway copy of the thumbnail at this D and
+      // report what its median became.
+      let trial = function( D )
       {
-         let mid = (lo + hi) / 2;
-         let trial = fxPixelMathNew( pv, FX_TEMP_PREFIX + "ghstrial", false, probe, false, false );
-         let tv = fxRequireView( trial );
+         let t = fxPixelMathNew( pv, FX_TEMP_PREFIX + "ghstrial", false, probe, false, false );
          let median = 0;
          try
          {
+            let tv = fxRequireView( t );
             let P = new GeneralizedHyperbolicStretch;
-            fxSetIfPresent( P, "stretchFactor",  mid );
+            fxSetIfPresent( P, "stretchFactor",  D );
             fxSetIfPresent( P, "localIntensity", fxClamp( p.ghsB, -5, 15 ) );
             fxSetIfPresent( P, "symmetryPoint",  sp );
             P.executeOn( tv, false );
@@ -1401,7 +1413,40 @@ function fxGhsSolveD( view, p, sp, target )
          catch ( x )
          {
          }
-         fxCloseViewById( trial );
+         fxCloseViewById( t );
+         return median;
+      };
+
+      // Bisection assumes the median rises with D. That only holds while the
+      // symmetry point sits at or below the background: GHS COMPRESSES
+      // everything below SP towards black, so with SP above the data a stronger
+      // stretch makes the channel darker, and a search that assumes otherwise
+      // walks confidently to the worst value it can find. Measured with SP at
+      // 0.10 on data at 0.003, it settled on D = 9.96 and a median of exactly
+      // zero. So the direction is established before trusting it.
+      let atZero = trial( 0 );
+      let atMax = trial( HI );
+      if ( !(atMax > atZero) )
+      {
+         Console.warningln( format( "GHS: raising the stretch factor makes %s darker, not "
+                                  + "brighter (%.5f at D=0, %.5f at D=%.0f). The symmetry point "
+                                  + "(%.5f) is above this channel's background (%.5f), and "
+                                  + "everything below it is compressed towards black.",
+                                    view.id, atZero, atMax, HI, sp, fxChannelStats( view ).median ) );
+         return -1;
+      }
+      if ( atMax < target )
+      {
+         Console.warningln( format( "GHS: even D=%.0f reaches only %.5f on %s, short of the %.3f "
+                                  + "asked for.", HI, atMax, view.id, target ) );
+         return HI;
+      }
+
+      let lo = 0, hi = HI;
+      for ( let i = 0; i < STEPS; ++i )
+      {
+         let mid = (lo + hi) / 2;
+         let median = trial( mid );
          if ( median < target )
             lo = mid;
          else
@@ -1431,6 +1476,8 @@ function fxApplyGHS( view, p, swap )
 
       let target = fxClamp( p.linearTarget, 0.001, 0.999 );
       let D = fxGhsSolveD( view, p, sp, target );
+      if ( D < 0 )
+         return false;               // the solver said the search is meaningless here
 
       let P = new GeneralizedHyperbolicStretch;
       fxSetIfPresent( P, "stretchFactor",  D );

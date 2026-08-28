@@ -122,6 +122,7 @@ module.exports = {
    fxCollectStretch: fxCollectStretch,
    fxConditionsChannels: fxConditionsChannels,
    fxGhsSymmetryFor: fxGhsSymmetryFor,
+   fxGhsAutoSymmetry: fxGhsAutoSymmetry,
    fxGhsAvailable: fxGhsAvailable,
    fxStretchDidFallBack: fxStretchDidFallBack,
    fxClearStretchFallback: fxClearStretchFallback,

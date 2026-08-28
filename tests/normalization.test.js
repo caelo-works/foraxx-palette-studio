@@ -400,4 +400,32 @@ eq( fx.fxClamp( 0.5, 0, 1 ), 0.5, 'clamp passes what is already inside' );
        'and a missing view falls back to it rather than throwing' );
 }
 
+// ---------------------------------------------------------------------------
+// The symmetry point has to sit at or below the background.
+//
+// GHS compresses everything below SP towards black. With SP above the data, a
+// stronger stretch makes the channel DARKER - and a solver that assumes
+// otherwise walks to the worst value it can reach. Measured on the reference
+// masters with SP left at its stored 0.10 against a background of 0.003: the
+// search settled on D = 9.96 and a median of exactly zero.
+// ---------------------------------------------------------------------------
+{
+   fx.fxClearStatsCache();
+   [ [ 'sii', 'sii' ], [ 'ha', 'ha' ], [ 'oiii', 'oiii' ] ].forEach( ( [ tag, k ] ) => {
+      const auto = fx.fxGhsAutoSymmetry( master( 'auto_' + tag, k ) );
+      near( auto, MASTERS[k].median, tag + ' seeds its symmetry point from its own background' );
+      ok( auto <= MASTERS[k].median + 1e-12,
+          tag + ' symmetry point is not above the background it pivots on' );
+   } );
+
+   eq( fx.fxGhsAutoSymmetry( null ), 0.1,
+       'with no view there is nothing to measure, so the stored value stands' );
+
+   // The stored default alone is thirty times above linear data, which is
+   // exactly the state that produced a black channel. Unticking the automatic
+   // placement seeds this value instead of leaving it there.
+   ok( fx.FX.ghsSP > MASTERS.ha.median * 5,
+       'the stored symmetry point is far above linear data - hence the seeding' );
+}
+
 report( 'normalization' );

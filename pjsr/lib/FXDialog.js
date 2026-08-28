@@ -1116,6 +1116,19 @@ function ForaxxStudioDialog()
       function( checked )
       {
          FX.ghsAutoSP = checked;
+         if ( !checked )
+         {
+            // Hand the user the value the automatic placement was using, rather
+            // than leaving a stored 0.10 sitting thirty times above linear data.
+            // A symmetry point above the background makes GHS compress towards
+            // black, so the wrong starting number is not a small mistake.
+            let seed = fxGhsAutoSymmetry( FX.haView != null ? FX.haView : FX.siiView );
+            if ( seed > 0 )
+            {
+               FX.ghsSP = seed;
+               dlg.ghsSPRow.setValue( seed );
+            }
+         }
          dlg.updateControls();
          dlg.requestPreview();
       }, this );
