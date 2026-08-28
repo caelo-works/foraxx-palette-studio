@@ -71,8 +71,9 @@ out formally.
   surface, output naming, the settings/process-icon defensive layer, the string
   tables in both languages, the process wrappers, and a scan for identifiers and
   event-handler names nothing declares.
-- A full audit under `audit/2026-08-28/`: seven reports, each with its own
-  adversarial verification pass, and a consolidated backlog.
+- A full technical audit of the inherited code, seven reports each with its own
+  adversarial verification pass, and a consolidated backlog. Kept out of the
+  repository; its findings arrive here as commits.
 - CI on every push: the harness on two Node versions, shellcheck, a package
   contract check mirroring the update site's ingest guards, and a build
   reproducibility check.
