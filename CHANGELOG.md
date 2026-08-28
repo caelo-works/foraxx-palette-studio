@@ -11,10 +11,36 @@ releases.
 
 ## [Unreleased]
 
+Nothing here changes what the script produces. The parity gate in
+`docs/RELEASING.md` is expected to show a maximum difference of 0 against 3.0.1.
+
 ### Changed
-- Project taken over by Caelo Works for long-term maintenance and distribution.
-- Repository, licence (CC BY-NC 4.0), attribution notice, packaging and release
-  tooling added around the existing script. No behavioural change.
+- Project taken over by Caelo Works for long-term maintenance and distribution,
+  with the agreement of Nicolas Godingen, who wrote it.
+- Licensed CC BY-NC 4.0, inherited from upstream work rather than chosen; see
+  `LICENSE` and `NOTICE.md`, which ships inside the distribution package.
+- The menu entry moves from **Script → Utilities** to **Script → CaeloWorks**,
+  and gains an icon.
+- The release tag is now the version. The entry script carries `__BUILD__`,
+  stamped at packaging time, so the zip name and the dialog label cannot
+  disagree.
+- Three console warnings announced themselves as "Auto stretch", a stage removed
+  in 3.0.0. They are named for what emits them — channel normalization — and one
+  of them no longer sends the user after two controls that no longer exist.
+
+### Added
+- A node test harness: five suites, 1262 assertions, covering the PixelMath
+  expressions, numeric emission, the conditioning arithmetic, the parameter
+  surface and output naming.
+- CI on every push: the harness on two Node versions, shellcheck, a package
+  contract check mirroring the update site's ingest guards, and a build
+  reproducibility check.
+- Distribution through the shared CaeloWorks update repository, alongside the
+  zip on GitHub Releases.
+
+### Removed
+- The empty "linear input" section headers left in the parameter object and the
+  dialog when 3.0.0 withdrew linear support. Linear input remains unsupported.
 
 ## [3.0.1] — 2026-08-27
 
