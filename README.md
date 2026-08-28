@@ -660,6 +660,8 @@ sessions. Sections collapse from their title bars if you want more room.
 
 ## Credit and licence
 
+Foraxx Palette Studio was written by **Nicolas Godingen**.
+
 The combination maths and the signature curves are the work of **Paul Hancock** (Foraxx Palette
 Utility, © 2023–2024), implementing the dynamic PixelMath expressions published by
 **Bill Blanshan** at [thecoldestnights.com](https://thecoldestnights.com/2020/06/pixinsight-dynamic-narrowband-combinations-with-pixelmath/).

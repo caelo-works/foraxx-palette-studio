@@ -6,6 +6,11 @@ named below and must travel with any copy or fork of this script.
 
 ---
 
+## The script itself
+
+**Foraxx Palette Studio** was written by **Nicolas Godingen**, who built it on the
+works credited below and maintained it through to version 3.0.1.
+
 ## Dynamic combination maths and signature curves
 
 **Foraxx Palette Utility** — Paul Hancock, © 2023–2024.
@@ -43,5 +48,8 @@ This product is based on software from the **PixInsight** project, developed by
 
 ## Maintenance
 
-Maintained by **Caelo Works** (<https://caelo.works>) with the agreement of the
-original author.
+Maintained by **Caelo Works** (<https://caelo.works>) from version 3.0.1 onwards,
+with the agreement of Nicolas Godingen.
+
+By his own wish the credit stays here and in the README, and does not appear
+anywhere in the interface.
