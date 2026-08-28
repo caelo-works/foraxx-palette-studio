@@ -63,7 +63,12 @@ Requires PixInsight 1.8.9 or later; developed and checked against the 1.9.x API.
 
 ---
 
-## What's new in 3.0.1
+<details>
+<summary><b>Previous changelog</b></summary>
+
+<br>
+
+### What's new in 3.0.1
 
 - **The Foraxx amount and the two transition sliders grey out on the fixed palettes.** SHO, HSO,
   HOO, OHH and the rest are straight permutations of the channels — there is no transition to
@@ -73,7 +78,7 @@ Requires PixInsight 1.8.9 or later; developed and checked against the 1.9.x API.
 
 ---
 
-## What's new in 3.0.0
+### What's new in 3.0.0
 
 **Linear input support is removed. This script takes NON-LINEAR (stretched) images only.**
 
@@ -92,7 +97,7 @@ common brightness before they're combined — which is the thing most SHO images
 
 ---
 
-## What's new in 2.7.0
+### What's new in 2.7.0
 
 **The histogram belongs to the image the preview is showing.**
 
@@ -119,7 +124,7 @@ identity transform, while the nebula got a stale one.
 
 ---
 
-## What's new in 2.6.1
+### What's new in 2.6.1
 
 **Fixed: linear input produced a washed-out image on a grey floor.**
 
@@ -151,7 +156,7 @@ whichever pedestal convention your star removal left behind.
 
 ---
 
-## What's new in 2.6.0
+### What's new in 2.6.0
 
 - **The artificial luminance has its own black point, stretch amount and white point.** The
   histogram under the preview drives the *colour* image, and it is applied after the luminance
@@ -175,7 +180,7 @@ whichever pedestal convention your star removal left behind.
 
 ---
 
-## What's new in 2.5.0
+### What's new in 2.5.0
 
 Fewer choices, and the ones that are left are PixInsight's or the reference script's rather than
 this script's inventions.
@@ -215,7 +220,7 @@ this script's inventions.
 
 ---
 
-## What's new in 2.4.0
+### What's new in 2.4.0
 
 **The star adjustments are SetiAstro's NBtoRGBStars again, defaults included.**
 
@@ -244,7 +249,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.5
+### What's new in 2.3.5
 
 - **Fixed: previewed stars looked nothing like the ones Execute produced.** The preview downsamples
   the channels to keep the pipeline live, and it was averaging the star channels — before the star
@@ -262,7 +267,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.4
+### What's new in 2.3.4
 
 - **Fixed: on linear input the nebula came out black while the stars looked right.** The auto
   stretch solves a midtones balance to move each channel's median onto the target. That balance was
@@ -289,7 +294,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.3
+### What's new in 2.3.3
 
 - **HDR and local contrast is a switched section**, off by default, with every amount at 0. Nothing
   in it runs unless you ask for it. A settings file or process icon from an earlier version that
@@ -305,7 +310,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.2
+### What's new in 2.3.2
 
 - **Continuous, cursor-anchored preview zoom**, following the geometry of SetiAstro's
   statisticalstretch. A wheel notch multiplies the scale by 1.25 or 0.8 rather than jumping between
@@ -324,7 +329,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.1
+### What's new in 2.3.1
 
 - **The star finishing chain is now shared by both combinations.** Green removal, the brightness
   stretch and the colour boost used to belong to the NB to RGB path; picking **Foraxx** got you
@@ -349,7 +354,7 @@ The one style that still asks for the stretch is **Andy Warhol**, which is meant
 
 ---
 
-## What's new in 2.3.0
+### What's new in 2.3.0
 
 - **Zoom no longer re-renders.** The zoom control and the mouse wheel scale the preview you already
   have; the pipeline is not run again. A separate **Detail** control sets the sampling the pipeline
@@ -452,6 +457,8 @@ stretch, so it is now applied to RGB/K.
 The two *starless* signature curves are also hue curves in the original. Those are left exactly as
 they were: rotating reds towards gold and blues towards teal is a real part of what makes a Foraxx
 image look the way it does.
+
+</details>
 
 ---
 
@@ -660,7 +667,12 @@ sessions. Sections collapse from their title bars if you want more room.
 
 ## Credit and licence
 
-Foraxx Palette Studio was written by **Nicolas Godingen**.
+**Nicolas Godingen** wrote Foraxx Palette Studio, and it is his throughout — the engine, the
+interface, and every default in it, each one settled against his own narrowband masters rather
+than guessed. The care is in the details a lesser tool would have skipped: a preview that runs the
+real pipeline instead of approximating it, controls that emit no arithmetic at all while they sit
+at their neutral position, and a version history honest enough to document what it got wrong
+before it got it right.
 
 The combination maths and the signature curves are the work of **Paul Hancock** (Foraxx Palette
 Utility, © 2023–2024), implementing the dynamic PixelMath expressions published by
