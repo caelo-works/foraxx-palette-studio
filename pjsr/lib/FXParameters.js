@@ -46,7 +46,7 @@ var FXStyles =
    },
    {
       key: "styleForaxxClean",
-      name: "Foraxx - with colour clean-up (recommended)",
+      name: "Foraxx - with colour clean-up",
       dynamic: true, map: "SHO", needsSii: true, id: "Foraxx",
       values: {
          gainSii: 1.00, gainHa: 1.00, gainOiii: 1.00,

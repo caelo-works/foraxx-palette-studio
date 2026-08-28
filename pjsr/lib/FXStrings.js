@@ -221,7 +221,7 @@ var FX_UI =
       normalizeRefTip: "<p>The channel every other one is brought up to. Ha is almost always the "
                       + "strongest, so it is the usual reference.</p>",
       styleForaxxClassic: "Foraxx - classic (starless identical to the original)",
-      styleForaxxClean: "Foraxx - with colour clean-up (recommended)",
+      styleForaxxClean: "Foraxx - with colour clean-up",
       styleForaxxSoft: "Foraxx - soft transition",
       styleForaxxGold: "Foraxx - gold forward",
       styleForaxxTeal: "Foraxx - teal forward",
@@ -648,7 +648,7 @@ var FX_UI =
       normalizeRefTip: "<p>La couche \u00e0 laquelle toutes les autres sont remont\u00e9es. Ha est presque "
                       + "toujours la plus forte : c'est la r\u00e9f\u00e9rence habituelle.</p>",
       styleForaxxClassic: "Foraxx - classique (starless identique \u00e0 l'original)",
-      styleForaxxClean: "Foraxx - avec nettoyage des couleurs (recommand\u00e9)",
+      styleForaxxClean: "Foraxx - avec nettoyage des couleurs",
       styleForaxxSoft: "Foraxx - transition douce",
       styleForaxxGold: "Foraxx - or dominant",
       styleForaxxTeal: "Foraxx - turquoise dominant",
