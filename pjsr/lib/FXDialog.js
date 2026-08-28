@@ -381,6 +381,7 @@ function ForaxxStudioDialog()
 
       this.rendering = true;
       this.refreshButton.enabled = false;
+      fxClearStretchFallback();
       this.previewStatus.text = (this.notice.length > 0)
                               ? (this.notice + "  -  " + fxT( "renderingShort" ))
                               : fxT( "rendering" );
@@ -504,6 +505,10 @@ function ForaxxStudioDialog()
          note += "  -  " + fxT( "noteLinear" );
       else if ( FX.linearInput && !fxLooksLinear( FX ) )
          note += "  -  " + fxT( "noteAlreadyStretched" );
+      // The auto stretch quietly changed method. Saying so on screen is the
+      // difference between "this looks odd" and "this is not what I asked for".
+      if ( fxStretchDidFallBack() )
+         note += "  -  " + fxT( "noteStretchFallback" );
       // Appends, like its two neighbours. A bare assignment here discarded both
       // the capitalised linear-data warning and the off-screen-levels note
       // whenever a multiscale stage was on - silencing, in exactly the

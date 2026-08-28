@@ -123,6 +123,8 @@ module.exports = {
    fxConditionsChannels: fxConditionsChannels,
    fxGhsSymmetryFor: fxGhsSymmetryFor,
    fxGhsAvailable: fxGhsAvailable,
+   fxStretchDidFallBack: fxStretchDidFallBack,
+   fxClearStretchFallback: fxClearStretchFallback,
    fxLooksLinear: fxLooksLinear,
    fxUniqueViewId: fxUniqueViewId,
    fxUniqueBaseId: fxUniqueBaseId,

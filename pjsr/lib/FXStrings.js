@@ -69,6 +69,7 @@ var FX_UI =
                     + "result is a screen transfer, not a considered final stretch - judge it in "
                     + "the preview.",
       noteAlreadyStretched: "the auto stretch is on but these channels already look stretched",
+      noteStretchFallback: "GHS DID NOT RUN - the statistical stretch was used instead; see the console",
       linearMethodStf:  "Screen transfer (STF)",
       linearMethodStat: "Statistical stretch",
       linearMethodGhs:  "GeneralizedHyperbolicStretch",
@@ -500,6 +501,7 @@ var FX_UI =
                     + "le r\u00e9sultat est un transfert d'\u00e9cran, pas un stretch final r\u00e9fl\u00e9chi : "
                     + "jugez-le dans l'aper\u00e7u.",
       noteAlreadyStretched: "l'auto-stretch est actif mais ces couches semblent d\u00e9j\u00e0 stretch\u00e9es",
+      noteStretchFallback: "GHS N'A PAS TOURN\u00c9 - le stretch statistique a \u00e9t\u00e9 utilis\u00e9 \u00e0 la place ; voir la console",
       linearMethodStf:  "Transfert d'\u00e9cran (STF)",
       linearMethodStat: "Stretch statistique",
       linearMethodGhs:  "GeneralizedHyperbolicStretch",

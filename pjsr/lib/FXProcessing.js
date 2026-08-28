@@ -149,6 +149,20 @@ function fxSolveMTF( x, y )
  */
 var fxStatsCache = {};
 
+// Set when the auto stretch had to fall back, read by the status line. A
+// console warning alone is a warning nobody sees.
+var fxStretchFallback = false;
+
+function fxClearStretchFallback()
+{
+   fxStretchFallback = false;
+}
+
+function fxStretchDidFallBack()
+{
+   return fxStretchFallback;
+}
+
 function fxClearStatsCache()
 {
    fxStatsCache = {};
@@ -1318,18 +1332,50 @@ function fxGhsSymmetryFor( view, p )
    return fxClamp( fxChannelStats( view ).median, 0, 1 );
 }
 
+/*
+ * Set only if the process actually has the property. Guessing an enumeration is
+ * one risk; silently writing to a property that does not exist is another, and
+ * PJSR raises nothing for the second - the assignment simply lands on a plain
+ * object member the process never reads.
+ */
+function fxSetIfPresent( P, name, value )
+{
+   if ( P[name] === undefined )
+   {
+      Console.warningln( "GHS: this build has no \"" + name + "\" parameter; left alone." );
+      return false;
+   }
+   P[name] = value;
+   return true;
+}
+
 function fxApplyGHS( view, p, swap )
 {
    try
    {
+      let sp = fxGhsSymmetryFor( view, p );
+      let before = 0;
+      try { before = view.image.median(); } catch ( x ) {}
+
       let P = new GeneralizedHyperbolicStretch;
-      // Only the three the interface offers are set. Everything else keeps the
-      // process's own defaults rather than a guess at its enumerations, which
-      // would silently change meaning if the module ever renumbers them.
-      P.stretchFactor  = fxClamp( p.ghsD, 0, 10 );
-      P.localIntensity = fxClamp( p.ghsB, -5, 15 );
-      P.symmetryPoint  = fxGhsSymmetryFor( view, p );
+      fxSetIfPresent( P, "stretchFactor",  fxClamp( p.ghsD, 0, 10 ) );
+      fxSetIfPresent( P, "localIntensity", fxClamp( p.ghsB, -5, 15 ) );
+      fxSetIfPresent( P, "symmetryPoint",  sp );
       P.executeOn( view, swap );
+
+      let after = 0;
+      try { after = view.image.median(); } catch ( x ) {}
+
+      // The record that makes this diagnosable. A stretch that leaves the
+      // median where it found it did nothing, whatever the process reported.
+      Console.writeln( format( "GHS %s: D %.2f, b %.2f, SP %.5f - median %.5f -> %.5f",
+                               view.id, p.ghsD, p.ghsB, sp, before, after ) );
+      if ( after <= before * 1.05 )
+      {
+         Console.warningln( "GHS left " + view.id + " essentially unchanged. The stretch had no "
+                          + "effect, so the channel is still linear." );
+         return false;
+      }
       return true;
    }
    catch ( error )
@@ -1361,7 +1407,8 @@ function fxConditionGHS( p, ids, show, swap, temps )
       let copy = fxPixelMathNew( src, FX_TEMP_PREFIX + "ghs_" + key, false, id, false, swap );
       temps.push( copy );
       let v = fxRequireView( copy );
-      fxApplyGHS( v, p, swap );
+      if ( !fxApplyGHS( v, p, swap ) )
+         return null;                 // one channel short is not a usable set
       out[key] = copy;
    }
    return out;
@@ -1409,11 +1456,40 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
 
       // GHS conditions the channels in place of the expression's own stretch,
       // so the map and the copies are mutually exclusive by construction.
-      if ( p.linearInput && p.linearMethod == 2 && fxGhsAvailable() )
+      if ( p.linearInput && p.linearMethod == 2 )
       {
-         ids = fxConditionGHS( p, ids, show, swap, ghsTemps );
-         if ( starIds != null )
-            starIds = fxConditionGHS( p, starIds, show, swap, ghsTemps );
+         let condIds = fxGhsAvailable() ? fxConditionGHS( p, ids, show, swap, ghsTemps ) : null;
+         let condStars = (condIds != null && starIds != null)
+                       ? fxConditionGHS( p, starIds, show, swap, ghsTemps ) : null;
+         let ghsOk = condIds != null && (starIds == null || condStars != null);
+
+         if ( !ghsOk )
+         {
+            // The expression carries no stretch under method 2, because the
+            // process is supposed to have done it. If the process did not, then
+            // nothing did, and the result is the linear data untouched - a
+            // black image, with only a console line to say why. An optional
+            // stage that fails must not cost the picture, so the statistical
+            // stretch takes over and the status line says so.
+            fxStretchFallback = true;
+            Console.warningln( "Auto stretch: falling back to the statistical stretch - "
+                             + "GeneralizedHyperbolicStretch did not condition the channels." );
+            let pf = {};
+            for ( let k in p )
+               pf[k] = p[k];
+            pf.linearMethod = 1;
+            let of = {};
+            for ( let k in opts )
+               of[k] = opts[k];
+            of.stretch = fxCollectStretch( pf, false );
+            of.starStretchMap = (starIds != null) ? fxCollectStretch( pf, true ) : null;
+            opts = of;
+         }
+         else
+         {
+         ids = condIds;
+         if ( condStars != null )
+            starIds = condStars;
 
          // Channel normalization runs AFTER the stretch, on what the stretch
          // produced. Measuring it on the linear source instead would put every
@@ -1446,6 +1522,7 @@ function fxRenderParts( p, ids, starIds, outBase, opts )
          o.stretch = fxCollectStretch( pc, false );
          o.starStretchMap = (starIds != null) ? fxCollectStretch( pc, true ) : null;
          opts = o;
+         }
       }
 
       let maskCtx = { sii: ids.sii, ha: ids.ha, oiii: ids.oiii,
