@@ -11,6 +11,19 @@ releases.
 
 ## [Unreleased]
 
+### Fixed
+- **Stars no longer come out blue on the HOO palettes.** The star combination
+  was given the palette's `needsSii`, which describes what the *nebula* mapping
+  requires, so an HOO palette discarded the Sii star frame even when one was
+  selected and the channel count was three. Red fell from `0.5·Ha + 0.5·Sii` to
+  `Ha` alone while green and blue kept their Oiii, and the star field turned
+  blue.
+
+  Stars are broadband sources: the palette decides how the nebula is coloured,
+  not how much data the star mix is allowed. Only the channel count removes the
+  Sii now. **This changes the stars image on every HOO palette**; every other
+  palette is unaffected.
+
 ## [3.1.1] - 2026-08-28
 
 **Minimum PixInsight is now 1.9.0.** The script runs on the V8 JavaScript

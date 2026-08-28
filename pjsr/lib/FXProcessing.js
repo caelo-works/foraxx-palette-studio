@@ -1469,8 +1469,15 @@ function fxCollectIds( p, stars )
    {
       if ( !p.makeStars )
          return null;
+      // The star frames take the Sii whenever there is one, whatever the
+      // palette. needsSii says what the *nebula* mapping requires, and applying
+      // it here threw the Sii away on the HOO palettes: red fell from
+      // 0.5*Ha + 0.5*Sii to Ha alone while green and blue kept their Oiii, and
+      // the stars came out blue. Stars are broadband sources - the palette
+      // decides how the nebula is coloured, not how much data the star field is
+      // allowed. Only the channel count can remove it.
       return {
-         sii:  needsSii ? (p.siiStarsView ? p.siiStarsView.id : null) : null,
+         sii:  (!p.twoChannels && p.siiStarsView) ? p.siiStarsView.id : null,
          ha:   p.haStarsView   ? p.haStarsView.id   : null,
          oiii: p.oiiiStarsView ? p.oiiiStarsView.id : null
       };

@@ -574,6 +574,10 @@ G = 0.3·Ha + 0.7·Oiii
 B = Oiii
 ```
 
+The same on every palette. The palette decides how the nebula is coloured, not what the star mix is
+given — an HOO palette still hands the stars your Sii frame if you selected one. Only 2-channel
+mode changes the formula, because then there is no Sii at all.
+
 | Control | What it does |
 |---|---|
 | **Star brightness** | `((3^k)*$T)/((3^k-1)*$T+1)` — fixes 0 and 1 and is monotonic, so it lifts faint stars hard without ever clipping a bright core. **0 leaves the stars exactly as the combination produced them.** Above about 5 on stars that were already stretched, the multiplier is 243 and every core goes flat white. |

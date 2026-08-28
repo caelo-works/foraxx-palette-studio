@@ -119,6 +119,7 @@ module.exports = {
    fxChannelTransform: fxChannelTransform,
    fxStretchMapFor: fxStretchMapFor,
    fxCollectStretch: fxCollectStretch,
+   fxCollectIds: fxCollectIds,
    fxConditionsChannels: fxConditionsChannels,
    fxLooksLinear: fxLooksLinear,
    fxUniqueViewId: fxUniqueViewId,

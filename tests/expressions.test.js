@@ -161,6 +161,50 @@ eq( fx.fxGain( 'X', 1.5 ), '((1.500000*(X))/(1 + 0.500000*(X)))', 'gain is the s
 }
 
 // ---------------------------------------------------------------------------
+// Which frames the star combination is given.
+//
+// The palette decides how the nebula is coloured. It does not decide how much
+// data the star field is allowed: stars are broadband sources, and the mix
+// wants every frame there is. Applying the palette's needsSii to the star
+// frames threw the Sii away on the HOO palettes, so red fell from
+// 0.5*Ha + 0.5*Sii to Ha alone while green and blue kept their Oiii, and the
+// stars came out blue. Only the channel count may remove the Sii.
+// ---------------------------------------------------------------------------
+{
+   const V = id => ( { id: id, isNull: false } );
+   const withViews = over => P( Object.assign( {
+      makeStars: true, twoChannels: false,
+      siiStarsView: V( 'S_stars' ), haStarsView: V( 'H_stars' ),
+      oiiiStarsView: V( 'O_stars' )
+   }, over ) );
+
+   const iSHO = fx.FXStyles.findIndex( s => s.key === 'styleForaxxClassic' );
+   const iHOO = fx.FXStyles.findIndex( s => s.key === 'styleHOO' );
+   ok( iSHO >= 0 && iHOO >= 0, 'the two palettes under test exist' );
+   ok( fx.FXStyles[iSHO].needsSii === true,  'the SHO palette needs Sii' );
+   ok( fx.FXStyles[iHOO].needsSii === false, 'the HOO palette does not' );
+
+   const sho = fx.fxCollectIds( withViews( { styleIndex: iSHO } ), true );
+   const hoo = fx.fxCollectIds( withViews( { styleIndex: iHOO } ), true );
+   eq( sho.sii, 'S_stars', 'an SHO palette gives the star mix its Sii frame' );
+   eq( hoo.sii, 'S_stars',
+       'and so does an HOO palette - the nebula mapping does not gate the stars' );
+
+   // The channel count still does, and so does simply not having the frame.
+   const twoCh = fx.fxCollectIds(
+      withViews( { styleIndex: iHOO, twoChannels: true } ), true );
+   eq( twoCh.sii, null, 'in 2 channel mode there is no Sii to give' );
+   const noFrame = fx.fxCollectIds(
+      withViews( { styleIndex: iSHO, siiStarsView: null } ), true );
+   eq( noFrame.sii, null, 'nor when the user selected no Sii star frame' );
+
+   // The nebula keeps the palette's own rule.
+   const neb = fx.fxCollectIds( P( Object.assign( withViews( { styleIndex: iHOO } ),
+      { siiView: V( 'S' ), haView: V( 'H' ), oiiiView: V( 'O' ) } ) ), false );
+   eq( neb.sii, null, 'an HOO nebula still takes no Sii' );
+}
+
+// ---------------------------------------------------------------------------
 // The star brightening curve. 3^k is left for PixelMath to evaluate rather than
 // computed here and rounded — at k = 8 the equivalent midtones balance is
 // 1/6562, which does not survive six decimals.
