@@ -49,7 +49,6 @@ var FX_UI =
       twoChannels:    "2 channels (Ha / Oiii)",
       starlessOnly:   "Starless only - do not build a stars image",
       palette:        "Palette:",
-      images:         "Images",
       reloadList:     "Reload image list",
       reloadListTip:  "<p>Rescan the workspace. Use it if you created or renamed images after "
                     + "opening this dialog.</p>",
@@ -114,7 +113,6 @@ var FX_UI =
       twoChannels:    "2 couches (Ha / Oiii)",
       starlessOnly:   "Starless seulement - ne pas construire d'image d'\u00e9toiles",
       palette:        "Palette :",
-      images:         "Images",
       reloadList:     "Recharger la liste",
       reloadListTip:  "<p>Relit l'espace de travail. \u00c0 utiliser si vous avez cr\u00e9\u00e9 ou renomm\u00e9 "
                     + "des images apr\u00e8s avoir ouvert ce dialogue.</p>",

@@ -493,7 +493,6 @@ function ForaxxStudioDialog()
       this.langCombo.toolTip = fxT( "languageTip" );
 
       this.generalBar.title = fxT( "secGeneral" );
-      this.channelsBar.title = fxT( "images" );
       this.normalizeBar.title = fxT( "secNormalize" );
       this.scnrBar.title = fxT( "secScnr" );
       this.hdrBar.title = fxT( "secHdr" );
@@ -548,6 +547,10 @@ function ForaxxStudioDialog()
    this.langCombo = new ComboBox( this );
    this.langCombo.addItem( "English" );
    this.langCombo.addItem( "Fran\u00e7ais" );
+   // An explicit width. Sharing a row with addStretch(), a combo with no width
+   // of its own can be squeezed to nothing - which is what happened here, and
+   // an invisible control looks exactly like one that was never built.
+   this.langCombo.setScaledFixedWidth( 110 );
    this.langCombo.currentItem = (FX.lang == "fr") ? 1 : 0;
    this.langCombo.onItemSelected = function( index )
    {
@@ -873,25 +876,26 @@ function ForaxxStudioDialog()
     * part of the banner rather than the first thing to set.
     * ========================================================================== */
 
+   // One section, not two. How many channels you have and which images they are
+   // is a single decision taken in two steps, and "Starless only" is what greys
+   // the three star selectors sitting beside them. The palette leads it because
+   // it decides what everything below means.
    this.generalControl = fxGroupControl( this );
    this.generalControl.sizer.add( dataSizer );
    this.generalControl.sizer.add( this.starlessOnlyCheck );
    this.generalControl.sizer.addSpacing( 4 );
    this.generalControl.sizer.add( styleSizer );
-
-   this.generalBar = fxSection( this, "General", this.generalControl, false );
-
-   this.channelsControl = fxGroupControl( this );
-   this.channelsControl.sizer.add( this.siiRow.sizer );
-   this.channelsControl.sizer.add( this.haRow.sizer );
-   this.channelsControl.sizer.add( this.oiiiRow.sizer );
+   this.generalControl.sizer.addSpacing( 6 );
+   this.generalControl.sizer.add( this.siiRow.sizer );
+   this.generalControl.sizer.add( this.haRow.sizer );
+   this.generalControl.sizer.add( this.oiiiRow.sizer );
 
    let reloadSizer = new HorizontalSizer;
    reloadSizer.addStretch();
    reloadSizer.add( this.reloadButton );
-   this.channelsControl.sizer.add( reloadSizer );
+   this.generalControl.sizer.add( reloadSizer );
 
-   this.channelsBar = fxSection( this, "Images", this.channelsControl, false );
+   this.generalBar = fxSection( this, "General", this.generalControl, false );
 
    /* ==========================================================================
     * Channel normalization section
@@ -1892,8 +1896,6 @@ function ForaxxStudioDialog()
    this.leftSizer.spacing = 4;
    this.leftSizer.add( this.generalBar );
    this.leftSizer.add( this.generalControl );
-   this.leftSizer.add( this.channelsBar );
-   this.leftSizer.add( this.channelsControl );
    this.leftSizer.add( this.normalizeBar );
    this.leftSizer.add( this.normalizeControl );
    this.leftSizer.add( this.paletteBar );
