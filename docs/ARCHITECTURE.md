@@ -12,17 +12,37 @@ rather than approximate.
 | `pjsr/ForaxxPaletteStudio.js` | Feature declaration, entry point, the console report |
 | `pjsr/lib/FXParameters.js` | The `FX` parameter object, defaults, the style table, persistence, process icons |
 | `pjsr/lib/FXExpressions.js` | **Pure logic.** Every PixelMath expression string |
+| `pjsr/lib/FXStrings.js` | Every string the interface shows, in English and French |
 | `pjsr/lib/FXProcessing.js` | The pipeline: runs the expressions and the stock processes |
 | `pjsr/lib/FXDialog.js` | The dialog and every control on it |
 | `pjsr/lib/FXPreview.js` | Downsampled render, caching, zoom and pan |
 | `pjsr/lib/FXHistogram.js` | The histogram widget and its levels markers |
 | `pjsr/assets/ForaxxPaletteStudio.svg` | Menu icon, installed to `rsc/icons/script/` |
 
-`FXParameters.js`, `FXExpressions.js` and `FXProcessing.js` load under the test
-shim, so the node harness bundles and drives all three — the expression writer,
-the parameter surface and the conditioning arithmetic. `FXDialog.js`,
-`FXPreview.js` and `FXHistogram.js` build PixInsight controls at load time and
-are only parsed; they are verified by hand in PixInsight.
+`FXParameters.js`, `FXStrings.js`, `FXExpressions.js` and `FXProcessing.js` load
+under the test shim, so the node harness bundles and drives all four — the
+expression writer, the parameter surface, the conditioning arithmetic and both
+string tables. `FXDialog.js`, `FXPreview.js` and `FXHistogram.js` build
+PixInsight controls at load time and are only parsed; they are verified by hand
+in PixInsight.
+
+## Language
+
+`FX_UI` in `FXStrings.js` holds one table per language and `fxT( key )` reads
+the current one, falling back to English and then to the key itself. A control
+keeps the key it was built from and exposes `retranslate()`, so switching
+language rebuilds the text in place rather than the dialog. Accented characters
+are written as `\uXXXX` escapes: the file travels through a preprocessor and a
+zip, and an escape cannot be mangled by either.
+
+`tests/strings.test.js` holds the structure to it: the two tables must carry the
+same keys and the same markup, every key must be read somewhere, every `fxT()`
+call must name a key that exists, and no English sentence may be hard-coded in
+the dialog. Each of those four failed at least once while the translation was
+being written.
+
+Image identifiers and console output are deliberately not translated. They are
+what the user types and what they paste into a forum post.
 
 ## The two invariants
 
@@ -76,9 +96,12 @@ signature means, not because anything currently exercises it.
 
 ## Output
 
-Always 32-bit floating point. The dynamic factors involve fractional powers, and
-rounding those into a 16-bit container produces visible banding in the
-transition zones.
+Floating point, whatever the source is. The dynamic factors involve fractional
+powers, and rounding those into a 16-bit integer container bands visibly in the
+transition zones the palette is built around. `fxSampleFormat32` asks PixelMath
+for `f32`, then `f64` — wider than asked for still honours the invariant, which
+is "not an integer container" rather than "exactly 32 bits" — and only then
+falls back to the source format, warning once a run when it does.
 
 Existing identifiers are never overwritten: a numeric suffix is added to the
 whole group at once, so `Warhol01`, `Warhol01_stars`, `Warhol01_combined` and

@@ -50,7 +50,8 @@ cp -R "$REPO"/pjsr/assets/. "$DEST/assets/" 2>/dev/null || true
 # first tag, fall back to the newest released heading in the changelog. Either
 # way the dialog shows a real number rather than the word "dev", which read as a
 # bug in the footer.
-stamp="$( git -C "$REPO" describe --tags --abbrev=0 2>/dev/null || true )"
+# Tags are vX.Y.Z; the dialog label already prepends its own "v".
+stamp="$( git -C "$REPO" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true )"
 if [ -z "$stamp" ]; then
    stamp="$( grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "$REPO/CHANGELOG.md" \
              | tr -d '#[] ' || true )"

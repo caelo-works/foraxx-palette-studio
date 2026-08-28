@@ -11,10 +11,26 @@ releases.
 
 ## [Unreleased]
 
-The starless image at the default settings is unchanged: the parity gate in
-`docs/RELEASING.md` still shows a maximum difference of 0 against 3.0.1 for
-*Foraxx - classic*. The **stars** image does change, and deliberately - see
-Removed.
+## [3.1.0] - 2026-08-28
+
+No change reaches the starless image at the default settings. The **stars**
+image does change, and deliberately - see Removed.
+
+**Validation.** Node harness green: 3923 assertions across nine suites,
+including the expressions for *Foraxx - classic* at defaults, which are pinned
+literally against Paul Hancock's original. Linear input measured on the
+reference linear masters: 0.250 on all three channels, combined background
+0.2502, against the 0.4375 the 2.6.1 fault produced. The dialog, the preview in
+both languages, and the linear and HDR paths were exercised by hand in
+PixInsight through the session that produced this release.
+
+**Not done.** The pixel parity gate in `docs/RELEASING.md` step 2 has not been
+run: it compares a build against the previous tag's output on the reference
+master set, and this is the first tag under Caelo Works, so there is nothing to
+compare against. The pinned expression tests stand in for it here, and the gate
+becomes runnable from the next release onward. The full palette walk and the
+settings/process-icon migration check from that step were likewise not carried
+out formally.
 
 ### Changed
 - Project taken over by Caelo Works for long-term maintenance and distribution,
