@@ -4,7 +4,7 @@
 
 ### Narrowband palettes with a live preview that is the real thing, not an approximation
 
-[![Version](https://img.shields.io/badge/version-3.1.2-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
+[![Version](https://img.shields.io/badge/version-3.1.3-22d3ee?style=for-the-badge&labelColor=0f172a)](https://github.com/caelo-works/foraxx-palette-studio/releases/latest)
 [![PixInsight](https://img.shields.io/badge/PixInsight-%E2%89%A5%201.9.0-67e8f9?style=for-the-badge&labelColor=0f172a)](https://pixinsight.com/)
 [![Status](https://img.shields.io/badge/status-stable-34d399?style=for-the-badge&labelColor=0f172a)](https://pixinsight-scripts.caelo.works/en/scripts/foraxx-palette-studio)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-94a3b8?style=for-the-badge&labelColor=0f172a)](LICENSE)
@@ -84,6 +84,22 @@ PixInsight 1.8.9 does not provide.
 <summary><b>Previous changelog</b></summary>
 
 <br>
+
+### What's new in 3.1.3
+
+- **Clicking "by CaeloWorks" no longer starts a program on your machine.** It used to
+  launch your platform's URL handler itself; it now hands the address to PixInsight,
+  which opens your browser. The link also goes straight to this script's own page.
+- **The README says what the script does outside your images**: no network connection,
+  no external program, no file written, settings kept under `ForaxxPaletteStudio/`
+  through the PixInsight Settings API. See *Privacy, network and files* above. The same
+  statement now travels inside the package, in the script's header.
+- **Installing from the zip no longer asks you to unpack it over your PixInsight
+  installation.** Unpack it anywhere else and add it through **Feature Scripts…**.
+- Fixed, in the script's header comment: it still claimed linear data was unsupported
+  and would come out black. Linear input has been supported since 3.1.0.
+- Nothing in the image pipeline changed. *Foraxx — classic* at defaults is
+  pixel-identical to 3.1.2 on the reference masters.
 
 ### What's new in 3.1.2
 

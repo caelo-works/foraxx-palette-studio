@@ -11,6 +11,20 @@ releases.
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-10-13
+
+Compliance with the Certified PixInsight Developer Program Rules v1.0, published
+on 2026-10-13. **No pixel moves**: nothing in the image pipeline is touched.
+
+**Validation.** Node harness green: 3935 assertions across nine suites, plus a new
+source gate that refuses any network, external-program or file-writing call in
+`pjsr/`. Parity gate **run, not assumed**: *Foraxx — classic* at defaults, starless
+only, on the reference masters, rendered by this build and by the installed 3.1.2
+and differenced in PixelMath — `max abs diff = 0`, `mean = 0` over 3764x2101x3.
+All 18 style and channel-count combinations the dialog allows — 15 in 3-channel
+mode, the 3 that need no Sii in 2-channel mode — built on PixInsight 1.9.5 build
+1702, with stars and the combined image, none black. `check-package.sh` PASS.
+
 ### Changed
 
 - The header link no longer starts a program. Clicking **by CaeloWorks** used to
