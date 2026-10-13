@@ -157,6 +157,23 @@ for src in "${UNBUNDLED[@]}"; do
    echo "OK   syntax $(basename "$src") (node --check, unbundled)"
 done
 
+# What the README and the script header promise about the script's behaviour
+# outside the image: no network connection, no process of its own, no file
+# written anywhere. Those are claims in documentation the CPD rules require to
+# be accurate, and a single new call would make them false without any test
+# noticing - the APIs below are not reachable from the Node harness.
+#
+# Settings.read / Settings.write are deliberately absent from this list: the
+# documentation discloses them.
+FORBIDDEN='ExternalProcess|NetworkTransfer|FileDownload|FileFormatInstance|File\.(write|create|append|copy|move|remove|rename)|writeTextFile|\.saveAs\(|new File\b'
+if hits="$( grep -rnE "$FORBIDDEN" "$ROOT/pjsr" )"; then
+   echo "FAIL the documented behaviour says no network, no external program and no file write:"
+   echo "$hits"
+   echo "Either drop the call, or update README.md and the script header first." >&2
+   exit 1
+fi
+echo "OK   no network, external program or file write in pjsr/"
+
 failures=0
 total=0
 for t in "$ROOT"/tests/*.test.js; do

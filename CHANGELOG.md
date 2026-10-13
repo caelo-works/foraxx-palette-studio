@@ -11,6 +11,34 @@ releases.
 
 ## [Unreleased]
 
+### Changed
+
+- The header link no longer starts a program. Clicking **by CaeloWorks** used to
+  launch the platform's URL handler — `cmd /c start`, `open`, `xdg-open` — through
+  `ExternalProcess`. It now hands the address to the PixInsight core, which opens
+  it, so the script starts no process of its own.
+- The header link points at this script's own page rather than the publisher's
+  catalogue, and its tooltip says that clicking opens a web browser.
+- Installing from the zip no longer tells you to unpack it over the PixInsight
+  installation directory. Unpack it anywhere else and add it through
+  **Feature Scripts…**; only the update system should write in there.
+
+### Added
+
+- A **Privacy, network and files** section in the README, and the same disclosure
+  in the script's header comment so it travels inside the package: no network
+  connection, no external program, no file written, settings kept through the
+  Settings API under `ForaxxPaletteStudio/`.
+- `tests/run.sh` fails if `pjsr/` gains a network, external-program or
+  file-writing call, so the documentation above cannot quietly become false.
+
+### Fixed
+
+- The script's header comment still said linear data was not supported and would
+  come out black. It has been supported since 3.1.0, with **Linear input (auto
+  stretch)**.
+- The README no longer says the update repository is unsigned.
+
 ## [3.1.2] - 2026-08-28
 
 Two faults in the star field, the first hiding the second. **The stars image

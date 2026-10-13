@@ -42,21 +42,41 @@ Updates then arrive on their own, along with every other CaeloWorks script.
 2. **Add** `https://pixinsight-scripts.caelo.works/update/`.
 3. **Resources → Updates → Check for Updates**, then restart PixInsight.
 
-The repository is not yet signed with a Certified PixInsight Developer identity, so PixInsight
-warns that it is unsigned. That is expected.
-
 ### From the zip
 
 1. Download the latest zip from [Releases](../../releases).
-2. Unpack it over your PixInsight installation directory — it carries the
-   `src/scripts/CaeloWorks/…` tree PixInsight expects — or unpack it anywhere and point
-   **Script → Feature Scripts… → Add** at the
-   `src/scripts/CaeloWorks/ForaxxPaletteStudio` folder inside it.
+2. Unpack it **anywhere outside your PixInsight installation directory** — your documents, a
+   scripts folder of your own.
+3. Point **Script → Feature Scripts… → Add** at the
+   `src/scripts/CaeloWorks/ForaxxPaletteStudio` folder inside what you unpacked, then **Done**.
 
 Either way it appears under **Script → CaeloWorks → Foraxx Palette Studio**.
 
+Nothing but the update system should write into the PixInsight installation directory, which is
+why the zip is not meant to be unpacked over it.
+
 Requires PixInsight 1.9.0 or later. The script runs on the V8 JavaScript engine, which
 PixInsight 1.8.9 does not provide.
+
+---
+
+## Privacy, network and files
+
+- It opens **no network connection** of its own and **sends no data anywhere**. There is no
+  telemetry, no update check, no account.
+- It starts **no external program**. The **by CaeloWorks** line in the header asks the PixInsight
+  core to open [this script's page](https://pixinsight-scripts.caelo.works/scripts/foraxx-palette-studio)
+  in whatever browser your desktop uses; the core does the opening, and only when you click.
+- Its **settings** are stored through the PixInsight Settings API under the key
+  `ForaxxPaletteStudio/`, written whenever the dialog closes. Nothing else is stored outside the
+  PixInsight installation.
+- It **writes no files**. The images it builds are created in the PixInsight workspace, for you to
+  keep or discard; saving them is yours to do.
+- It reads nothing from the PixInsight installation except its own menu icon, and writes nothing
+  there.
+- Image work goes through standard PixInsight processes only — PixelMath, HistogramTransformation,
+  CurvesTransformation, ColorSaturation, HDRMultiscaleTransform, UnsharpMask, SCNR,
+  ChannelExtraction and Invert.
 
 ---
 

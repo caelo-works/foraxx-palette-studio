@@ -47,28 +47,32 @@ function fxFmt( value, precision )
 // directory. Named once so the two places that build a path agree.
 #define FX_ICON_NAME "ForaxxPaletteStudio.svg"
 
+// This product's own page. The header link points here rather than at the
+// publisher's catalogue: the page identifies this script, and nothing else.
+#define FX_PRODUCT_URL "https://pixinsight-scripts.caelo.works/scripts/foraxx-palette-studio"
+
 /*
- * Open a URL with the platform's default handler. The "by CaeloWorks" line in
- * the header is a link, and PJSR has no browser of its own.
+ * Open a URL. The "by CaeloWorks" line in the header is a link, and PJSR has no
+ * browser of its own, so the URL is handed to the core: Dialog.openBrowser asks
+ * PixInsight to open it with whatever the user's desktop uses.
+ *
+ * This script deliberately starts no process of its own. Launching the
+ * platform's handler here - cmd /c start, open, xdg-open - would make the
+ * script a program that runs other programs, which the Certified PixInsight
+ * Developer rules allow only for a program the developer ships or one the user
+ * picked themselves. Neither applies to a URL handler, and the core already
+ * does the job.
  */
 function fxOpenInBrowser( url )
 {
    try
    {
-      let plat = String( CoreApplication.platform );
-      let P = new ExternalProcess;
-      if ( /win|mswindows/i.test( plat ) )
-         P.start( "cmd", [ "/c", "start", "", url ] );
-      else if ( /mac|osx/i.test( plat ) )
-         P.start( "/usr/bin/open", [ url ] );
-      else
-         P.start( "xdg-open", [ url ] );
-      if ( P.waitForStarted )
-         P.waitForStarted();
+      Dialog.openBrowser( url );
    }
    catch ( x )
    {
-      // A header that cannot open a browser is not a reason to stop working.
+      // A header that cannot open a browser is not a reason to stop working:
+      // leave the address where it can be copied from and carry on.
       Console.warningln( "Could not open " + url );
    }
 }
@@ -636,7 +640,8 @@ class ForaxxStudioDialog extends Dialog
       {
          this.byLabel.text = "<span style=\"color:#5a8fd0; text-decoration:underline;\">"
                            + fxT( "byLine" ) + "</span>";
-         this.byLabel.toolTip = fxT( "byLineTip" ) + " \u2014 build " + VERSION;
+         this.byLabel.toolTip = fxT( "byLineTip" )
+                              + "<p>" + FX_PRODUCT_URL + " \u2014 build " + VERSION + "</p>";
          this.taglineLabel.text = "<i>" + fxT( "tagline" ) + "</i>";
          this.langLabel.text = fxT( "language" );
 
@@ -771,7 +776,7 @@ class ForaxxStudioDialog extends Dialog
       this.byLabel.textAlignment = TextAlign_Left | TextAlign_VertCenter;
       this.byLabel.onMousePress = function()
       {
-         fxOpenInBrowser( "https://pixinsight-scripts.caelo.works/" );
+         fxOpenInBrowser( FX_PRODUCT_URL );
       };
       try { this.byLabel.cursor = new Cursor( StdCursor_PointingHand ); } catch ( x ) {}
 

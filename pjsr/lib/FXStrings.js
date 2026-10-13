@@ -34,7 +34,7 @@ var FX_UI =
       // --- the header ------------------------------------------------------
       tagline:        "Your channels already hold the colour. This decides where it goes.",
       byLine:         "by CaeloWorks",
-      byLineTip:      "https://pixinsight-scripts.caelo.works/",
+      byLineTip:      "<p>Opens this script's page in your web browser.</p>",
       language:       "Language:",
       languageTip:    "<p>The language of this dialog. Remembered between sessions.</p>"
                     + "<p>Image identifiers and console output are not translated: they are "
@@ -431,7 +431,7 @@ var FX_UI =
       // --- l'en-tête -------------------------------------------------------
       tagline:        "Vos couches portent d\u00e9j\u00e0 la couleur. Reste \u00e0 d\u00e9cider o\u00f9 elle va.",
       byLine:         "par CaeloWorks",
-      byLineTip:      "https://pixinsight-scripts.caelo.works/",
+      byLineTip:      "<p>Ouvre la page de ce script dans votre navigateur web.</p>",
       language:       "Langue :",
       languageTip:    "<p>La langue de ce dialogue. Retenue d'une session \u00e0 l'autre.</p>"
                     + "<p>Les identifiants d'images et la sortie console ne sont pas traduits : "

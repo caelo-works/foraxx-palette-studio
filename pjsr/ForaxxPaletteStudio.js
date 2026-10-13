@@ -10,18 +10,30 @@
  * lightness-preserving green / magenta suppression.
  *
  * ---------------------------------------------------------------------------
- * THIS SCRIPT REQUIRES NON-LINEAR (STRETCHED) IMAGES.
+ * What it expects
  * ---------------------------------------------------------------------------
  *
- * FEED IT NON-LINEAR DATA ONLY. Stretch every channel before you run this -
- * with HistogramTransformation, a masked stretch, or whatever you normally use.
- * LINEAR DATA IS NOT SUPPORTED and will produce a black or washed-out result.
- * The status line under the preview says so if the selected channels look
- * linear.
+ * Stretched channels, or linear ones with "Linear input (auto stretch)"
+ * switched on. The status line under the preview says which it thinks it has.
  *
  * With three channels supply Sii, Ha and Oiii; with two supply Ha and Oiii.
  * Star images are optional - tick "Starless images only" if you do not have
  * them.
+ *
+ * ---------------------------------------------------------------------------
+ * Network, external programs and storage
+ * ---------------------------------------------------------------------------
+ *
+ * This script opens no network connection and sends no data anywhere. It starts
+ * no external program: the "by CaeloWorks" line in the header asks the
+ * PixInsight core to open this product's page, and the core decides how.
+ *
+ * It writes no files. Its settings are kept through the PixInsight Settings API
+ * under the key "ForaxxPaletteStudio/", written when the dialog closes, and
+ * nothing else is stored outside the PixInsight installation. The images it
+ * builds are created in the PixInsight workspace and are never saved to disk by
+ * the script. Nothing is read from the installation except the script's own
+ * menu icon.
  *
  * ---------------------------------------------------------------------------
  * Credit and licence
