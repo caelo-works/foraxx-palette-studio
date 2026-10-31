@@ -52,6 +52,10 @@ Updates then arrive on their own, along with every other CaeloWorks script.
 
 Either way it appears under **Script → CaeloWorks → Foraxx Palette Studio**.
 
+The script is signed by **CaeloWorks**, a Certified PixInsight Developer, so it runs with
+**Preferences → Security → Allow execution of unsigned scripts** turned off. PixInsight checks the
+signature every time the script starts; a copy whose code has been altered no longer passes.
+
 Nothing but the update system should write into the PixInsight installation directory, which is
 why the zip is not meant to be unpacked over it.
 
@@ -84,6 +88,13 @@ PixInsight 1.8.9 does not provide.
 <summary><b>Previous changelog</b></summary>
 
 <br>
+
+### What's new in 3.1.4
+
+- **The script is signed.** It carries the code signature of CaeloWorks, a Certified
+  PixInsight Developer, so you no longer need to allow unsigned scripts to run it.
+  One signature, `ForaxxPaletteStudio.xsgn`, covers the script and every file it loads.
+- Nothing in the image pipeline changed.
 
 ### What's new in 3.1.3
 

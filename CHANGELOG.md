@@ -11,6 +11,42 @@ releases.
 
 ## [Unreleased]
 
+Signed with the CaeloWorks identity of the Certified PixInsight Developer
+program, as the PixInsight Development Team asked under rule 5.1 of the CPD
+Program Rules. **No pixel moves**: nothing in `pjsr/` is touched.
+
+### Added
+
+- `ForaxxPaletteStudio.xsgn`, the code signature of the entry script. It covers
+  every file the entry script includes, so the `lib/` files carry none of their
+  own; PixInsight's documentation advises against signing them, and refuses to.
+  The script now runs with *Allow execution of unsigned scripts* turned off.
+- `scripts/sign-package.sh`: signs a built zip in place, re-zips it the way the
+  build does, writes the new sha1 into `update-package.json`, and checks the
+  result. `scripts/verify-signature.sh` asks PixInsight whether a package's
+  signature is valid, on the files as the zip carries them, and needs no key.
+
+### Changed
+
+- A tag now opens a **draft** release. It is published once the package is
+  signed, which CI cannot do, having neither PixInsight nor the keys.
+- `build-update-package.sh` no longer signs: the signature is made on the zip,
+  after the version stamp. Its zip writer moved to `scripts/repro-zip.py`, shared
+  with `sign-package.sh` so the signed zip is laid out like the unsigned one.
+- `check-package.sh --signed` requires exactly one signature, the entry
+  script's, claiming CaeloWorks. Without the flag it checks a development build
+  and expects none. It used to refuse any signature.
+- A release zip is no longer reproducible: the signature carries a timestamp.
+  CI still checks reproducibility on the unsigned build.
+
+### Fixed
+
+- The old signing step had never run, and could not have from WSL: a Windows
+  PixInsight was handed Linux paths and could not see the variables it was
+  given. `scripts/pi-run.sh` now converts the paths, forwards the variables
+  through WSLENV and works under the Windows `%TEMP%`. It also keeps `cmd.exe`
+  from swallowing the password typed at the prompt.
+
 ## [3.1.3] - 2026-10-13
 
 Compliance with the Certified PixInsight Developer Program Rules v1.0, published

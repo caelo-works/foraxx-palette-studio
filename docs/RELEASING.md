@@ -32,6 +32,13 @@
    - **Settings and process icons migrate.** Open with a settings file and a
      process icon from the previous release. Nothing may silently change value.
    - **Clean console.** Read the log end to end and explain every warning.
+   - **Signed, with unsigned scripts refused.** This one runs on the signed
+     package, so after step 7: unpack the signed zip outside the
+     installation, add it through **Feature Scripts…**, turn **Preferences →
+     Security → Allow execution of unsigned scripts** off, and run it. The
+     dialog must open and build an image. Then add one line of *code* (not a
+     comment, which the signature ignores) to any `lib/` file of that copy: the
+     script must now be refused. Turn the option back to what it was.
 
 3. Update `CHANGELOG.md` — move `[Unreleased]` into a `[X.Y.Z]` section dated
    today, and record the validation evidence from step 2. Update the README
@@ -56,13 +63,30 @@
    git tag -a vX.Y.Z -m "vX.Y.Z — <headline>"
    GH_TOKEN="$(gh auth token --user caelo-works)" git -c credential.https://github.com.helper='!gh auth git-credential' push origin vX.Y.Z
    ```
+   The tag starts the Release workflow: the full CI, then a **draft** release
+   carrying the unsigned zip and `update-package.json`. A draft is invisible to
+   the public and to the update site.
 
-7. The Release workflow attaches `dist/ForaxxPaletteStudio-X.Y.Z.zip` +
-   `update-package.json`.
+7. **Sign and publish the draft.** This is the CaeloWorks signing run, done from
+   a machine with PixInsight and the keys, usually alongside the other
+   CaeloWorks scripts:
+   ```
+   gh release download vX.Y.Z -R caelo-works/foraxx-palette-studio -D dist
+   XSSK_PATH=/path/to/caeloworks.xssk scripts/sign-package.sh dist/ForaxxPaletteStudio-X.Y.Z.zip
+   gh release upload vX.Y.Z -R caelo-works/foraxx-palette-studio --clobber dist/ForaxxPaletteStudio-X.Y.Z.zip dist/update-package.json
+   gh release edit vX.Y.Z -R caelo-works/foraxx-palette-studio --draft=false
+   ```
+   (`gh` with the caelo-works token, as in step 5.) `sign-package.sh` reads the
+   key password from stdin, signs the entry script as the zip carries it,
+   re-zips, writes the new sha1 into `update-package.json`, then runs
+   `check-package.sh --signed` and `verify-signature.sh`. Any other signing
+   tool must meet the same contract: see *Code signing* below. Then run the
+   signed hand gate from step 2.
 
 8. **Notify the site agent**: comment on the tracking issue in
    `caelo-works/pixinsight-scripts` with the release URL, the zip **sha1** (from the
-   published `update-package.json`, not your local build), and `piVersionRange`.
+   published `update-package.json`, not another local build: a signed zip is not
+   reproducible), and `piVersionRange`.
 
 ---
 
@@ -91,10 +115,38 @@ real frames has not been validated at all.
 
 ## Code signing
 
-Off, deliberately. `build-update-package.sh` signs only when `XSSK_PATH` is set,
-and the site's ingest **refuses** any zip containing a `.xsgn` while the
-CaeloWorks CPD identity is not published in `certified-developers.xcdev`: a
-signature made with a local identity is rejected on every other machine, which
-is worse than no signature. Until then PixInsight shows an "unsigned repository"
-warning on the shared repository, which is expected and affects every CaeloWorks
-script equally.
+Every release is signed with the CaeloWorks identity of the Certified PixInsight
+Developer program, as rule 5.1 of the CPD Program Rules requires. Without it,
+users would have to allow the execution of unsigned scripts to run this one.
+
+Signing happens **after** the build, on the zip, never in CI (no PixInsight, no
+keys) and never in `build-update-package.sh`. `scripts/sign-package.sh` does it,
+but whatever signs the package - that script or a signing run covering every
+CaeloWorks script at once - must meet this contract, which
+`check-package.sh --signed` and `verify-signature.sh` check:
+
+- **Sign the entry script as the zip carries it**, not `pjsr/` in the
+  repository. The version stamp changes code, so a signature made before it
+  does not hold.
+- **One signature, the entry script's**: `ForaxxPaletteStudio.xsgn` next to
+  `ForaxxPaletteStudio.js`. It covers every file the entry script `#include`s,
+  recursively (PixInsight's `CodeSigning` documentation, section 6; measured on
+  1.9.5: a line of code added to an included file invalidates it). The `lib/`
+  files are not signed: their signatures would never be verified, PixInsight
+  calls that misleading, and it refuses to sign a file without a `#feature-id`.
+  A signing run that signs every `.js` it finds fails here.
+- **Re-zip and give `update-package.json` the new sha1.** The site
+  authenticates the package by it. `scripts/repro-zip.py` is the layout the
+  build uses.
+- **Comments are not covered.** The signed code is canonicalized, so an edited
+  comment leaves the signature valid. Any test that a signature catches
+  tampering must change code.
+- **A signed zip is not reproducible**: the signature carries a timestamp, so
+  every signing gives a new sha1. CI's reproducibility check runs on the
+  unsigned build, and release parity is measured on pixels (the parity gate),
+  never on the zip's sha1.
+- **The keys stay off this repository.** `XSSK_PATH` points to them; the
+  password only ever lives in the environment of the PixInsight process that
+  signs.
+- On WSL, `scripts/pi-run.sh` hands a Windows PixInsight its paths and
+  variables (wslpath, WSLENV) and works under the Windows `%TEMP%`.
