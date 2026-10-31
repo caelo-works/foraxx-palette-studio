@@ -23,14 +23,18 @@ fail=0
 note() { printf '  ok    %s\n' "$*"; }
 bad()  { printf '  FAIL  %s\n' "$*"; fail=1; }
 
+# Every listing is captured whole before it is searched, never piped into
+# grep -q: grep -q exits at its first match, the writer then dies of SIGPIPE,
+# and under pipefail a found match reads as a failure - at random, depending on
+# how much of the listing was still unwritten.
 tree="$( unzip -Z1 "$ZIP" )"
-has() { printf '%s\n' "$tree" | grep -qx "$1"; }
+has() { grep -qx "$1" <<< "$tree"; }
 
 echo "Package contract: $(basename "$ZIP")"
 
 # The site refuses a package whose tree does not extract relative to the
 # PixInsight install directory.
-if printf '%s\n' "$tree" | grep -q '^src/'; then
+if grep -q '^src/' <<< "$tree"; then
    note "extracts relative to the PixInsight install directory"
 else
    bad "no src/... tree: the site's ingest would reject this"
@@ -52,8 +56,8 @@ if [ -z "$sigs" ]; then
 elif [ "$sigs" != "$VENDOR/$NAME.xsgn" ]; then
    bad "the only signature must be $VENDOR/$NAME.xsgn, found:"
    printf '%s\n' "$sigs" | sed 's/^/          /'
-elif ! unzip -p "$ZIP" "$VENDOR/$NAME.xsgn" \
-       | grep -q "<Signature [^>]*scriptId=\"$NAME\"[^>]*developerId=\"CaeloWorks\""; then
+elif ! grep -q "<Signature [^>]*scriptId=\"$NAME\"[^>]*developerId=\"CaeloWorks\"" \
+       <<< "$( unzip -p "$ZIP" "$VENDOR/$NAME.xsgn" )"; then
    bad "$NAME.xsgn is not a CaeloWorks signature of script $NAME"
 else
    note "signed by CaeloWorks ($NAME.xsgn)"
@@ -80,7 +84,8 @@ if has "$VENDOR/NOTICE.md"; then note "NOTICE.md ships with the script"; else ba
 
 # The version stamp has to have been substituted, or the dialog shows the
 # literal placeholder and no user can report which build they are on.
-if unzip -p "$ZIP" "$VENDOR/$NAME.js" | grep -q '__BUILD__'; then
+entry="$( unzip -p "$ZIP" "$VENDOR/$NAME.js" 2>/dev/null || true )"
+if grep -q '__BUILD__' <<< "$entry"; then
    bad "the __BUILD__ placeholder was not stamped"
 else
    note "the version stamp was substituted"

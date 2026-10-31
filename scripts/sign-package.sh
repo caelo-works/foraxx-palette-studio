@@ -5,8 +5,10 @@
 # Signs a package built by build-update-package.sh with the CaeloWorks identity
 # of the Certified PixInsight Developer program (CPD Program Rules, rule 5.1),
 # in place: the zip gains <NAME>.xsgn and is re-zipped reproducibly, and the
-# update-package.json next to it gets the new sha1. Then it checks the result
-# with check-package.sh --signed and verify-signature.sh.
+# update-package.json next to it gets the new sha1. The signed zip and its sidecar
+# are built in a work directory and checked there with check-package.sh --signed
+# and verify-signature.sh; only once both pass do they replace the originals, so
+# a failed signing or verification leaves the unsigned zip and sidecar untouched.
 #
 #   XSSK_PATH=/path/to/caeloworks.xssk scripts/sign-package.sh dist/ForaxxPaletteStudio-X.Y.Z.zip
 #
@@ -55,7 +57,7 @@ REPO="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 . "$REPO/scripts/pi-run.sh"
 pi_setup
 WORK="$( pi_tmpdir )"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK" "$ZIP.signing" "$SIDECAR.signing"' EXIT
 
 mkdir -p "$WORK/pkg"
 ( cd "$WORK/pkg" && unzip -q "$ZIP" )
@@ -70,7 +72,8 @@ SIGN_LIST="$NAME.js"
 if [ -t 0 ]; then
   printf 'PixInsight signing-key password for %s (not stored): ' "$DEVELOPER" >&2
 fi
-read -r -s __PW || true
+# IFS= so that leading and trailing spaces are kept: they are part of a password.
+IFS= read -r -s __PW || true
 [ -t 0 ] && echo >&2
 [ -n "$__PW" ] || { echo "error: no password given" >&2; exit 1; }
 
@@ -126,12 +129,15 @@ done
 [ "$fail" = 0 ] || exit 1
 rm -f "$WORK/sign.js" "$REPORT"
 
-# Re-zip exactly as the build does, then give the sidecar the new sha1. The zip is
-# replaced only once the signed one exists in full.
-python3 "$REPO/scripts/repro-zip.py" "$WORK/pkg" "$WORK/signed.zip"
-mv "$WORK/signed.zip" "$ZIP"
-SHA1="$( sha1sum "$ZIP" | cut -d' ' -f1 )"
-python3 - "$SIDECAR" "$SHA1" <<'PY'
+# Re-zip exactly as the build does, and give a copy of the sidecar the new sha1,
+# both in the work directory.
+mkdir -p "$WORK/out"
+OUT_ZIP="$WORK/out/$( basename "$ZIP" )"
+OUT_SIDECAR="$WORK/out/update-package.json"
+python3 "$REPO/scripts/repro-zip.py" "$WORK/pkg" "$OUT_ZIP"
+cp "$SIDECAR" "$OUT_SIDECAR"
+SHA1="$( sha1sum "$OUT_ZIP" | cut -d' ' -f1 )"
+python3 - "$OUT_SIDECAR" "$SHA1" <<'PY'
 import json, sys
 path, sha1 = sys.argv[1], sys.argv[2]
 with open(path) as f:
@@ -141,7 +147,16 @@ with open(path, "w") as f:
     json.dump(meta, f, indent=2, ensure_ascii=False)
     f.write("\n")
 PY
-echo "$( basename "$ZIP" ) signed by $DEVELOPER - sha1 $SHA1 (update-package.json updated)"
 
-bash "$REPO/scripts/check-package.sh" --signed "$ZIP"
-bash "$REPO/scripts/verify-signature.sh" "$ZIP"
+# Check the signed zip before it replaces anything: set -e stops here on a
+# failure, and the original zip and sidecar are still the unsigned ones.
+bash "$REPO/scripts/check-package.sh" --signed "$OUT_ZIP"
+bash "$REPO/scripts/verify-signature.sh" "$OUT_ZIP"
+
+# Swap into place. The work directory may sit on another filesystem, so copy next
+# to the target first and rename there: each file is replaced in one step.
+cp "$OUT_ZIP" "$ZIP.signing"
+cp "$OUT_SIDECAR" "$SIDECAR.signing"
+mv "$ZIP.signing" "$ZIP"
+mv "$SIDECAR.signing" "$SIDECAR"
+echo "$( basename "$ZIP" ) signed by $DEVELOPER - sha1 $SHA1 (update-package.json updated)"
