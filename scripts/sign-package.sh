@@ -22,7 +22,13 @@
 #   never verified) and the core refuses it anyway, since they carry no
 #   #feature-id. A comment added to any file does NOT invalidate the signature:
 #   the signed code is canonicalized, so a tamper test has to change code.
-#   Entitlements: none.
+#
+#   Entitlements: the signature declares none (generateScriptSignatureFile gets
+#   [], and the .xsgn carries no <Entitlements> element). verify-signature.sh
+#   still prints com.pixinsight.security.pjsr.*,com.pixinsight.security.pcl.*:
+#   those belong to the CaeloWorks identity, from its entry in PixInsight's
+#   etc/security/certified-developers.xcdev - the standard set nearly every
+#   certified developer has. Nothing in the script needs more.
 #
 #   The file signed is the one in the zip, after the version stamp: the stamp
 #   changes code, so a signature made on pjsr/ in the repository would not hold.
@@ -103,7 +109,12 @@ FXSIGN_REPORT="$( pi_native "$REPORT" )" \
   pi_run "$WORK/sign.js" FXSIGN_DIR FXSIGN_FILES FXSIGN_XSSK FXSIGN_PW FXSIGN_REPORT
 unset __PW
 
-[ -f "$REPORT" ] || { echo "error: PixInsight did not run the signing script" >&2; exit 1; }
+[ -f "$REPORT" ] || {
+  echo "error: PixInsight did not run the signing script" >&2
+  echo "       (the runner is an unsigned script: is Preferences > Security >" >&2
+  echo "       Allow execution of unsigned scripts turned on for this PixInsight?)" >&2
+  exit 1
+}
 tr -d '\r' < "$REPORT" | sed 's/^/  sign: /' >&2
 fail=0
 IFS=';' read -r -a sign_files <<< "$SIGN_LIST"

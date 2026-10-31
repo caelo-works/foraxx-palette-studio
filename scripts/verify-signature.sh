@@ -11,6 +11,10 @@
 # check-package.sh --signed checks the shape; this checks the cryptography. A
 # release passes both before it is published.
 #
+# The entitlements it prints are the developer identity's, as listed in
+# PixInsight's etc/security/certified-developers.xcdev, not something the
+# signature declares: ours declares none (see sign-package.sh).
+#
 set -euo pipefail
 
 ZIP="${1:?usage: verify-signature.sh <zip>}"
@@ -39,7 +43,7 @@ try
 {
    var sig = Security.getScriptSignature( js );
    line = ( sig.valid ? "valid" : "invalid" ) + " " + sig.developerId + " " + sig.scriptId
-        + " " + sig.timestamp + " [" + sig.entitlements + "]";
+        + " " + sig.timestamp + " identity entitlements [" + sig.entitlements + "]";
 }
 catch ( e )
 {
@@ -52,7 +56,12 @@ REPORT="$WORK/report.txt"
 FXVERIFY_JS="$( pi_native "$ENTRY" )" FXVERIFY_REPORT="$( pi_native "$REPORT" )" \
   pi_run "$WORK/verify.js" FXVERIFY_JS FXVERIFY_REPORT
 
-[ -f "$REPORT" ] || { echo "error: PixInsight did not run the verification script" >&2; exit 1; }
+[ -f "$REPORT" ] || {
+  echo "error: PixInsight did not run the verification script" >&2
+  echo "       (the runner is an unsigned script: is Preferences > Security >" >&2
+  echo "       Allow execution of unsigned scripts turned on for this PixInsight?)" >&2
+  exit 1
+}
 verdict="$( tr -d '\r' < "$REPORT" )"
 echo "Code signature: $( basename "$ZIP" )"
 echo "  $verdict"

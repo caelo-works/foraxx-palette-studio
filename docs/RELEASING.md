@@ -138,6 +138,9 @@ CaeloWorks script at once - must meet this contract, which
 - **Re-zip and give `update-package.json` the new sha1.** The site
   authenticates the package by it. `scripts/repro-zip.py` is the layout the
   build uses.
+- **No entitlements declared.** The `.xsgn` carries no `<Entitlements>`
+  element. The `pjsr.*`/`pcl.*` entitlements `verify-signature.sh` prints are
+  the CaeloWorks identity's, from PixInsight's `certified-developers.xcdev`.
 - **Comments are not covered.** The signed code is canonicalized, so an edited
   comment leaves the signature valid. Any test that a signature catches
   tampering must change code.
@@ -148,5 +151,10 @@ CaeloWorks script at once - must meet this contract, which
 - **The keys stay off this repository.** `XSSK_PATH` points to them; the
   password only ever lives in the environment of the PixInsight process that
   signs.
+- **The signing machine must allow unsigned scripts.** `sign-package.sh` and
+  `verify-signature.sh` drive PixInsight with small PJSR runners that are not
+  signed themselves; with *Allow execution of unsigned scripts* off, PixInsight
+  refuses them silently and both scripts stop with an error saying so. The
+  signed hand gate, which needs the option off, runs separately.
 - On WSL, `scripts/pi-run.sh` hands a Windows PixInsight its paths and
   variables (wslpath, WSLENV) and works under the Windows `%TEMP%`.

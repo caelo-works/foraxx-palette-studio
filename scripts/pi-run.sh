@@ -16,6 +16,10 @@
 #
 # PixInsight's exit status says nothing about what the script did: callers make
 # the script write a report file and judge that.
+#
+# The scripts run this way are unsigned. A PixInsight with "Allow execution of
+# unsigned scripts" turned off refuses them silently: no report appears. The
+# machine that signs and verifies must keep that option on.
 
 pi_setup() {
   if [ -z "${PI_EXE:-}" ] && [ -f "/mnt/c/Program Files/PixInsight/bin/PixInsight.exe" ]; then
