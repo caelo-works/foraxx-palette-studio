@@ -11,9 +11,20 @@ releases.
 
 ## [Unreleased]
 
+## [3.1.4] - 2026-10-31
+
 Signed with the CaeloWorks identity of the Certified PixInsight Developer
 program, as the PixInsight Development Team asked under rule 5.1 of the CPD
 Program Rules. **No pixel moves**: nothing in `pjsr/` is touched.
+
+**Validation.** Node harness green (3935 assertions), shellcheck clean. The
+unsigned zip is byte-identical to what the 3.1.3 build scripts produce from the
+same sources (`check-package.sh` PASS, reproducible). `pjsr/` is unchanged since
+3.1.3, so the parity gate holds by construction. Signing path exercised on
+PixInsight 1.9.5: a foreign key fails cleanly without touching the zip, and
+`verify-signature.sh` accepts PTeam's signed AperturePhotometry and rejects a
+forged signature. The signed package is checked with unsigned scripts
+disallowed once the signing run has published it.
 
 ### Added
 
